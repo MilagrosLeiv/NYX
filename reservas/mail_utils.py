@@ -1,0 +1,872 @@
+from django.conf import settings
+from django.core.mail import send_mail
+from django.urls import reverse
+
+
+def send_booking_confirmed_email(booking, request=None):
+    customer_email = (booking.customer_email or "").strip()
+    from_email = (settings.DEFAULT_FROM_EMAIL or "").strip()
+
+    if not customer_email or not from_email:
+        return False
+
+    booking_items = booking.items.select_related('service', 'employee').all()
+    if not booking_items:
+        return False
+
+    services_text = ', '.join(item.service.name for item in booking_items)
+
+    professionals_text_plain = ' | '.join(
+        f'{item.service.name}: {item.employee.name}' for item in booking_items
+    )
+
+    professionals_text_html = '<br>'.join(
+        f'{item.service.name}: {item.employee.name}' for item in booking_items
+    )
+
+    first_item = booking_items.order_by('start_datetime').first()
+    if not first_item:
+        return False
+
+    fecha_formateada = first_item.start_datetime.strftime("%d/%m/%Y")
+    hora_inicio = first_item.start_datetime.strftime("%H:%M")
+
+    manage_url = ""
+
+    if booking.client_manage_token:
+        path = reverse('manage_booking', args=[booking.client_manage_token])
+
+        if request:
+            manage_url = request.build_absolute_uri(path)
+        else:
+            site_url = getattr(settings, 'SITE_URL', '').rstrip('/')
+            if site_url:
+                manage_url = f"{site_url}{path}"
+
+    manage_button_html = ""
+
+    if manage_url:
+        manage_button_html = f"""
+            <div style="text-align:center; margin:28px 0 8px;">
+                <a href="{manage_url}"
+                   style="display:inline-block; background:#0f2d3a; color:#ffffff; text-decoration:none; padding:14px 22px; border-radius:999px; font-size:14px; font-weight:700;">
+                    Gestionar mi turno
+                </a>
+            </div>
+
+            <p style="margin:14px 0 0; font-size:13px; line-height:1.6; color:#6b7280; text-align:center;">
+                Podés cancelar tu turno online hasta {booking.salon.cancellation_limit_hours} horas antes del horario reservado.
+            </p>
+        """
+
+    payment_text_plain = ""
+    payment_text_html = ""
+
+    if booking.payment_choice == 'deposit' and booking.payment_required_amount > 0:
+        amount_formatted = f"{int(booking.payment_required_amount):,}".replace(",", ".")
+
+        payment_text_plain = f"- Seña abonada: ${amount_formatted}\n"
+
+        payment_text_html = f"""
+            <tr>
+                <td style="padding:10px 0; font-size:14px; color:#6b7280;">Seña abonada</td>
+                <td style="padding:10px 0; font-size:14px; color:#111827; font-weight:600;">
+                    ${amount_formatted}
+                </td>
+            </tr>
+        """
+
+    elif booking.payment_choice == 'full' and booking.payment_required_amount > 0:
+        amount_formatted = f"{int(booking.payment_required_amount):,}".replace(",", ".")
+
+        payment_text_plain = f"- Pago confirmado: ${amount_formatted}\n"
+
+        payment_text_html = f"""
+            <tr>
+                <td style="padding:10px 0; font-size:14px; color:#6b7280;">Pago confirmado</td>
+                <td style="padding:10px 0; font-size:14px; color:#111827; font-weight:600;">
+                    ${amount_formatted}
+                </td>
+            </tr>
+        """
+
+    if manage_url:
+        manage_text_plain = (
+            f"Podés gestionar tu turno desde este link:\n"
+            f"{manage_url}\n\n"
+            f"Podés cancelar tu turno online hasta {booking.salon.cancellation_limit_hours} horas antes del horario reservado.\n\n"
+        )
+    else:
+        manage_text_plain = (
+            f"Si necesitás modificar o cancelar tu turno, comunicate con anticipación con el salón.\n\n"
+        )
+
+    plain_message = (
+        f'{booking.salon.name}\n'
+        f'Turno confirmado\n\n'
+        f'Hola {booking.customer_name}, tu turno quedó confirmado.\n\n'
+        f'Resumen de tu reserva:\n'
+        f'- Servicios: {services_text}\n'
+        f'- Profesionales: {professionals_text_plain}\n'
+        f'- Fecha: {fecha_formateada}\n'
+        f'- Hora de inicio: {hora_inicio}\n'
+        f'- Teléfono: {booking.customer_phone}\n'
+        f'{payment_text_plain}\n'
+        f'{manage_text_plain}'
+        f'Gracias por reservar con nosotros.'
+    )
+
+    html_message = f"""
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <title>Turno confirmado</title>
+    </head>
+    <body style="margin:0; padding:0; background-color:#eef4f4; font-family:Arial, Helvetica, sans-serif; color:#1f2937;">
+        <div style="width:100%; background-color:#eef4f4; padding:32px 16px;">
+            <div style="max-width:620px; margin:0 auto; background-color:#ffffff; border-radius:22px; overflow:hidden; box-shadow:0 10px 30px rgba(15, 23, 42, 0.08); border:1px solid #dbe7e7;">
+
+                <div style="background:linear-gradient(135deg, #0f2d3a 0%, #18495c 100%); padding:32px 32px 26px;">
+                    <div style="font-size:28px; font-weight:700; color:#ffffff; line-height:1.2;">
+                        {booking.salon.name}
+                    </div>
+                    <div style="margin-top:8px; font-size:14px; color:#c7d9df; letter-spacing:0.2px;">
+                        Turno confirmado
+                    </div>
+                </div>
+
+                <div style="padding:32px;">
+                    <p style="margin:0 0 18px; font-size:17px; line-height:1.6; color:#1f2937;">
+                        Hola <strong>{booking.customer_name}</strong>, tu turno quedó confirmado.
+                    </p>
+
+                    <div style="margin:0 0 24px; padding:16px 18px; background-color:#ecfeff; border:1px solid #b6ecef; border-radius:14px;">
+                        <div style="font-size:14px; font-weight:700; color:#0f766e; margin-bottom:6px;">
+                            Reserva confirmada
+                        </div>
+                        <div style="font-size:14px; line-height:1.6; color:#155e63;">
+                            Guardá este correo para tener a mano los datos de tu turno.
+                        </div>
+                    </div>
+
+                    <div style="background-color:#f9fbfb; border:1px solid #e3ecec; border-radius:18px; padding:22px; margin-bottom:24px;">
+                        <div style="font-size:16px; font-weight:700; color:#0f2d3a; margin-bottom:16px;">
+                            Resumen de tu reserva
+                        </div>
+
+                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+                            <tr>
+                                <td style="padding:10px 0; font-size:14px; color:#6b7280; width:170px; vertical-align:top;">Servicios</td>
+                                <td style="padding:10px 0; font-size:14px; color:#111827; font-weight:600; line-height:1.6;">
+                                    {services_text}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding:10px 0; font-size:14px; color:#6b7280; vertical-align:top;">Profesionales</td>
+                                <td style="padding:10px 0; font-size:14px; color:#111827; font-weight:600; line-height:1.6;">
+                                    {professionals_text_html}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding:10px 0; font-size:14px; color:#6b7280;">Fecha</td>
+                                <td style="padding:10px 0; font-size:14px; color:#111827; font-weight:600;">
+                                    {fecha_formateada}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding:10px 0; font-size:14px; color:#6b7280;">Hora de inicio</td>
+                                <td style="padding:10px 0; font-size:14px; color:#111827; font-weight:600;">
+                                    {hora_inicio}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding:10px 0; font-size:14px; color:#6b7280;">Teléfono</td>
+                                <td style="padding:10px 0; font-size:14px; color:#111827; font-weight:600;">
+                                    {booking.customer_phone}
+                                </td>
+                            </tr>
+                            {payment_text_html}
+                        </table>
+                    </div>
+
+                    {manage_button_html}
+
+                    <p style="margin:26px 0 0; font-size:14px; line-height:1.7; color:#6b7280; text-align:center;">
+                        Gracias por reservar con nosotros.
+                    </p>
+                </div>
+
+                <div style="border-top:1px solid #e5e7eb; background-color:#fafafa; padding:20px 32px; text-align:center;">
+                    <div style="font-size:12px; color:#9ca3af;">
+                        Este es un mensaje automático de confirmación de reserva.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
+    send_mail(
+        subject=f'Turno confirmado en {booking.salon.name}',
+        message=plain_message,
+        from_email=from_email,
+        recipient_list=[customer_email],
+        fail_silently=False,
+        html_message=html_message,
+    )
+
+    return True
+
+
+def send_booking_payment_pending_email(booking, request=None):
+    customer_email = (booking.customer_email or "").strip()
+    from_email = (settings.DEFAULT_FROM_EMAIL or "").strip()
+
+    if not customer_email or not from_email:
+        return False
+
+    booking_items = booking.items.select_related('service', 'employee').all()
+    if not booking_items:
+        return False
+
+    services_text = ', '.join(item.service.name for item in booking_items)
+
+    professionals_text_plain = ' | '.join(
+        f'{item.service.name}: {item.employee.name}' for item in booking_items
+    )
+
+    professionals_text_html = '<br>'.join(
+        f'{item.service.name}: {item.employee.name}' for item in booking_items
+    )
+
+    first_item = booking_items.order_by('start_datetime').first()
+    if not first_item:
+        return False
+
+    fecha_formateada = first_item.start_datetime.strftime("%d/%m/%Y")
+    hora_inicio = first_item.start_datetime.strftime("%H:%M")
+
+    manage_url = ""
+
+    if booking.client_manage_token:
+        path = reverse('manage_booking', args=[booking.client_manage_token])
+
+        if request:
+            manage_url = request.build_absolute_uri(path)
+        else:
+            site_url = getattr(settings, 'SITE_URL', '').rstrip('/')
+            if site_url:
+                manage_url = f"{site_url}{path}"
+
+    manage_button_html = ""
+
+    if manage_url:
+        manage_button_html = f"""
+            <div style="text-align:center; margin:28px 0 8px;">
+                <a href="{manage_url}"
+                   style="display:inline-block; background:#0f2d3a; color:#ffffff; text-decoration:none; padding:14px 22px; border-radius:999px; font-size:14px; font-weight:700;">
+                    Gestionar mi reserva
+                </a>
+            </div>
+
+            <p style="margin:14px 0 0; font-size:13px; line-height:1.6; color:#6b7280; text-align:center;">
+                Desde ese link podés consultar o cancelar tu reserva, siempre que esté dentro del plazo permitido por el salón.
+            </p>
+        """
+
+        manage_text_plain = (
+            f"Podés gestionar tu reserva desde este link:\n"
+            f"{manage_url}\n\n"
+        )
+    else:
+        manage_text_plain = ""
+
+    payment_label = "Pago pendiente"
+
+    if booking.payment_choice == 'deposit':
+        payment_label = "Seña pendiente"
+    elif booking.payment_choice == 'full':
+        payment_label = "Pago pendiente"
+
+    amount_formatted = f"{int(booking.payment_required_amount):,}".replace(",", ".")
+
+    expiration_text = ""
+    expiration_html = ""
+
+    if booking.payment_expires_at:
+        expiration_local = booking.payment_expires_at.strftime("%d/%m/%Y %H:%M")
+
+        expiration_text = f"- Vence: {expiration_local}\n"
+
+        expiration_html = f"""
+            <tr>
+                <td style="padding:10px 0; font-size:14px; color:#6b7280;">Vence</td>
+                <td style="padding:10px 0; font-size:14px; color:#111827; font-weight:600;">
+                    {expiration_local}
+                </td>
+            </tr>
+        """
+
+    plain_message = (
+        f'{booking.salon.name}\n'
+        f'Reserva creada - pago pendiente\n\n'
+        f'Hola {booking.customer_name}, tu reserva fue creada pero todavía no está confirmada.\n\n'
+        f'Para confirmar tu turno tenés que completar el pago indicado por el salón.\n\n'
+        f'Resumen de tu reserva:\n'
+        f'- Servicios: {services_text}\n'
+        f'- Profesionales: {professionals_text_plain}\n'
+        f'- Fecha: {fecha_formateada}\n'
+        f'- Hora de inicio: {hora_inicio}\n'
+        f'- Teléfono: {booking.customer_phone}\n'
+        f'- {payment_label}: ${amount_formatted}\n'
+        f'{expiration_text}\n'
+        f'{manage_text_plain}'
+        f'Instrucciones de pago:\n'
+        f'{booking.salon.payment_instructions or "Contactate con el salón para completar el pago."}\n\n'
+        f'Una vez validado el pago, te llegará la confirmación final del turno.'
+    )
+
+    html_message = f"""
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <title>Reserva creada - pago pendiente</title>
+    </head>
+    <body style="margin:0; padding:0; background-color:#eef4f4; font-family:Arial, Helvetica, sans-serif; color:#1f2937;">
+        <div style="width:100%; background-color:#eef4f4; padding:32px 16px;">
+            <div style="max-width:620px; margin:0 auto; background-color:#ffffff; border-radius:22px; overflow:hidden; box-shadow:0 10px 30px rgba(15, 23, 42, 0.08); border:1px solid #dbe7e7;">
+
+                <div style="background:linear-gradient(135deg, #0f2d3a 0%, #18495c 100%); padding:32px 32px 26px;">
+                    <div style="font-size:28px; font-weight:700; color:#ffffff; line-height:1.2;">
+                        {booking.salon.name}
+                    </div>
+                    <div style="margin-top:8px; font-size:14px; color:#c7d9df; letter-spacing:0.2px;">
+                        Reserva creada - pago pendiente
+                    </div>
+                </div>
+
+                <div style="padding:32px;">
+                    <p style="margin:0 0 18px; font-size:17px; line-height:1.6; color:#1f2937;">
+                        Hola <strong>{booking.customer_name}</strong>, tu reserva fue creada pero todavía no está confirmada.
+                    </p>
+
+                    <div style="margin:0 0 24px; padding:16px 18px; background-color:#fff7ed; border:1px solid #f3d3a1; border-radius:14px;">
+                        <div style="font-size:14px; font-weight:700; color:#b45309; margin-bottom:6px;">
+                            Falta completar el pago
+                        </div>
+                        <div style="font-size:14px; line-height:1.6; color:#9a3412;">
+                            Para confirmar tu turno necesitás completar el pago indicado por el salón.
+                        </div>
+                    </div>
+
+                    <div style="background-color:#f9fbfb; border:1px solid #e3ecec; border-radius:18px; padding:22px; margin-bottom:24px;">
+                        <div style="font-size:16px; font-weight:700; color:#0f2d3a; margin-bottom:16px;">
+                            Resumen de tu reserva
+                        </div>
+
+                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+                            <tr>
+                                <td style="padding:10px 0; font-size:14px; color:#6b7280; width:170px; vertical-align:top;">Servicios</td>
+                                <td style="padding:10px 0; font-size:14px; color:#111827; font-weight:600; line-height:1.6;">
+                                    {services_text}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding:10px 0; font-size:14px; color:#6b7280; vertical-align:top;">Profesionales</td>
+                                <td style="padding:10px 0; font-size:14px; color:#111827; font-weight:600; line-height:1.6;">
+                                    {professionals_text_html}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding:10px 0; font-size:14px; color:#6b7280;">Fecha</td>
+                                <td style="padding:10px 0; font-size:14px; color:#111827; font-weight:600;">
+                                    {fecha_formateada}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding:10px 0; font-size:14px; color:#6b7280;">Hora de inicio</td>
+                                <td style="padding:10px 0; font-size:14px; color:#111827; font-weight:600;">
+                                    {hora_inicio}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding:10px 0; font-size:14px; color:#6b7280;">Teléfono</td>
+                                <td style="padding:10px 0; font-size:14px; color:#111827; font-weight:600;">
+                                    {booking.customer_phone}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding:10px 0; font-size:14px; color:#6b7280;">{payment_label}</td>
+                                <td style="padding:10px 0; font-size:14px; color:#111827; font-weight:600;">
+                                    ${amount_formatted}
+                                </td>
+                            </tr>
+                            {expiration_html}
+                        </table>
+                    </div>
+
+                    {manage_button_html}
+
+                    <div style="background-color:#ffffff; border:1px solid #e3ecec; border-radius:18px; padding:22px; margin-top:24px;">
+                        <div style="font-size:16px; font-weight:700; color:#0f2d3a; margin-bottom:12px;">
+                            Instrucciones de pago
+                        </div>
+                        <div style="font-size:14px; line-height:1.7; color:#4b5563;">
+                            {(booking.salon.payment_instructions or "Contactate con el salón para completar el pago.").replace(chr(10), "<br>")}
+                        </div>
+                        <div style="font-size:14px; line-height:1.7; color:#4b5563; margin-top:14px;">
+                            Una vez validado el pago, te llegará la confirmación final del turno.
+                        </div>
+                    </div>
+                </div>
+
+                <div style="border-top:1px solid #e5e7eb; background-color:#fafafa; padding:20px 32px; text-align:center;">
+                    <div style="font-size:12px; color:#9ca3af;">
+                        Este es un mensaje automático de reserva.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
+    send_mail(
+        subject=f'Reserva creada en {booking.salon.name} - falta completar el pago',
+        message=plain_message,
+        from_email=from_email,
+        recipient_list=[customer_email],
+        fail_silently=False,
+        html_message=html_message,
+    )
+
+    return True
+
+def send_booking_cancelled_email(booking):
+    customer_email = (booking.customer_email or "").strip()
+    salon_email = (booking.salon.email or "").strip()
+    from_email = (settings.DEFAULT_FROM_EMAIL or "").strip()
+
+    if not from_email:
+        return False
+
+    booking_items = booking.items.select_related('service', 'employee').all()
+    if not booking_items:
+        return False
+
+    services_text = ', '.join(item.service.name for item in booking_items)
+
+    professionals_text_plain = ' | '.join(
+        f'{item.service.name}: {item.employee.name}' for item in booking_items
+    )
+
+    professionals_text_html = '<br>'.join(
+        f'{item.service.name}: {item.employee.name}' for item in booking_items
+    )
+
+    first_item = booking_items.order_by('start_datetime').first()
+    if not first_item:
+        return False
+
+    fecha_formateada = first_item.start_datetime.strftime("%d/%m/%Y")
+    hora_inicio = first_item.start_datetime.strftime("%H:%M")
+
+    total_formatted = f"{int(booking.get_total_price()):,}".replace(",", ".")
+
+    if customer_email:
+        customer_plain_message = (
+            f'{booking.salon.name}\n'
+            f'Turno cancelado\n\n'
+            f'Hola {booking.customer_name}, tu turno fue cancelado correctamente.\n\n'
+            f'Resumen del turno cancelado:\n'
+            f'- Servicios: {services_text}\n'
+            f'- Profesionales: {professionals_text_plain}\n'
+            f'- Fecha: {fecha_formateada}\n'
+            f'- Hora de inicio: {hora_inicio}\n'
+            f'- Total: ${total_formatted}\n\n'
+            f'El horario volvió a quedar disponible.\n'
+            f'Si querés reservar otro turno, podés hacerlo desde la página del salón.\n'
+        )
+
+        customer_html_message = f"""
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+            <meta charset="UTF-8">
+            <title>Turno cancelado</title>
+        </head>
+        <body style="margin:0; padding:0; background-color:#eef4f4; font-family:Arial, Helvetica, sans-serif; color:#1f2937;">
+            <div style="width:100%; background-color:#eef4f4; padding:32px 16px;">
+                <div style="max-width:620px; margin:0 auto; background-color:#ffffff; border-radius:22px; overflow:hidden; box-shadow:0 10px 30px rgba(15, 23, 42, 0.08); border:1px solid #dbe7e7;">
+
+                    <div style="background:linear-gradient(135deg, #3f1f2d 0%, #7f1d1d 100%); padding:32px 32px 26px;">
+                        <div style="font-size:28px; font-weight:700; color:#ffffff; line-height:1.2;">
+                            {booking.salon.name}
+                        </div>
+                        <div style="margin-top:8px; font-size:14px; color:#fecaca; letter-spacing:0.2px;">
+                            Turno cancelado
+                        </div>
+                    </div>
+
+                    <div style="padding:32px;">
+                        <p style="margin:0 0 18px; font-size:17px; line-height:1.6; color:#1f2937;">
+                            Hola <strong>{booking.customer_name}</strong>, tu turno fue cancelado correctamente.
+                        </p>
+
+                        <div style="margin:0 0 24px; padding:16px 18px; background-color:#fef2f2; border:1px solid #fecaca; border-radius:14px;">
+                            <div style="font-size:14px; font-weight:700; color:#991b1b; margin-bottom:6px;">
+                                Reserva cancelada
+                            </div>
+                            <div style="font-size:14px; line-height:1.6; color:#7f1d1d;">
+                                El horario volvió a quedar disponible para otros clientes.
+                            </div>
+                        </div>
+
+                        <div style="background-color:#f9fbfb; border:1px solid #e3ecec; border-radius:18px; padding:22px; margin-bottom:24px;">
+                            <div style="font-size:16px; font-weight:700; color:#0f2d3a; margin-bottom:16px;">
+                                Resumen del turno cancelado
+                            </div>
+
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+                                <tr>
+                                    <td style="padding:10px 0; font-size:14px; color:#6b7280; width:170px; vertical-align:top;">Servicios</td>
+                                    <td style="padding:10px 0; font-size:14px; color:#111827; font-weight:600; line-height:1.6;">
+                                        {services_text}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:10px 0; font-size:14px; color:#6b7280; vertical-align:top;">Profesionales</td>
+                                    <td style="padding:10px 0; font-size:14px; color:#111827; font-weight:600; line-height:1.6;">
+                                        {professionals_text_html}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:10px 0; font-size:14px; color:#6b7280;">Fecha</td>
+                                    <td style="padding:10px 0; font-size:14px; color:#111827; font-weight:600;">
+                                        {fecha_formateada}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:10px 0; font-size:14px; color:#6b7280;">Hora de inicio</td>
+                                    <td style="padding:10px 0; font-size:14px; color:#111827; font-weight:600;">
+                                        {hora_inicio}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:10px 0; font-size:14px; color:#6b7280;">Total</td>
+                                    <td style="padding:10px 0; font-size:14px; color:#111827; font-weight:600;">
+                                        ${total_formatted}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <p style="margin:0; font-size:14px; line-height:1.7; color:#6b7280; text-align:center;">
+                            Si querés reservar otro turno, podés hacerlo desde la página del salón.
+                        </p>
+                    </div>
+
+                    <div style="border-top:1px solid #e5e7eb; background-color:#fafafa; padding:20px 32px; text-align:center;">
+                        <div style="font-size:12px; color:#9ca3af;">
+                            Este es un mensaje automático de cancelación de reserva.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+
+        send_mail(
+            subject=f'Turno cancelado en {booking.salon.name}',
+            message=customer_plain_message,
+            from_email=from_email,
+            recipient_list=[customer_email],
+            fail_silently=False,
+            html_message=customer_html_message,
+        )
+
+    if salon_email:
+        salon_plain_message = (
+            f'Se canceló un turno desde NYX.\n\n'
+            f'Cliente: {booking.customer_name}\n'
+            f'Teléfono: {booking.customer_phone}\n'
+            f'Email: {booking.customer_email or "Sin email"}\n'
+            f'Servicios: {services_text}\n'
+            f'Profesionales: {professionals_text_plain}\n'
+            f'Fecha: {fecha_formateada}\n'
+            f'Hora de inicio: {hora_inicio}\n'
+            f'Total: ${total_formatted}\n\n'
+            f'El horario volvió a quedar disponible.'
+        )
+
+        salon_html_message = f"""
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+            <meta charset="UTF-8">
+            <title>Turno cancelado</title>
+        </head>
+        <body style="margin:0; padding:0; background-color:#eef4f4; font-family:Arial, Helvetica, sans-serif; color:#1f2937;">
+            <div style="width:100%; background-color:#eef4f4; padding:32px 16px;">
+                <div style="max-width:620px; margin:0 auto; background-color:#ffffff; border-radius:22px; overflow:hidden; box-shadow:0 10px 30px rgba(15, 23, 42, 0.08); border:1px solid #dbe7e7;">
+
+                    <div style="background:linear-gradient(135deg, #0f2d3a 0%, #18495c 100%); padding:32px 32px 26px;">
+                        <div style="font-size:28px; font-weight:700; color:#ffffff; line-height:1.2;">
+                            NYX
+                        </div>
+                        <div style="margin-top:8px; font-size:14px; color:#c7d9df; letter-spacing:0.2px;">
+                            Aviso de cancelación
+                        </div>
+                    </div>
+
+                    <div style="padding:32px;">
+                        <p style="margin:0 0 18px; font-size:17px; line-height:1.6; color:#1f2937;">
+                            Se canceló un turno de <strong>{booking.customer_name}</strong>.
+                        </p>
+
+                        <div style="margin:0 0 24px; padding:16px 18px; background-color:#fef2f2; border:1px solid #fecaca; border-radius:14px;">
+                            <div style="font-size:14px; font-weight:700; color:#991b1b; margin-bottom:6px;">
+                                Turno cancelado
+                            </div>
+                            <div style="font-size:14px; line-height:1.6; color:#7f1d1d;">
+                                El horario volvió a quedar disponible.
+                            </div>
+                        </div>
+
+                        <div style="background-color:#f9fbfb; border:1px solid #e3ecec; border-radius:18px; padding:22px;">
+                            <div style="font-size:16px; font-weight:700; color:#0f2d3a; margin-bottom:16px;">
+                                Detalle de la reserva cancelada
+                            </div>
+
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+                                <tr>
+                                    <td style="padding:10px 0; font-size:14px; color:#6b7280; width:170px;">Cliente</td>
+                                    <td style="padding:10px 0; font-size:14px; color:#111827; font-weight:600;">{booking.customer_name}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:10px 0; font-size:14px; color:#6b7280;">Teléfono</td>
+                                    <td style="padding:10px 0; font-size:14px; color:#111827; font-weight:600;">{booking.customer_phone}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:10px 0; font-size:14px; color:#6b7280;">Email</td>
+                                    <td style="padding:10px 0; font-size:14px; color:#111827; font-weight:600;">{booking.customer_email or "Sin email"}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:10px 0; font-size:14px; color:#6b7280; vertical-align:top;">Servicios</td>
+                                    <td style="padding:10px 0; font-size:14px; color:#111827; font-weight:600; line-height:1.6;">{services_text}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:10px 0; font-size:14px; color:#6b7280; vertical-align:top;">Profesionales</td>
+                                    <td style="padding:10px 0; font-size:14px; color:#111827; font-weight:600; line-height:1.6;">{professionals_text_html}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:10px 0; font-size:14px; color:#6b7280;">Fecha</td>
+                                    <td style="padding:10px 0; font-size:14px; color:#111827; font-weight:600;">{fecha_formateada}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:10px 0; font-size:14px; color:#6b7280;">Hora de inicio</td>
+                                    <td style="padding:10px 0; font-size:14px; color:#111827; font-weight:600;">{hora_inicio}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:10px 0; font-size:14px; color:#6b7280;">Total</td>
+                                    <td style="padding:10px 0; font-size:14px; color:#111827; font-weight:600;">${total_formatted}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div style="border-top:1px solid #e5e7eb; background-color:#fafafa; padding:20px 32px; text-align:center;">
+                        <div style="font-size:12px; color:#9ca3af;">
+                            Este es un mensaje automático de NYX.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+
+        send_mail(
+            subject=f'Turno cancelado - {booking.customer_name}',
+            message=salon_plain_message,
+            from_email=from_email,
+            recipient_list=[salon_email],
+            fail_silently=False,
+            html_message=salon_html_message,
+        )
+
+    return True
+
+def send_booking_rescheduled_email(booking, request=None):
+    customer_email = (booking.customer_email or "").strip()
+    salon_email = (booking.salon.email or "").strip()
+    from_email = (settings.DEFAULT_FROM_EMAIL or "").strip()
+
+    if not from_email:
+        return False
+
+    booking_items = booking.items.select_related('service', 'employee').order_by('order', 'start_datetime')
+    if not booking_items:
+        return False
+
+    services_text = ', '.join(item.service.name for item in booking_items)
+
+    professionals_text_plain = ' | '.join(
+        f'{item.service.name}: {item.employee.name}' for item in booking_items
+    )
+
+    professionals_text_html = '<br>'.join(
+        f'{item.service.name}: {item.employee.name}' for item in booking_items
+    )
+
+    first_item = booking_items.first()
+    fecha_formateada = first_item.start_datetime.strftime("%d/%m/%Y")
+    hora_inicio = first_item.start_datetime.strftime("%H:%M")
+
+    manage_url = ""
+
+    if booking.client_manage_token:
+        path = reverse('manage_booking', args=[booking.client_manage_token])
+
+        if request:
+            manage_url = request.build_absolute_uri(path)
+        else:
+            site_url = getattr(settings, 'SITE_URL', '').rstrip('/')
+            if site_url:
+                manage_url = f"{site_url}{path}"
+
+    manage_button_html = ""
+
+    if manage_url:
+        manage_button_html = f"""
+            <div style="text-align:center; margin:28px 0 8px;">
+                <a href="{manage_url}"
+                   style="display:inline-block; background:#0f2d3a; color:#ffffff; text-decoration:none; padding:14px 22px; border-radius:999px; font-size:14px; font-weight:700;">
+                    Gestionar mi turno
+                </a>
+            </div>
+        """
+
+    plain_message = (
+        f'{booking.salon.name}\n'
+        f'Turno modificado\n\n'
+        f'Hola {booking.customer_name}, tu turno fue modificado correctamente.\n\n'
+        f'Nuevo resumen de tu reserva:\n'
+        f'- Servicios: {services_text}\n'
+        f'- Profesionales: {professionals_text_plain}\n'
+        f'- Nueva fecha: {fecha_formateada}\n'
+        f'- Nueva hora de inicio: {hora_inicio}\n'
+        f'- Teléfono: {booking.customer_phone}\n\n'
+        f'Gracias por reservar con nosotros.'
+    )
+
+    html_message = f"""
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <title>Turno modificado</title>
+    </head>
+    <body style="margin:0; padding:0; background-color:#eef4f4; font-family:Arial, Helvetica, sans-serif; color:#1f2937;">
+        <div style="width:100%; background-color:#eef4f4; padding:32px 16px;">
+            <div style="max-width:620px; margin:0 auto; background-color:#ffffff; border-radius:22px; overflow:hidden; box-shadow:0 10px 30px rgba(15, 23, 42, 0.08); border:1px solid #dbe7e7;">
+
+                <div style="background:linear-gradient(135deg, #0f2d3a 0%, #18495c 100%); padding:32px 32px 26px;">
+                    <div style="font-size:28px; font-weight:700; color:#ffffff; line-height:1.2;">
+                        {booking.salon.name}
+                    </div>
+                    <div style="margin-top:8px; font-size:14px; color:#c7d9df; letter-spacing:0.2px;">
+                        Turno modificado
+                    </div>
+                </div>
+
+                <div style="padding:32px;">
+                    <p style="margin:0 0 18px; font-size:17px; line-height:1.6; color:#1f2937;">
+                        Hola <strong>{booking.customer_name}</strong>, tu turno fue modificado correctamente.
+                    </p>
+
+                    <div style="margin:0 0 24px; padding:16px 18px; background-color:#ecfeff; border:1px solid #b6ecef; border-radius:14px;">
+                        <div style="font-size:14px; font-weight:700; color:#0f766e; margin-bottom:6px;">
+                            Nuevo horario confirmado
+                        </div>
+                        <div style="font-size:14px; line-height:1.6; color:#155e63;">
+                            Guardá este correo para tener a mano los datos actualizados de tu turno.
+                        </div>
+                    </div>
+
+                    <div style="background-color:#f9fbfb; border:1px solid #e3ecec; border-radius:18px; padding:22px; margin-bottom:24px;">
+                        <div style="font-size:16px; font-weight:700; color:#0f2d3a; margin-bottom:16px;">
+                            Nuevo resumen de tu reserva
+                        </div>
+
+                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+                            <tr>
+                                <td style="padding:10px 0; font-size:14px; color:#6b7280; width:170px; vertical-align:top;">Servicios</td>
+                                <td style="padding:10px 0; font-size:14px; color:#111827; font-weight:600; line-height:1.6;">
+                                    {services_text}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding:10px 0; font-size:14px; color:#6b7280; vertical-align:top;">Profesionales</td>
+                                <td style="padding:10px 0; font-size:14px; color:#111827; font-weight:600; line-height:1.6;">
+                                    {professionals_text_html}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding:10px 0; font-size:14px; color:#6b7280;">Nueva fecha</td>
+                                <td style="padding:10px 0; font-size:14px; color:#111827; font-weight:600;">
+                                    {fecha_formateada}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding:10px 0; font-size:14px; color:#6b7280;">Nueva hora</td>
+                                <td style="padding:10px 0; font-size:14px; color:#111827; font-weight:600;">
+                                    {hora_inicio}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    {manage_button_html}
+
+                    <p style="margin:26px 0 0; font-size:14px; line-height:1.7; color:#6b7280; text-align:center;">
+                        Gracias por reservar con nosotros.
+                    </p>
+                </div>
+
+                <div style="border-top:1px solid #e5e7eb; background-color:#fafafa; padding:20px 32px; text-align:center;">
+                    <div style="font-size:12px; color:#9ca3af;">
+                        Este es un mensaje automático de modificación de reserva.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
+    if customer_email:
+        send_mail(
+            subject=f'Turno modificado en {booking.salon.name}',
+            message=plain_message,
+            from_email=from_email,
+            recipient_list=[customer_email],
+            fail_silently=False,
+            html_message=html_message,
+        )
+
+    if salon_email:
+        send_mail(
+            subject=f'Turno modificado - {booking.customer_name}',
+            message=plain_message,
+            from_email=from_email,
+            recipient_list=[salon_email],
+            fail_silently=False,
+            html_message=html_message,
+        )
+
+    return True

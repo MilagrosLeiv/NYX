@@ -1,0 +1,333 @@
+{% extends 'reservas/base.html' %}
+{% load custom_filters %}
+
+{% block title %}Servicios | NYX{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+    <div>
+        <h1 class="nyx-page-title">Servicios</h1>
+        <p class="nyx-text-muted nyx-page-subtitle mb-0">
+            Elegí uno o más servicios y armá tu reserva en pocos pasos.
+        </p>
+    </div>
+</div>
+
+<div class="row g-4 align-items-start">
+    <div class="col-12 col-lg-8">
+        {% if services %}
+            <div class="row g-4">
+                {% for service in services %}
+                    <div class="col-12 col-md-6 col-xl-4">
+                        <div class="card h-100 border-0 shadow-sm service-card">
+                            <div class="card-body d-flex flex-column">
+                                <div class="service-card-header mb-3">
+                                    <div>
+                                        <h2 class="h5 card-title mb-2">{{ service.name }}</h2>
+                                        <span class="badge nyx-badge-soft">
+                                            {{ service.duration_minutes }} min
+                                        </span>
+                                    </div>
+
+                                    <div class="service-price-pill">
+                                        ${{ service.price|miles_punto }}
+                                    </div>
+                                </div>
+
+                                {% if service.description %}
+                                    <p class="card-text nyx-text-muted mb-4">
+                                        {{ service.description }}
+                                    </p>
+                                {% else %}
+                                    <p class="card-text nyx-text-muted mb-4">
+                                        Sin descripción.
+                                    </p>
+                                {% endif %}
+
+                                <div class="mt-auto">
+                                    <button
+                                        type="button"
+                                        class="btn nyx-btn-outline w-100 add-service-btn"
+                                        data-id="{{ service.id }}"
+                                        data-name="{{ service.name }}"
+                                        data-price="{{ service.price }}"
+                                        data-duration="{{ service.duration_minutes }}"
+                                    >
+                                        Agregar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="card border-0 shadow-sm service-card">
+                <div class="card-body py-5 text-center">
+                    <h2 class="h4 mb-2">No hay servicios disponibles</h2>
+                    <p class="nyx-text-muted mb-0">
+                        Cargá servicios desde el panel de administración para mostrarlos acá.
+                    </p>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="col-12 col-lg-4 align-self-start">
+        <div class="card border-0 shadow-sm selection-summary sticky-summary">
+            <div class="card-body p-4">
+                <h2 class="h4 mb-3">Tu selección</h2>
+                <p class="nyx-text-muted small mb-4">
+                    Agregá los servicios que quieras reservar en un mismo turno.
+                </p>
+
+                <div id="selected-services-list" class="mb-4">
+                    <div id="empty-selection" class="nyx-text-muted">
+                        Todavía no agregaste ningún servicio.
+                    </div>
+                </div>
+
+                <hr class="nyx-divider">
+
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="nyx-text-muted">Servicios</span>
+                    <span class="fw-semibold" id="services-count">0</span>
+                </div>
+
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="nyx-text-muted">Duración estimada</span>
+                    <span class="fw-semibold" id="total-duration">0 min</span>
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <span>Total estimado</span>
+                    <strong id="summary-total">$0</strong>
+                </div>
+
+                <div id="payment-summary-block" class="mt-2"></div>
+
+                <form method="get" action="{% url 'select_professional' %}">
+                    <div id="selected-services-inputs"></div>
+
+                    <button
+                        type="submit"
+                        id="continue-btn"
+                        class="mt-3 btn nyx-btn-primary w-100"
+                        disabled
+                    >
+                        Continuar
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+{% block scripts %}
+
+<script>
+  const DEPOSIT_ENABLED = {{ deposit_enabled|yesno:"true,false" }};
+  const DEPOSIT_PERCENTAGE = Number("{{ deposit_percentage|default:'0' }}");
+  const ALLOW_FULL_PAYMENT = {{ allow_full_payment|yesno:"true,false" }};
+  const FULL_PAYMENT_REQUIRED = {{ full_payment_required|yesno:"true,false" }};
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const selectedServices = [];
+
+    const buttons = document.querySelectorAll('.add-service-btn');
+    const selectedList = document.getElementById('selected-services-list');
+    const servicesCount = document.getElementById('services-count');
+    const totalDuration = document.getElementById('total-duration');
+    const summaryTotal = document.getElementById('summary-total');
+    const paymentSummaryBlock = document.getElementById('payment-summary-block');
+    const selectedInputsContainer = document.getElementById('selected-services-inputs');
+    const continueBtn = document.getElementById('continue-btn');
+
+    function formatPrice(value) {
+        return '$' + new Intl.NumberFormat('es-AR').format(Number(value || 0));
+    }
+
+    function renderPaymentSummary(totalAmount) {
+        if (!paymentSummaryBlock) return;
+
+        const depositAmount = Math.round((Number(totalAmount) * Number(DEPOSIT_PERCENTAGE))) / 100;
+
+        if (FULL_PAYMENT_REQUIRED) {
+            paymentSummaryBlock.innerHTML = `
+                <div class="d-flex justify-content-between mt-2">
+                    <span>Pago requerido</span>
+                    <strong>${formatPrice(totalAmount)}</strong>
+                </div>
+                <div class="mt-3 small text-muted">
+                    Para reservar este turno se solicitará el pago total.
+                </div>
+            `;
+            return;
+        }
+
+        if (DEPOSIT_ENABLED && ALLOW_FULL_PAYMENT) {
+            paymentSummaryBlock.innerHTML = `
+                <div class="d-flex justify-content-between mt-2">
+                    <span>Seña requerida (${DEPOSIT_PERCENTAGE}%)</span>
+                    <strong>${formatPrice(depositAmount)}</strong>
+                </div>
+                <div class="d-flex justify-content-between mt-2">
+                    <span>Pago total opcional</span>
+                    <strong>${formatPrice(totalAmount)}</strong>
+                </div>
+                <div class="mt-3 small text-muted">
+                    Para reservar se solicitará una seña, aunque también vas a poder pagar el total si querés.
+                </div>
+            `;
+            return;
+        }
+
+        if (DEPOSIT_ENABLED) {
+            paymentSummaryBlock.innerHTML = `
+                <div class="d-flex justify-content-between mt-2">
+                    <span>Seña requerida (${DEPOSIT_PERCENTAGE}%)</span>
+                    <strong>${formatPrice(depositAmount)}</strong>
+                </div>
+                <div class="mt-3 small text-muted">
+                    Para reservar se solicitará una seña de ${formatPrice(depositAmount)}.
+                </div>
+            `;
+            return;
+        }
+
+        if (ALLOW_FULL_PAYMENT) {
+            paymentSummaryBlock.innerHTML = `
+                <div class="d-flex justify-content-between mt-2">
+                    <span>Pago total opcional</span>
+                    <strong>${formatPrice(totalAmount)}</strong>
+                </div>
+                <div class="mt-3 small text-muted">
+                    Más adelante vas a poder elegir pagar el total si querés.
+                </div>
+            `;
+            return;
+        }
+
+        paymentSummaryBlock.innerHTML = '';
+    }
+
+    function renderSelection() {
+        if (!selectedList || !servicesCount || !totalDuration || !summaryTotal) {
+            console.error('Faltan elementos del resumen en el HTML');
+            return;
+        }
+
+        if (selectedServices.length === 0) {
+            selectedList.innerHTML = `
+                <div id="empty-selection" class="nyx-text-muted">
+                    Todavía no agregaste ningún servicio.
+                </div>
+            `;
+
+            if (selectedInputsContainer) selectedInputsContainer.innerHTML = '';
+            servicesCount.textContent = '0';
+            totalDuration.textContent = '0 min';
+            summaryTotal.textContent = '$0';
+            renderPaymentSummary(0);
+            if (continueBtn) continueBtn.disabled = true;
+            return;
+        }
+
+        let totalMinutes = 0;
+        let totalAmount = 0;
+
+        selectedList.innerHTML = selectedServices.map((service, index) => {
+            totalMinutes += Number(service.duration);
+            totalAmount += Number(service.price);
+
+            return `
+                <div class="nyx-selected-service p-3 mb-2">
+                    <div class="d-flex justify-content-between align-items-start gap-2">
+                        <div>
+                            <div class="fw-semibold">${service.name}</div>
+                            <div class="small nyx-text-muted">
+                                ${service.duration} min · ${formatPrice(service.price)}
+                            </div>
+                        </div>
+                        <button
+                            type="button"
+                            class="btn btn-sm nyx-btn-remove remove-service-btn"
+                            data-index="${index}"
+                        >
+                            Quitar
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        if (selectedInputsContainer) {
+            selectedInputsContainer.innerHTML = selectedServices.map(service => `
+                <input type="hidden" name="services" value="${service.id}">
+            `).join('');
+        }
+
+        servicesCount.textContent = selectedServices.length;
+        totalDuration.textContent = `${totalMinutes} min`;
+        summaryTotal.textContent = formatPrice(totalAmount);
+        renderPaymentSummary(totalAmount);
+        if (continueBtn) continueBtn.disabled = false;
+
+        bindRemoveButtons();
+    }
+
+    function bindRemoveButtons() {
+        document.querySelectorAll('.remove-service-btn').forEach(button => {
+            button.addEventListener('click', function () {
+                const index = Number(this.dataset.index);
+                const removedService = selectedServices[index];
+
+                selectedServices.splice(index, 1);
+
+                buttons.forEach(btn => {
+                    if (btn.dataset.id === String(removedService.id)) {
+                        btn.disabled = false;
+                        btn.textContent = 'Agregar';
+                        btn.classList.remove('nyx-btn-added');
+                        btn.classList.add('nyx-btn-outline');
+                    }
+                });
+
+                renderSelection();
+            });
+        });
+    }
+
+    buttons.forEach(button => {
+        button.addEventListener('click', function () {
+            const serviceId = this.dataset.id;
+
+            const alreadySelected = selectedServices.some(
+                service => String(service.id) === String(serviceId)
+            );
+            if (alreadySelected) return;
+
+            selectedServices.push({
+                id: this.dataset.id,
+                name: this.dataset.name,
+                price: this.dataset.price,
+                duration: this.dataset.duration
+            });
+
+            this.disabled = true;
+            this.textContent = 'Agregado';
+            this.classList.remove('nyx-btn-outline');
+            this.classList.add('nyx-btn-added');
+
+            renderSelection();
+        });
+    });
+
+    renderSelection();
+});
+</script>
+{% endblock %}

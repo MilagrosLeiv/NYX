@@ -1,0 +1,724 @@
+:root {
+    --nyx-primary: #408888;
+    --nyx-primary-hover: #326d6d;
+    --nyx-soft: #8cdcdf;
+
+    --nyx-bg: #f6fbfb;
+    --nyx-surface: #ffffff;
+    --nyx-surface-soft: #f2fbfb;
+
+    --nyx-text: #183131;
+    --nyx-text-muted: #6b8484;
+
+    --nyx-border: #dceeee;
+    --nyx-border-strong: #c7e3e3;
+
+    --nyx-shadow: 0 10px 30px rgba(34, 83, 83, 0.08);
+    --nyx-shadow-hover: 0 16px 40px rgba(34, 83, 83, 0.14);
+}
+
+/* =========================
+   BASE
+========================= */
+
+body.nyx-body {
+    background:
+        radial-gradient(circle at top left, rgba(140, 220, 223, 0.18), transparent 22%),
+        radial-gradient(circle at top right, rgba(64, 136, 136, 0.08), transparent 18%),
+        var(--nyx-bg);
+    color: var(--nyx-text);
+    min-height: 100vh;
+}
+
+/* =========================
+   NAVBAR
+========================= */
+
+.nyx-navbar {
+    background: rgba(24, 49, 49, 0.88);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.nyx-navbar .navbar-brand {
+    color: #fff !important;
+    font-family: "Cinzel", serif;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-size: 1.3rem;
+    line-height: 1;
+    transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.nyx-navbar .navbar-brand:hover {
+    opacity: 0.92;
+    transform: translateY(-1px);
+}
+
+.nyx-navbar .btn {
+    border-radius: 0.8rem;
+    padding: 0.48rem 0.9rem;
+    font-weight: 600;
+    font-size: 0.92rem;
+}
+
+/* =========================
+   TIPOGRAFÍA
+========================= */
+
+h1, h2, h3, h4, h5, h6 {
+    color: var(--nyx-text);
+    letter-spacing: -0.02em;
+}
+
+.nyx-text-muted {
+    color: var(--nyx-text-muted) !important;
+}
+
+.nyx-page-title {
+    font-size: clamp(2rem, 2.4vw, 2.6rem);
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    margin-bottom: 0.35rem;
+}
+
+.nyx-page-subtitle {
+    font-size: 1rem;
+    max-width: 42rem;
+}
+
+.card-title {
+    font-weight: 700;
+    font-size: 1.15rem;
+    line-height: 1.3;
+}
+
+.card-text {
+    line-height: 1.55;
+}
+
+/* =========================
+   BOTONES GENERALES
+========================= */
+
+.nyx-btn-primary {
+    background: linear-gradient(135deg, var(--nyx-soft), #74cfd1);
+    border: 1px solid transparent;
+    color: var(--nyx-text);
+    font-weight: 700;
+    border-radius: 0.9rem;
+    transition: all 0.18s ease;
+    box-shadow: 0 8px 20px rgba(140, 220, 223, 0.25);
+}
+
+.nyx-btn-primary:hover,
+.nyx-btn-primary:focus,
+.nyx-btn-primary:active {
+    transform: translateY(-1px);
+    background: linear-gradient(135deg, #98e3e5, #7ad6d8);
+    color: var(--nyx-text);
+    box-shadow: 0 12px 26px rgba(140, 220, 223, 0.35);
+}
+
+.nyx-btn-primary:disabled {
+    background: #cfe7e7 !important;
+    color: rgba(24, 49, 49, 0.5) !important;
+    border-color: #cfe7e7 !important;
+    box-shadow: none !important;
+    transform: none !important;
+    cursor: not-allowed;
+}
+
+.nyx-btn-outline {
+    background-color: #ffffff;
+    border: 1px solid var(--nyx-primary);
+    color: var(--nyx-primary) !important;
+    border-radius: 0.9rem;
+    font-weight: 700;
+    transition: all 0.18s ease;
+}
+
+.nyx-btn-outline:hover,
+.nyx-btn-outline:focus,
+.nyx-btn-outline:active {
+    background-color: var(--nyx-primary);
+    border-color: var(--nyx-primary);
+    color: #ffffff !important;
+    box-shadow: 0 0 0 0.2rem rgba(64, 136, 136, 0.12);
+}
+
+.nyx-btn-added {
+    background: linear-gradient(135deg, var(--nyx-primary), #337171) !important;
+    border: 1px solid transparent !important;
+    color: #fff !important;
+    font-weight: 700;
+    border-radius: 0.9rem;
+    box-shadow: 0 8px 18px rgba(64, 136, 136, 0.22);
+}
+
+.nyx-btn-remove {
+    border: 1px solid #ecd5d8;
+    color: #9e5860;
+    background-color: #fffafb;
+    border-radius: 0.75rem;
+    font-weight: 600;
+}
+
+.nyx-btn-remove:hover {
+    background-color: #fff1f3;
+    border-color: #e4b8be;
+    color: #8a3f48;
+}
+
+/* Botón unificado para todo el flujo público */
+.nyx-flow-btn {
+    min-width: 148px;
+    height: 48px;
+    padding: 0 1.25rem;
+    border: none;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #8cdcdf, #74cfd1);
+    color: #183131 !important;
+    font-weight: 700;
+    font-size: 1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    box-shadow: 0 10px 24px rgba(140, 220, 223, 0.28);
+    transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+}
+
+.nyx-flow-btn:hover,
+.nyx-flow-btn:focus,
+.nyx-flow-btn:active {
+    transform: translateY(-1px);
+    filter: brightness(1.02);
+    color: #183131 !important;
+    box-shadow: 0 14px 28px rgba(140, 220, 223, 0.34);
+}
+
+.nyx-flow-btn:disabled {
+    background: #cfe7e7 !important;
+    color: rgba(24, 49, 49, 0.5) !important;
+    box-shadow: none !important;
+    cursor: not-allowed;
+    transform: none !important;
+    filter: none !important;
+}
+
+/* Específico de service_list */
+.add-service-btn.nyx-btn-outline {
+    background: transparent;
+    border: 1px solid var(--nyx-border-strong);
+    color: var(--nyx-primary);
+    font-weight: 700;
+}
+
+.add-service-btn.nyx-btn-outline:hover {
+    background: var(--nyx-primary);
+    border-color: var(--nyx-primary);
+    color: #fff;
+}
+
+/* =========================
+   SUPERFICIES / CARDS
+========================= */
+
+.service-card,
+.selection-summary,
+.nyx-panel,
+.nyx-summary-card,
+.booking-option,
+.nyx-form-card,
+.nyx-info-card,
+.nyx-suboption-card {
+    position: relative;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.84);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border: 1px solid rgba(220, 238, 238, 0.95);
+    border-radius: 1.35rem;
+    box-shadow: var(--nyx-shadow);
+}
+
+.service-card::before,
+.selection-summary::before,
+.nyx-panel::before,
+.nyx-summary-card::before,
+.booking-option::before,
+.nyx-form-card::before,
+.nyx-info-card::before,
+.nyx-suboption-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(90deg, var(--nyx-primary), var(--nyx-soft));
+}
+
+.service-card,
+.booking-option {
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.service-card:hover,
+.booking-option:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--nyx-shadow-hover);
+    border-color: var(--nyx-border-strong);
+}
+
+.service-card .card-body {
+    padding: 1.4rem;
+}
+
+.selection-summary .card-body {
+    padding: 1.55rem;
+}
+
+.sticky-summary,
+.nyx-summary-card {
+    position: sticky;
+    top: 0;
+    align-self: start;
+}
+
+/* =========================
+   SERVICIOS
+========================= */
+
+.service-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.service-price {
+    font-size: 1.45rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--nyx-primary);
+    letter-spacing: -0.03em;
+    white-space: nowrap;
+    margin-top: 0.1rem;
+}
+
+.service-price-pill,
+.nyx-price-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: linear-gradient(135deg, rgba(140, 220, 223, 0.32), rgba(64, 136, 136, 0.16));
+    border: 1px solid rgba(64, 136, 136, 0.16);
+    color: var(--nyx-primary);
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+    box-shadow: 0 6px 14px rgba(64, 136, 136, 0.08);
+}
+
+.service-price-pill {
+    padding: 0.5rem 0.95rem;
+    font-size: 1.05rem;
+}
+
+.nyx-price-pill {
+    padding: 0.45rem 0.85rem;
+    font-size: 0.95rem;
+    font-weight: 800;
+}
+
+/* =========================
+   BADGES
+========================= */
+
+.nyx-badge-primary,
+.nyx-badge-soft {
+    border-radius: 999px;
+    padding: 0.42rem 0.72rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+}
+
+.nyx-badge-primary {
+    background: rgba(64, 136, 136, 0.12);
+    color: var(--nyx-primary);
+    border: 1px solid rgba(64, 136, 136, 0.16);
+}
+
+.nyx-badge-soft {
+    background: rgba(140, 220, 223, 0.22);
+    color: var(--nyx-text);
+    border: 1px solid rgba(140, 220, 223, 0.3);
+}
+
+/* =========================
+   LISTAS / RESÚMENES
+========================= */
+
+.nyx-selected-service {
+    background-color: var(--nyx-surface-soft);
+    border: 1px solid var(--nyx-border);
+    border-radius: 1rem;
+    transition: border-color 0.18s ease, transform 0.18s ease;
+}
+
+.nyx-selected-service:hover {
+    border-color: var(--nyx-border-strong);
+}
+
+.nyx-divider {
+    border-color: var(--nyx-border);
+    opacity: 1;
+}
+
+.nyx-selection-row {
+    padding-bottom: 0.65rem;
+    margin-bottom: 0.65rem;
+    border-bottom: 1px solid var(--nyx-border);
+}
+
+.nyx-selection-row:last-child,
+.nyx-summary-service:last-child {
+    padding-bottom: 0;
+    margin-bottom: 0;
+    border-bottom: 0;
+}
+
+.nyx-summary-service {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.9rem;
+    padding-bottom: 0.85rem;
+    margin-bottom: 0.85rem;
+    border-bottom: 1px solid var(--nyx-border);
+}
+
+#total-price,
+.nyx-summary-total {
+    color: var(--nyx-primary);
+}
+
+#total-price {
+    font-size: 1.15rem;
+}
+
+/* =========================
+   STEPPER
+========================= */
+
+.nyx-stepper {
+    display: flex;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    color: var(--nyx-text-muted);
+    font-size: 0.92rem;
+}
+
+.nyx-stepper .is-current {
+    color: var(--nyx-text);
+    font-weight: 700;
+}
+
+.nyx-step-separator {
+    opacity: 0.5;
+}
+
+/* =========================
+   BOOKING / ELECCIÓN
+========================= */
+
+.booking-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(140, 220, 223, 0.34), rgba(140, 220, 223, 0.18));
+    border: 1px solid rgba(64, 136, 136, 0.12);
+    color: var(--nyx-primary);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.booking-avatar-icon {
+    font-size: 1.15rem;
+}
+
+.booking-option .card-body {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.45rem 1.5rem !important;
+    flex-wrap: wrap;
+}
+
+.booking-option-main {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex: 1 1 420px;
+    min-width: 0;
+}
+
+.booking-option-main .fw-semibold.fs-5 {
+    letter-spacing: -0.02em;
+}
+
+.booking-option-main .small {
+    font-size: 0.98rem;
+    line-height: 1.45;
+}
+
+.booking-option-action {
+    flex: 0 0 auto;
+    margin-left: auto;
+}
+
+.booking-option-action .btn {
+    min-width: 140px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.booking-slot {
+    min-width: 82px;
+    text-align: center;
+    border-radius: 999px !important;
+    font-weight: 700;
+}
+
+.btn-check:checked + .booking-slot {
+    background: linear-gradient(135deg, var(--nyx-primary), #337171);
+    border-color: var(--nyx-primary);
+    color: #fff;
+    box-shadow: 0 8px 18px rgba(64, 136, 136, 0.22);
+}
+
+.nyx-empty-state {
+    background: var(--nyx-surface-soft);
+    border: 1px solid var(--nyx-border);
+    padding: 1rem 1.1rem;
+    border-radius: 1rem;
+}
+
+/* =========================
+   FORMULARIOS
+========================= */
+
+.nyx-input,
+.nyx-textarea {
+    border-radius: 1rem;
+    border: 1px solid var(--nyx-border-strong);
+    background: rgba(255, 255, 255, 0.92);
+    color: var(--nyx-text);
+    padding: 0.85rem 1rem;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+.nyx-textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+.nyx-input::placeholder,
+.nyx-textarea::placeholder {
+    color: #8aa1a1;
+}
+
+.nyx-input:focus,
+.nyx-textarea:focus,
+input.form-control:focus,
+textarea.form-control:focus,
+select.form-select:focus {
+    border-color: var(--nyx-primary);
+    box-shadow: 0 0 0 0.2rem rgba(64, 136, 136, 0.12);
+    background: #fff;
+}
+
+.nyx-suboption-card {
+    cursor: pointer;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.nyx-suboption-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--nyx-shadow);
+    border-color: var(--nyx-border-strong);
+}
+
+.nyx-suboption-card .form-check-input {
+    width: 1.15rem;
+    height: 1.15rem;
+    border-color: var(--nyx-border-strong);
+    box-shadow: none;
+}
+
+.nyx-suboption-card .form-check-input:checked {
+    background-color: var(--nyx-primary);
+    border-color: var(--nyx-primary);
+}
+
+.form-select.nyx-input {
+    padding-right: 2.75rem;
+}
+
+.nyx-panel h2.h3 {
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    font-size: 1.15rem;
+}
+
+/* =========================
+   ALERTAS
+========================= */
+
+.nyx-alert-warning {
+    border-radius: 1rem;
+    border: 1px solid #f0deaa;
+    background: #fff9e8;
+    color: #7a6230;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+@media (min-width: 992px) {
+    .nyx-summary-align {
+        margin-top: 7.25rem;
+        margin-left: 1.25rem;
+    }
+}
+@media (max-width: 991.98px) {
+    .selection-summary,
+    .nyx-summary-card {
+        position: static !important;
+        top: auto;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .booking-option-main {
+        flex-basis: 100%;
+    }
+
+    .booking-option-action {
+        width: 100%;
+        margin-left: 0;
+    }
+
+    .booking-option-action .btn,
+    .nyx-flow-btn {
+        width: 100%;
+    }
+}
+
+.nyx-settings-section {
+  background: #ffffff;
+  border: 1px solid rgba(64, 136, 136, 0.22);
+  border-radius: 22px;
+  overflow: hidden;
+  box-shadow: 0 16px 40px rgba(15, 45, 58, 0.08);
+}
+
+.nyx-settings-section-header {
+  background: linear-gradient(135deg, #0f2d3a 0%, #244f50 55%, #408888 100%);
+  padding: 24px 26px;
+  color: #ffffff;
+}
+
+.nyx-settings-section-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+}
+
+.nyx-settings-section-subtitle {
+  font-size: 0.92rem;
+  color: rgba(255, 255, 255, 0.78);
+  line-height: 1.5;
+}
+
+.nyx-settings-section-body {
+  padding: 26px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fdfd 100%);
+}
+
+.nyx-setting-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 18px 20px;
+  margin-bottom: 22px;
+  background: #f5fbfb;
+  border: 1px solid rgba(64, 136, 136, 0.18);
+  border-radius: 18px;
+}
+
+.nyx-setting-help {
+  font-size: 0.86rem;
+  color: #647b7b;
+  line-height: 1.5;
+}
+
+.nyx-settings-section .form-label {
+  color: #163236;
+  margin-bottom: 8px;
+}
+
+.nyx-settings-section .form-control,
+.nyx-settings-section input[type="number"],
+.nyx-settings-section input[type="text"],
+.nyx-settings-section textarea,
+.nyx-settings-section select {
+  border: 1px solid rgba(64, 136, 136, 0.28);
+  border-radius: 16px;
+  padding: 13px 16px;
+  background-color: #ffffff;
+  color: #102a2d;
+  box-shadow: none;
+}
+
+.nyx-settings-section .form-control:focus,
+.nyx-settings-section input[type="number"]:focus,
+.nyx-settings-section input[type="text"]:focus,
+.nyx-settings-section textarea:focus,
+.nyx-settings-section select:focus {
+  border-color: #408888;
+  box-shadow: 0 0 0 4px rgba(140, 220, 220, 0.26);
+  outline: none;
+}
+
+.nyx-settings-section .form-check-input {
+  width: 2.8rem;
+  height: 1.45rem;
+  border-color: rgba(64, 136, 136, 0.35);
+  cursor: pointer;
+}
+
+.nyx-settings-section .form-check-input:checked {
+  background-color: #408888;
+  border-color: #408888;
+}
+
+.nyx-settings-section .form-check-input:focus {
+  box-shadow: 0 0 0 4px rgba(140, 220, 220, 0.26);
+}

@@ -1,0 +1,204 @@
+{% extends "reservas/panel/base_panel.html" %}
+{% load custom_filters %}
+
+{% block title %}Reservas | NYX{% endblock %}
+{% block panel_title %}Reservas{% endblock %}
+{% block panel_subtitle %}Visualizá, filtrá y gestioná las reservas de {{ salon.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .nyx-filter-form{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: end;
+  }
+
+  .nyx-filter-label{
+    display: block;
+    font-weight: 700;
+    margin-bottom: .45rem;
+  }
+
+  .nyx-filter-input{
+    min-width: 220px;
+    border-radius: 1rem;
+    border: 1px solid var(--nyx-border);
+    padding: .8rem 1rem;
+    background: #fff;
+  }
+
+  .nyx-payment-stack{
+    display: flex;
+    flex-direction: column;
+    gap: .35rem;
+  }
+
+  .nyx-payment-meta{
+    font-size: .82rem;
+    color: #6b7280;
+  }
+</style>
+{% endblock %}
+
+{% block panel_content %}
+<div class="nyx-card p-4 mb-4">
+  <form method="get" class="nyx-filter-form">
+    <div>
+      <label class="nyx-filter-label" for="status">Estado</label>
+      <select name="status" id="status" class="nyx-filter-input">
+        <option value="">Todos</option>
+        <option value="pending" {% if selected_status == 'pending' %}selected{% endif %}>Pendiente</option>
+        <option value="confirmed" {% if selected_status == 'confirmed' %}selected{% endif %}>Confirmado</option>
+        <option value="completed" {% if selected_status == 'completed' %}selected{% endif %}>Finalizado</option>
+        <option value="cancelled" {% if selected_status == 'cancelled' %}selected{% endif %}>Cancelado</option>
+        <option value="expired" {% if selected_status == 'expired' %}selected{% endif %}>Expirada</option>
+      </select>
+    </div>
+
+    <div>
+      <label class="nyx-filter-label" for="date">Fecha</label>
+      <input
+        type="date"
+        name="date"
+        id="date"
+        class="nyx-filter-input"
+        value="{{ selected_date }}"
+      >
+    </div>
+
+    <div>
+      <label class="nyx-filter-label" for="employee">Profesional</label>
+      <select name="employee" id="employee" class="nyx-filter-input">
+        <option value="">Todos</option>
+        {% for employee in employees %}
+          <option value="{{ employee.id }}" {% if selected_employee == employee.id|stringformat:"s" %}selected{% endif %}>
+            {{ employee.name }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div>
+      <label class="nyx-filter-label" for="service">Servicio</label>
+      <select name="service" id="service" class="nyx-filter-input">
+        <option value="">Todos</option>
+        {% for service in services %}
+          <option value="{{ service.id }}" {% if selected_service == service.id|stringformat:"s" %}selected{% endif %}>
+            {{ service.name }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="d-flex gap-2">
+      <button type="submit" class="nyx-primary-btn">Filtrar</button>
+      <a href="{% url 'panel_bookings' %}" class="nyx-filter-btn">Limpiar</a>
+    </div>
+  </form>
+</div>
+
+<div class="nyx-card p-4">
+  {% if bookings %}
+    <div class="table-responsive">
+      <table class="table nyx-table align-middle">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Cliente</th>
+            <th>Teléfono</th>
+            <th>Fecha</th>
+            <th>Servicios / profesionales</th>
+            <th>Estado</th>
+            <th>Pago</th>
+            <th class="text-end">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for booking in bookings %}
+            <tr>
+              <td class="fw-semibold">#{{ booking.id }}</td>
+              <td class="fw-semibold">{{ booking.customer_name }}</td>
+              <td>{{ booking.customer_phone }}</td>
+              <td>
+                {% for item in booking.items.all %}
+                  {% if forloop.first %}
+                    {{ item.start_datetime|date:"d/m/Y H:i" }}
+                  {% endif %}
+                {% empty %}
+                  -
+                {% endfor %}
+              </td>
+              <td>
+                <div class="d-flex flex-column gap-1">
+                  {% for item in booking.items.all %}
+                    <div class="small">
+                      <strong>{{ item.service.name }}</strong> · {{ item.employee.name }}
+                    </div>
+                  {% endfor %}
+                </div>
+              </td>
+              <td>
+                {% if booking.status == 'cancelled' %}
+                  <span class="nyx-badge" style="background:#fff3f3;color:#b54747;border-color:#f1caca;">
+                    {{ booking.get_status_display }}
+                  </span>
+                {% elif booking.status == 'completed' %}
+                  <span class="nyx-badge" style="background:#f3f4f6;color:#5f6b76;border-color:#d7dde3;">
+                    {{ booking.get_status_display }}
+                  </span>
+                  {% elif booking.status == 'expired' %}
+                    <span class="nyx-badge" style="background:#fff7ed;color:#b45309;border-color:#f3d3a1;">
+                      {{ booking.get_status_display }}
+                    </span>
+                {% else %}
+                  <span class="nyx-badge">
+                    {{ booking.get_status_display }}
+                  </span>
+                {% endif %}
+              </td>
+
+              <td>
+                <div class="nyx-payment-stack">
+                  {% if booking.payment_choice == 'none' %}
+                    <span class="nyx-badge" style="background:#f3f4f6;color:#5f6b76;border-color:#d7dde3;">
+                      Sin pago
+                    </span>
+                  {% elif booking.payment_choice == 'deposit' %}
+                    <span class="nyx-badge">
+                      Seña
+                    </span>
+                    <div class="nyx-payment-meta">
+                      {{ booking.get_payment_status_display }} · ${{ booking.payment_required_amount|miles_punto }}
+                    </div>
+                  {% elif booking.payment_choice == 'full' %}
+                    <span class="nyx-badge">
+                      Pago total
+                    </span>
+                    <div class="nyx-payment-meta">
+                      {{ booking.get_payment_status_display }} · ${{ booking.payment_required_amount|miles_punto }}
+                    </div>
+                  {% endif %}
+                </div>
+              </td>
+
+              <td class="text-end">
+                <div class="d-flex justify-content-end gap-2 flex-wrap">
+                  <a href="{% url 'panel_booking_detail' booking.id %}" class="nyx-filter-btn">Ver</a>
+                  {% if booking.status != 'cancelled' %}
+                    <a href="{% url 'panel_booking_cancel' booking.id %}" class="nyx-filter-btn">Cancelar</a>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="nyx-empty">
+      No hay reservas para los filtros seleccionados.
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends "reservas/panel/base_panel.html" %}
+
+{% block title %}Bloqueos | NYX{% endblock %}
+{% block panel_title %}Bloqueos{% endblock %}
+{% block panel_subtitle %}Horarios no disponibles y ausencias cargadas{% endblock %}
+
+{% block panel_content %}
+<div class="nyx-card p-4">
+  {% if blocks %}
+    <div class="table-responsive">
+      <table class="table nyx-table align-middle">
+        <thead>
+          <tr>
+            {% if panel_role == 'owner' %}
+              <th>Profesional</th>
+            {% endif %}
+            <th>Desde</th>
+            <th>Hasta</th>
+            <th>Motivo</th>
+            <th>Creado por</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for block in blocks %}
+            <tr>
+              {% if panel_role == 'owner' %}
+                <td class="fw-semibold">{{ block.employee.name }}</td>
+              {% endif %}
+              <td>{{ block.start_datetime|date:"d/m/Y H:i" }}</td>
+              <td>{{ block.end_datetime|date:"d/m/Y H:i" }}</td>
+              <td>{{ block.reason|default:"-" }}</td>
+              <td>{{ block.created_by.username|default:"-" }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="nyx-empty">
+      No hay bloqueos cargados.
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

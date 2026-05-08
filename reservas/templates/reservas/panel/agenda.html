@@ -1,0 +1,191 @@
+{% extends "reservas/panel/base_panel.html" %}
+
+{% block title %}Agenda | NYX{% endblock %}
+{% block panel_title %}Agenda{% endblock %}
+{% block panel_subtitle %}Tus turnos y bloques reales del día seleccionado{% endblock %}
+
+{% block extra_css %}
+<style>
+  .nyx-date-form{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: end;
+  }
+
+  .nyx-date-label{
+    display: block;
+    font-weight: 700;
+    margin-bottom: .45rem;
+    color: var(--nyx-text);
+  }
+
+  .nyx-date-input{
+    min-width: 240px;
+    border-radius: 1rem;
+    border: 1px solid var(--nyx-border);
+    padding: .85rem 1rem;
+    background: #fff;
+    color: var(--nyx-text);
+    box-shadow: none;
+  }
+
+  .nyx-date-input:focus{
+    outline: none;
+    border-color: var(--nyx-primary);
+    box-shadow: 0 0 0 0.2rem rgba(118, 207, 210, .18);
+  }
+
+  .nyx-primary-btn{
+    border: none;
+    border-radius: 999px;
+    padding: .85rem 1.25rem;
+    background: linear-gradient(135deg, var(--nyx-primary), var(--nyx-primary-strong));
+    color: #fff;
+    font-weight: 800;
+    transition: .2s ease;
+  }
+
+  .nyx-primary-btn:hover{
+    transform: translateY(-1px);
+    opacity: .96;
+  }
+
+  .nyx-date-chip{
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    background: #f5fbfb;
+    border: 1px solid var(--nyx-border);
+    color: var(--nyx-muted);
+    padding: .55rem .85rem;
+    border-radius: 999px;
+    font-weight: 700;
+  }
+
+  .nyx-agenda-card{
+    border: 1px solid #e0eded;
+    border-radius: 1.2rem;
+    padding: 1rem 1.1rem;
+    background: #fbfefe;
+    margin-bottom: .85rem;
+  }
+
+  .nyx-agenda-time{
+    min-width: 145px;
+    font-weight: 800;
+    color: #0f2f31;
+  }
+
+  .nyx-agenda-service{
+    font-weight: 800;
+    color: #173335;
+  }
+
+  .nyx-agenda-meta{
+    color: var(--nyx-muted);
+    font-size: .95rem;
+  }
+
+  .nyx-agenda-grid{
+    display: grid;
+    grid-template-columns: 160px 1fr auto;
+    gap: 1rem;
+    align-items: center;
+  }
+
+  @media (max-width: 768px){
+    .nyx-agenda-grid{
+      grid-template-columns: 1fr;
+    }
+
+    .nyx-agenda-time{
+      min-width: auto;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block panel_content %}
+<div class="nyx-card p-4 mb-4">
+  <div class="d-flex flex-wrap gap-2 mb-4">
+    <a href="{% url 'panel_agenda' %}?quick=today" class="nyx-filter-btn {% if selected_date == today %}active{% endif %}">
+      Hoy
+    </a>
+    <a href="{% url 'panel_agenda' %}?quick=tomorrow" class="nyx-filter-btn {% if selected_date == tomorrow %}active{% endif %}">
+      Mañana
+    </a>
+  </div>
+
+  <form method="get" class="nyx-date-form">
+    <div>
+      <label for="date" class="nyx-date-label">Elegir fecha</label>
+      <input
+        type="date"
+        id="date"
+        name="date"
+        class="nyx-date-input"
+        value="{{ selected_date|date:'Y-m-d' }}"
+      >
+    </div>
+
+    <div>
+      <button type="submit" class="nyx-primary-btn">
+        Ver agenda
+      </button>
+    </div>
+
+    <div class="ms-auto">
+      <div class="nyx-date-chip">
+        <span>Fecha seleccionada</span>
+        <strong>{{ selected_date|date:"d/m/Y" }}</strong>
+      </div>
+    </div>
+  </form>
+</div>
+
+<div class="nyx-card p-4">
+  {% if items %}
+    <div class="mb-3">
+      <h5 class="fw-bold mb-1">Turnos del día</h5>
+      <div class="text-secondary">
+        {{ items|length }} bloque{{ items|length|pluralize:"s" }} encontrado{{ items|length|pluralize:"s" }}
+      </div>
+    </div>
+
+    {% for item in items %}
+      <div class="nyx-agenda-card">
+        <div class="nyx-agenda-grid">
+          <div class="nyx-agenda-time">
+            {{ item.start_datetime|date:"H:i" }} — {{ item.end_datetime|date:"H:i" }}
+          </div>
+
+          <div>
+            <div class="nyx-agenda-service">{{ item.service.name }}</div>
+            <div class="nyx-agenda-meta">
+              Cliente: <strong>{{ item.booking.customer_name }}</strong>
+              {% if item.booking.customer_phone %}
+                · {{ item.booking.customer_phone }}
+              {% endif %}
+            </div>
+
+            {% if panel_role == 'owner' %}
+              <div class="nyx-agenda-meta mt-1">
+                Profesional: <strong>{{ item.employee.name }}</strong>
+              </div>
+            {% endif %}
+          </div>
+
+          <div>
+            <span class="nyx-badge">{{ item.booking.get_status_display }}</span>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="nyx-empty">
+      No hay turnos para el día {{ selected_date|date:"d/m/Y" }}.
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

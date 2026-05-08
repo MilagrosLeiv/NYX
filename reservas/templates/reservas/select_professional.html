@@ -1,0 +1,241 @@
+{% extends "reservas/base.html" %}
+{% load custom_filters %}
+
+{% block title %}Elegir profesional | NYX{% endblock %}
+
+{% block content %}
+<div class="booking-page py-4">
+  <div class="container">
+    <div class="row g-4">
+      <div class="col-lg-7">
+        <div class="nyx-stepper">
+          <span>Servicios</span>
+          <span class="nyx-step-separator">›</span>
+          <span class="is-current">Profesional</span>
+          <span class="nyx-step-separator">›</span>
+          <span>Horario</span>
+          <span class="nyx-step-separator">›</span>
+          <span>Confirmar</span>
+        </div>
+
+        {% if is_multi_service %}
+          <h1 class="nyx-page-title">Elegí cómo querés reservar</h1>
+          <p class="nyx-text-muted nyx-page-subtitle mb-4">
+            Podés dejar la asignación automática, elegir una sola persona o seleccionar un profesional para cada servicio.
+          </p>
+        {% else %}
+          <h1 class="nyx-page-title">Elegí profesional</h1>
+          <p class="nyx-text-muted nyx-page-subtitle mb-4">
+            Seleccioná quién querés que realice tu servicio o dejalo sin preferencia.
+          </p>
+        {% endif %}
+
+        <div class="d-flex flex-column gap-3">
+
+          {% if not is_multi_service %}
+            <form method="get" action="{% url 'select_time' %}">
+              {% for service in selected_services %}
+                <input type="hidden" name="services" value="{{ service.id }}">
+              {% endfor %}
+              <input type="hidden" name="mode" value="auto">
+
+              <div class="card booking-option">
+                <div class="card-body p-4">
+                  <div class="booking-option-main">
+                    <div class="booking-avatar booking-avatar-icon">★</div>
+                    <div>
+                      <div class="fw-semibold fs-5">Sin preferencia</div>
+                      <div class="nyx-text-muted small">
+                        Buscamos la mejor combinación disponible para atenderte seguido.
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="booking-option-action">
+                    <button type="submit" class="btn nyx-flow-btn">
+                      Continuar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </form>
+
+            {% for employee in employees %}
+              <form method="get" action="{% url 'select_time' %}">
+                {% for service in selected_services %}
+                  <input type="hidden" name="services" value="{{ service.id }}">
+                {% endfor %}
+                <input type="hidden" name="mode" value="single_employee">
+                <input type="hidden" name="employee" value="{{ employee.id }}">
+
+                <div class="card booking-option">
+                  <div class="card-body p-4">
+                    <div class="booking-option-main">
+                      <div class="booking-avatar">
+                        {{ employee.name|slice:":1" }}
+                      </div>
+                      <div>
+                        <div class="fw-semibold fs-5">{{ employee.name }}</div>
+                        <div class="nyx-text-muted small">Disponible para este servicio.</div>
+                      </div>
+                    </div>
+
+                    <div class="booking-option-action">
+                      <button type="submit" class="btn nyx-flow-btn"> 
+                        Seleccionar
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </form>
+            {% empty %}
+              <div class="alert nyx-alert-warning mb-0">
+                No hay profesionales disponibles para este servicio.
+              </div>
+            {% endfor %}
+
+          {% else %}
+
+            <form method="get" action="{% url 'select_time' %}">
+              {% for service in selected_services %}
+                <input type="hidden" name="services" value="{{ service.id }}">
+              {% endfor %}
+              <input type="hidden" name="mode" value="auto">
+
+              <div class="card booking-option">
+                <div class="card-body p-4">
+                  <div class="booking-option-main">
+                    <div class="booking-avatar booking-avatar-icon">★</div>
+                    <div>
+                      <div class="fw-semibold fs-5">Sin preferencia</div>
+                      <div class="nyx-text-muted small">
+                        Buscamos la mejor combinación disponible para atenderte seguido.
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="booking-option-action">
+                    <button type="submit" class="btn nyx-flow-btn">
+                      Continuar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </form>
+
+            <div class="card booking-option">
+              <div class="card-body p-4 d-block">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                  <div class="booking-avatar booking-avatar-icon">1</div>
+                  <div>
+                    <div class="fw-semibold fs-5">Una sola persona</div>
+                    <div class="nyx-text-muted small">
+                      Todos los servicios con el mismo profesional.
+                    </div>
+                  </div>
+                </div>
+
+                {% if has_single_employee_option %}
+                  <div class="d-flex flex-column gap-2">
+                    {% for employee in employees_for_all %}
+                      <form method="get" action="{% url 'select_time' %}">
+                        {% for service in selected_services %}
+                          <input type="hidden" name="services" value="{{ service.id }}">
+                        {% endfor %}
+                        <input type="hidden" name="mode" value="single_employee">
+                        <input type="hidden" name="employee" value="{{ employee.id }}">
+
+                        <div class="nyx-suboption-card p-3 d-flex justify-content-between align-items-center gap-3 flex-wrap">
+                          <div class="d-flex align-items-center gap-3">
+                            <div class="booking-avatar">
+                              {{ employee.name|slice:":1" }}
+                            </div>
+                            <div>
+                              <div class="fw-semibold">{{ employee.name }}</div>
+                              <div class="nyx-text-muted small">Puede realizar todos los servicios elegidos.</div>
+                            </div>
+                          </div>
+
+                          <button type="submit" class="btn nyx-flow-btn">
+                            Elegir
+                          </button>
+                        </div>
+                      </form>
+                    {% endfor %}
+                  </div>
+                {% else %}
+                  <div class="nyx-text-muted small">
+                    No hay una sola persona disponible para realizar todos los servicios.
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+
+            <form method="get" action="{% url 'select_professionals_per_service' %}">
+              {% for service in selected_services %}
+                <input type="hidden" name="services" value="{{ service.id }}">
+              {% endfor %}
+
+              <div class="card booking-option">
+                <div class="card-body p-4">
+                  <div class="booking-option-main">
+                    <div class="booking-avatar booking-avatar-icon">+</div>
+                    <div>
+                      <div class="fw-semibold fs-5">Elegir por servicio</div>
+                      <div class="nyx-text-muted small">
+                        Seleccionás quién hace cada servicio y después buscamos horarios seguidos.
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="booking-option-action">
+                    <button type="submit" class="btn booking-choice-btn nyx-flow-btn">
+                      Continuar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </form>
+
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="col-lg-5 align-self-start">
+        <div class="card nyx-summary-card nyx-summary-align">
+          <div class="card-body p-4">
+            <h5 class="fw-bold mb-1">{{ salon.name }}</h5>
+            {% if salon.address %}
+              <p class="nyx-text-muted mb-4">{{ salon.address }}</p>
+            {% endif %}
+
+            <div class="d-flex flex-column mb-4">
+              {% for service in selected_services %}
+                <div class="nyx-summary-service">
+                  <div>
+                    <div class="fw-medium">{{ service.name }}</div>
+                    <div class="nyx-text-muted small">{{ service.duration_minutes }} min</div>
+                  </div>
+                  <div class="nyx-price-pill">${{ service.price|miles_punto }}</div>
+                </div>
+              {% endfor %}
+            </div>
+
+            <hr class="nyx-divider">
+
+            <div class="d-flex justify-content-between mb-2">
+              <span class="nyx-text-muted">Duración total</span>
+              <span>{{ total_duration }} min</span>
+            </div>
+
+            <div class="d-flex justify-content-between fw-bold fs-5">
+              <span>Total</span>
+              <span class="nyx-summary-total">${{ total_price|miles_punto }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

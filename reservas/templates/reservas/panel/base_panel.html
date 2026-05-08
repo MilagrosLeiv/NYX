@@ -1,0 +1,343 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Panel NYX{% endblock %}</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+  <style>
+  :root{
+    --nyx-bg: #eef4f4;
+    --nyx-surface: #ffffff;
+    --nyx-surface-soft: #f8fbfb;
+    --nyx-border: #cfe4e5;
+    --nyx-primary: #76cfd2;
+    --nyx-primary-strong: #4aaeb4;
+    --nyx-primary-dark: #2f4b4d;
+    --nyx-text: #183234;
+    --nyx-muted: #6d8789;
+    --nyx-shadow: 0 10px 28px rgba(31, 55, 58, .08);
+    --nyx-radius: 1.5rem;
+  }
+
+  body{
+    background: linear-gradient(180deg, #f4f8f8 0%, #eef4f4 100%);
+    color: var(--nyx-text);
+    min-height: 100vh;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+
+  .nyx-primary-btn{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  border: none;
+  border-radius: 999px;
+  padding: .85rem 1.25rem;
+  background: linear-gradient(135deg, var(--nyx-primary), var(--nyx-primary-strong));
+  color: #fff !important;
+  font-weight: 800;
+  text-decoration: none !important;
+  transition: .2s ease;
+  box-shadow: 0 10px 24px rgba(118, 207, 210, .22);
+}
+
+.nyx-primary-btn:hover{
+  color: #fff !important;
+  text-decoration: none !important;
+  transform: translateY(-1px);
+  opacity: .97;
+}
+
+.nyx-primary-btn:focus{
+  outline: none;
+  box-shadow: 0 0 0 .2rem rgba(118, 207, 210, .18);
+}
+
+  .nyx-sidebar{
+    width: 270px;
+    min-height: 100vh;
+    background: #2f4b4d;
+    border-right: 1px solid rgba(255,255,255,.08);
+    position: sticky;
+    top: 0;
+    color: #eaf6f6;
+  }
+
+  .nyx-brand{
+    font-size: 1.9rem;
+    font-weight: 800;
+    letter-spacing: .08em;
+    color: #dff8f8;
+  }
+
+  .nyx-logo-dot{
+    display:inline-block;
+    width:10px;
+    height:10px;
+    border-radius:50%;
+    background: var(--nyx-primary);
+    margin-left: 8px;
+  }
+
+  .nyx-nav-link{
+    display:flex;
+    align-items:center;
+    gap:.8rem;
+    padding:.9rem 1rem;
+    border-radius: 1.2rem;
+    color: #d7e7e8;
+    text-decoration:none;
+    transition:.2s ease;
+    font-weight: 700;
+  }
+
+  .nyx-nav-link:hover,
+  .nyx-nav-link.active{
+    color: #ffffff;
+    background: rgba(118, 207, 210, .16);
+    border: 1px solid rgba(255,255,255,.08);
+  }
+
+  .nyx-main{
+    padding: 2rem;
+  }
+
+  .nyx-topbar{
+    background: var(--nyx-surface);
+    border: 1px solid var(--nyx-border);
+    border-radius: var(--nyx-radius);
+    padding: 1.25rem 1.4rem;
+    box-shadow: var(--nyx-shadow);
+    margin-bottom: 1.5rem;
+  }
+
+  .nyx-card{
+    background: var(--nyx-surface);
+    border: 1px solid var(--nyx-border);
+    border-radius: var(--nyx-radius);
+    box-shadow: var(--nyx-shadow);
+  }
+
+  .nyx-stat{
+    padding: 1.35rem;
+    height: 100%;
+  }
+
+  .nyx-stat-label{
+    color: var(--nyx-muted);
+    font-size: .95rem;
+    margin-bottom: .55rem;
+  }
+
+  .nyx-stat-value{
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--nyx-text);
+  }
+
+  .nyx-panel-title{
+    font-size: 2.1rem;
+    font-weight: 800;
+    margin-bottom: .2rem;
+    color: #0f2f31;
+  }
+
+  .nyx-panel-subtitle{
+    color: var(--nyx-muted);
+    margin-bottom: 0;
+  }
+
+  .nyx-table{
+    --bs-table-bg: transparent;
+    --bs-table-color: var(--nyx-text);
+    --bs-table-border-color: #e1eded;
+    margin-bottom: 0;
+  }
+
+  .nyx-table thead th{
+    color: var(--nyx-muted);
+    font-size: .82rem;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    border-bottom-color: #e1eded;
+  }
+
+  .nyx-badge{
+    background: #e8f7f7;
+    color: #3a8f94;
+    border: 1px solid #c7e7e8;
+    border-radius: 999px;
+    padding: .45rem .75rem;
+    font-size: .8rem;
+    font-weight: 700;
+  }
+
+  .nyx-filter-btn{
+    border-radius: 999px;
+    padding: .65rem 1rem;
+    border: 1px solid var(--nyx-border);
+    color: #48797d;
+    background: #fff;
+    text-decoration: none;
+    font-weight: 700;
+    transition: .2s ease;
+  }
+
+  .nyx-filter-btn:hover,
+  .nyx-filter-btn.active{
+    color: #fff;
+    background: linear-gradient(135deg, var(--nyx-primary), var(--nyx-primary-strong));
+    border-color: transparent;
+  }
+
+  .nyx-empty{
+    padding: 2.2rem;
+    text-align:center;
+    color: var(--nyx-muted);
+  }
+
+  .nyx-session-label{
+    color: rgba(234, 246, 246, .65);
+  }
+
+  .nyx-session-user{
+    color: #ffffff;
+    font-weight: 700;
+  }
+
+  .nyx-session-role{
+    color: rgba(234, 246, 246, .72);
+    text-transform: uppercase;
+    font-size: .82rem;
+    letter-spacing: .04em;
+  }
+
+  .nyx-outline-light{
+    border-radius: 999px;
+    padding: .55rem 1rem;
+    border: 1px solid var(--nyx-border);
+    background: #fff;
+    color: #315558;
+    text-decoration: none;
+    font-weight: 700;
+    transition: .2s ease;
+  }
+
+  .nyx-outline-light:hover{
+    background: #f2fbfb;
+    color: #183234;
+  }
+
+  @media (max-width: 991.98px){
+    .nyx-sidebar{
+      width: 100%;
+      min-height: auto;
+      position: relative;
+    }
+  }
+</style>
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+  <div class="container-fluid px-0">
+    <div class="row g-0">
+      <div class="col-lg-auto">
+        <aside class="nyx-sidebar p-3 p-lg-4">
+          <div class="mb-4">
+            <div class="nyx-brand">NYX<span class="nyx-logo-dot"></span></div>
+            <div class="small nyx-session-label mt-2">{{ salon.name }}</div>
+          </div>
+
+          <nav class="d-flex flex-column gap-2">
+            <a href="{% url 'panel_dashboard' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_dashboard' %}active{% endif %}">
+              <i class="bi bi-grid-1x2-fill"></i>
+              <span>Dashboard</span>
+            </a>
+
+            <a href="{% url 'panel_agenda' %}?quick=today" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_agenda' %}active{% endif %}">
+              <i class="bi bi-calendar-week-fill"></i>
+              <span>Agenda</span>
+            </a>
+
+            <a href="{% url 'panel_bloqueos' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_bloqueos' %}active{% endif %}">
+              <i class="bi bi-slash-circle-fill"></i>
+              <span>Bloqueos</span>
+            </a>
+
+            {% if panel_role == 'owner' %}
+              <a href="{% url 'panel_services' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_services' or request.resolver_match.url_name == 'panel_service_create' or request.resolver_match.url_name == 'panel_service_edit' %}active{% endif %}">
+                <i class="bi bi-scissors"></i>
+                <span>Servicios</span>
+              </a>
+
+              <a href="{% url 'panel_employees' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_employees' or request.resolver_match.url_name == 'panel_employee_create' or request.resolver_match.url_name == 'panel_employee_edit' %}active{% endif %}">
+                <i class="bi bi-people-fill"></i>
+                <span>Profesionales</span>
+              </a>
+
+              <a href="{% url 'panel_business_hours' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_business_hours' or request.resolver_match.url_name == 'panel_business_hours_create' or request.resolver_match.url_name == 'panel_business_hours_edit' %}active{% endif %}">
+                <i class="bi bi-clock-history"></i>
+                <span>Horarios</span>
+              </a>
+
+              <a href="{% url 'panel_bookings' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_bookings' or request.resolver_match.url_name == 'panel_booking_detail' %}active{% endif %}">
+                <i class="bi bi-journal-check"></i>
+                <span>Reservas</span>
+              </a>
+
+              <a href="{% url 'panel_settings' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_settings' %}active{% endif %}">
+                <i class="bi bi-gear-fill"></i>
+                <span>Configuración</span>
+              </a>
+            {% endif %}
+          </nav>
+
+          <div class="mt-4 pt-4 border-top border-light border-opacity-10">
+            <div class="small nyx-session-label mb-2">Sesión</div>
+            <div class="nyx-session-user">{{ request.user.username }}</div>
+            <div class="nyx-session-role">{{ panel_role }}</div>
+          </div>
+        </aside>
+      </div>
+
+      <div class="col">
+        <main class="nyx-main">
+          <div class="nyx-topbar d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+              <div class="nyx-panel-title">{% block panel_title %}Panel{% endblock %}</div>
+              <p class="nyx-panel-subtitle">{% block panel_subtitle %}Gestión interna NYX{% endblock %}</p>
+            </div>
+
+            <div class="d-flex align-items-center gap-2">
+              {% if request.user.is_superuser %}
+                <a href="/admin/" class="nyx-outline-light">Admin</a>
+              {% endif %}
+              <a href="/" class="nyx-outline-light">Sitio público</a>
+              <a href="{% url 'panel_logout' %}" class="nyx-outline-light">Salir</a>
+            </div>
+          </div>
+
+          {% if messages %}
+            <div class="mb-4">
+              {% for message in messages %}
+                <div class="alert alert-success rounded-4 border-0 shadow-sm mb-2" role="alert">
+                  {{ message }}
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          {% block panel_content %}{% endblock %}
+        </main>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

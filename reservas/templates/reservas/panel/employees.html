@@ -1,0 +1,77 @@
+{% extends "reservas/panel/base_panel.html" %}
+
+{% block title %}Profesionales | NYX{% endblock %}
+{% block panel_title %}Profesionales{% endblock %}
+{% block panel_subtitle %}Gestioná el equipo de {{ salon.name }} y los servicios que realiza cada persona{% endblock %}
+
+{% block panel_content %}
+<div class="nyx-card p-4 mb-4">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+      <h5 class="fw-bold mb-1">Equipo de trabajo</h5>
+      <div class="text-secondary">Alta, baja y edición de profesionales.</div>
+    </div>
+
+    <div class="ms-auto">
+      <a href="{% url 'panel_employee_create' %}" class="nyx-primary-btn">
+        <span>+</span>
+        <span>Nuevo profesional</span>
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="nyx-card p-4">
+  {% if employees %}
+    <div class="table-responsive">
+      <table class="table nyx-table align-middle">
+        <thead>
+          <tr>
+            <th>Profesional</th>
+            <th>Teléfono</th>
+            <th>Servicios</th>
+            <th>Estado</th>
+            <th class="text-end">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for employee in employees %}
+            <tr>
+              <td class="fw-semibold">{{ employee.name }}</td>
+              <td>{{ employee.phone|default:"-" }}</td>
+              <td>
+                <div class="d-flex flex-wrap gap-2">
+                  {% for service in employee.services.all %}
+                    <span class="nyx-badge">{{ service.name }}</span>
+                  {% empty %}
+                    <span class="text-secondary small">Sin servicios asignados</span>
+                  {% endfor %}
+                </div>
+              </td>
+              <td>
+                {% if employee.is_active %}
+                  <span class="nyx-badge">Activo</span>
+                {% else %}
+                  <span class="nyx-badge" style="background:#fff3f3;color:#b54747;border-color:#f1caca;">Inactivo</span>
+                {% endif %}
+              </td>
+              <td class="text-end">
+                <div class="d-flex justify-content-end gap-2 flex-wrap">
+                  <a href="{% url 'panel_employee_edit' employee.id %}" class="nyx-filter-btn">Editar</a>
+                  <a href="{% url 'panel_employee_toggle_active' employee.id %}" class="nyx-filter-btn">
+                    {% if employee.is_active %}Desactivar{% else %}Activar{% endif %}
+                  </a>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="nyx-empty">
+      Todavía no hay profesionales cargados.
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

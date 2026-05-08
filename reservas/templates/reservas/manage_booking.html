@@ -1,0 +1,140 @@
+{% extends "reservas/base.html" %}
+{% load custom_filters %}
+
+{% block title %}Gestionar turno | NYX{% endblock %}
+
+{% block content %}
+<div class="booking-page py-4">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-12 col-lg-8">
+        <div class="card nyx-form-card">
+          <div class="card-body p-4 p-md-5">
+
+            {% if messages %}
+              {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} rounded-4">
+                  {{ message }}
+                </div>
+              {% endfor %}
+            {% endif %}
+
+            <div class="d-flex align-items-center gap-3 mb-4">
+              <div class="booking-avatar booking-avatar-icon" style="width: 64px; height: 64px; font-size: 1.4rem;">
+                {% if booking.status == 'cancelled' %}
+                  ×
+                {% else %}
+                  ✓
+                {% endif %}
+              </div>
+              <div>
+                <h1 class="nyx-page-title mb-1">Gestionar turno</h1>
+                <p class="nyx-text-muted mb-0">
+                  {{ booking.salon.name }}
+                </p>
+              </div>
+            </div>
+
+            {% if booking.status == 'cancelled' %}
+              <div class="alert alert-danger rounded-4 mb-4">
+                Este turno fue cancelado.
+              </div>
+            {% elif can_cancel %}
+              <div class="alert alert-info rounded-4 mb-4">
+                Podés cancelar este turno sin recargo hasta el
+                <strong>{{ cancellation_deadline|date:"d/m/Y" }}</strong>
+                a las
+                <strong>{{ cancellation_deadline|date:"H:i" }}</strong>.
+              </div>
+            {% else %}
+              <div class="alert alert-warning rounded-4 mb-4">
+                {{ cancel_block_reason }}
+              </div>
+            {% endif %}
+
+            <div class="card nyx-panel mb-4">
+              <div class="card-body p-4">
+                <h2 class="h5 mb-3">Resumen del turno</h2>
+
+                <div class="row g-3">
+                  <div class="col-12 col-md-6">
+                    <div class="small nyx-text-muted">Cliente</div>
+                    <div class="fw-semibold">{{ booking.customer_name }}</div>
+                  </div>
+
+                  <div class="col-12 col-md-6">
+                    <div class="small nyx-text-muted">Teléfono</div>
+                    <div class="fw-semibold">{{ booking.customer_phone }}</div>
+                  </div>
+
+                  {% if booking.customer_email %}
+                    <div class="col-12 col-md-6">
+                      <div class="small nyx-text-muted">Email</div>
+                      <div class="fw-semibold">{{ booking.customer_email }}</div>
+                    </div>
+                  {% endif %}
+
+                  <div class="col-12 col-md-6">
+                    <div class="small nyx-text-muted">Estado</div>
+                    <div class="fw-semibold">{{ booking.get_status_display }}</div>
+                  </div>
+                </div>
+
+                <hr class="my-4">
+
+                <div class="d-flex flex-column gap-3">
+                  {% for item in booking.items.all %}
+                    <div class="border rounded-4 p-3">
+                      <div class="d-flex justify-content-between gap-3">
+                        <div>
+                          <div class="fw-semibold">{{ item.service.name }}</div>
+                          <div class="nyx-text-muted small">Con {{ item.employee.name }}</div>
+                        </div>
+                        <div class="text-end">
+                          <div class="fw-semibold">{{ item.start_datetime|date:"d/m/Y H:i" }}</div>
+                          <div class="nyx-text-muted small">hasta {{ item.end_datetime|date:"H:i" }}</div>
+                        </div>
+                      </div>
+                    </div>
+                  {% endfor %}
+                </div>
+
+                <hr class="my-4">
+
+                <div class="d-flex justify-content-between mb-2">
+                  <span class="nyx-text-muted">Duración total</span>
+                  <span class="fw-semibold">{{ booking.get_total_duration_minutes }} min</span>
+                </div>
+
+                <div class="d-flex justify-content-between fs-5 fw-bold">
+                  <span>Total</span>
+                  <span>${{ booking.get_total_price|miles_punto }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="d-flex flex-column flex-sm-row gap-2">
+              {% if can_reschedule %}
+                <a href="{% url 'reschedule_booking' booking.client_manage_token %}" class="btn nyx-btn-outline rounded-pill px-4">
+                  Modificar turno
+                </a>
+              {% elif reschedule_block_reason %}
+                <button type="button" class="btn nyx-btn-outline rounded-pill px-4" disabled title="{{ reschedule_block_reason }}">
+                  Modificar turno
+                </button>
+              {% endif %}
+
+              {% if can_cancel %}
+                <a href="{% url 'cancel_booking' booking.client_manage_token %}" class="btn btn-outline-danger rounded-pill px-4">
+                  Cancelar turno
+                </a>
+              {% endif %}
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

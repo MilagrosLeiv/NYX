@@ -1,0 +1,179 @@
+{% extends "reservas/base.html" %}
+{% load custom_filters %}
+
+{% block title %}Modificar turno | NYX{% endblock %}
+
+
+
+{% block content %}
+<style>
+  .reschedule-slots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 1.5rem;
+  }
+
+  .reschedule-slot-btn {
+    border: 1.5px solid #408888 !important;
+    color: #408888 !important;
+    background: #ffffff !important;
+    font-weight: 700;
+    border-radius: 999px !important;
+    padding: 0.55rem 1.35rem !important;
+    min-width: 82px;
+    text-align: center;
+    transition: all 0.18s ease;
+    cursor: pointer;
+  }
+
+  .reschedule-slot-btn:hover {
+    background: #eefafa !important;
+    border-color: #408888 !important;
+    color: #2f7373 !important;
+    transform: translateY(-1px);
+  }
+
+  .btn-check:checked + .reschedule-slot-btn {
+    background: #76cfd2 !important;
+    border-color: #408888 !important;
+    color: #0f2d3a !important;
+    box-shadow: 0 10px 22px rgba(64, 136, 136, 0.22);
+  }
+
+  .btn-check:focus + .reschedule-slot-btn {
+    box-shadow: 0 0 0 0.2rem rgba(140, 220, 220, 0.35);
+  }
+</style>
+
+<div class="booking-page py-5">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-12 col-lg-8">
+        <div class="card nyx-form-card">
+          <div class="card-body p-4 p-md-5">
+
+            {% if messages %}
+              {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} rounded-4">
+                  {{ message }}
+                </div>
+              {% endfor %}
+            {% endif %}
+
+            <div class="d-flex align-items-center gap-3 mb-4">
+              <div class="booking-avatar booking-avatar-icon" style="width: 64px; height: 64px; font-size: 1.4rem;">
+                ↻
+              </div>
+              <div>
+                <h1 class="nyx-page-title mb-1">Modificar turno</h1>
+                <p class="nyx-text-muted mb-0">{{ booking.salon.name }}</p>
+              </div>
+            </div>
+
+            <div class="alert alert-info rounded-4 mb-4">
+              Podés modificar este turno sin recargo hasta el
+              <strong>{{ reschedule_deadline|date:"d/m/Y" }}</strong>
+              a las
+              <strong>{{ reschedule_deadline|date:"H:i" }}</strong>.
+            </div>
+
+            <div class="card nyx-panel mb-4">
+              <div class="card-body p-4">
+                <h2 class="h5 mb-3">Turno actual</h2>
+
+                <div class="d-flex flex-column gap-3">
+                  {% for item in booking_items %}
+                    <div class="border rounded-4 p-3">
+                      <div class="d-flex justify-content-between gap-3">
+                        <div>
+                          <div class="fw-semibold">{{ item.service.name }}</div>
+                          <div class="nyx-text-muted small">Con {{ item.employee.name }}</div>
+                        </div>
+                        <div class="text-end">
+                          <div class="fw-semibold">{{ item.start_datetime|date:"d/m/Y H:i" }}</div>
+                          <div class="nyx-text-muted small">hasta {{ item.end_datetime|date:"H:i" }}</div>
+                        </div>
+                      </div>
+                    </div>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+
+            <div class="card nyx-panel mb-4">
+              <div class="card-body p-4">
+                <h2 class="h5 mb-3">Elegí nuevo horario</h2>
+
+                <form method="get" class="mb-4">
+                  <label class="form-label fw-semibold" for="date">Fecha</label>
+
+                  <div class="d-flex flex-column flex-sm-row gap-2">
+                    <input
+                      type="date"
+                      id="date"
+                      name="date"
+                      value="{{ selected_date }}"
+                      class="form-control nyx-form-input"
+                      required
+                    >
+
+                    <button type="submit" class="btn nyx-btn-primary rounded-pill px-4">
+                      Ver horarios
+                    </button>
+                  </div>
+                </form>
+
+                {% if selected_date %}
+                  {% if available_slots %}
+                    <form method="post">
+                      {% csrf_token %}
+                      <input type="hidden" name="date" value="{{ selected_date }}">
+
+                      <div class="reschedule-slots">
+                        {% for slot in available_slots %}
+                          <input
+                            type="radio"
+                            class="btn-check"
+                            name="start_time"
+                            id="slot_{{ forloop.counter }}"
+                            value="{{ slot }}"
+                            required
+                            autocomplete="off"
+                          >
+                          <label class="reschedule-slot-btn" for="slot_{{ forloop.counter }}">
+                            {{ slot }}
+                          </label>
+                        {% endfor %}
+                      </div>
+
+                      <div class="d-flex flex-column flex-sm-row gap-2">
+                        <a href="{% url 'manage_booking' booking.client_manage_token %}" class="btn nyx-btn-outline rounded-pill px-4">
+                          Volver
+                        </a>
+
+                        <button type="submit" class="btn nyx-btn-primary rounded-pill px-4">
+                          Confirmar modificación
+                        </button>
+                      </div>
+                    </form>
+                  {% else %}
+                    <div class="alert alert-warning rounded-4 mb-0">
+                      No hay horarios disponibles para esa fecha.
+                    </div>
+                  {% endif %}
+                {% else %}
+                  <div class="nyx-text-muted">
+                    Seleccioná una fecha para ver los horarios disponibles.
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

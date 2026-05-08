@@ -1,0 +1,143 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ingresar | NYX</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    :root{
+      --nyx-bg: #eef4f4;
+      --nyx-surface: #ffffff;
+      --nyx-border: #cfe4e5;
+      --nyx-primary: #76cfd2;
+      --nyx-primary-strong: #4aaeb4;
+      --nyx-primary-dark: #2f4b4d;
+      --nyx-text: #183234;
+      --nyx-muted: #6d8789;
+      --nyx-shadow: 0 18px 45px rgba(31, 55, 58, .10);
+    }
+
+    body{
+      min-height: 100vh;
+      background: linear-gradient(180deg, #f4f8f8 0%, #eef4f4 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      color: var(--nyx-text);
+    }
+
+    .nyx-login-card{
+      width: 100%;
+      max-width: 460px;
+      background: var(--nyx-surface);
+      border: 1px solid var(--nyx-border);
+      border-radius: 1.75rem;
+      box-shadow: var(--nyx-shadow);
+      overflow: hidden;
+    }
+
+    .nyx-login-header{
+      background: #2f4b4d;
+      color: #fff;
+      padding: 1.6rem 1.8rem;
+    }
+
+    .nyx-brand{
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: .08em;
+      color: #e8f7f7;
+    }
+
+    .nyx-logo-dot{
+      display:inline-block;
+      width:10px;
+      height:10px;
+      border-radius:50%;
+      background: var(--nyx-primary);
+      margin-left: 8px;
+    }
+
+    .nyx-subtitle{
+      color: rgba(232,247,247,.78);
+      margin-top: .45rem;
+      margin-bottom: 0;
+    }
+
+    .nyx-login-body{
+      padding: 1.8rem;
+    }
+
+    .nyx-label{
+      font-weight: 700;
+      margin-bottom: .45rem;
+    }
+
+    .nyx-input{
+      border-radius: 1rem;
+      border: 1px solid var(--nyx-border);
+      padding: .85rem 1rem;
+    }
+
+    .nyx-input:focus{
+      border-color: var(--nyx-primary);
+      box-shadow: 0 0 0 .2rem rgba(118,207,210,.18);
+    }
+
+    .nyx-btn{
+      width: 100%;
+      border: none;
+      border-radius: 999px;
+      padding: .9rem 1rem;
+      font-weight: 800;
+      color: #fff;
+      background: linear-gradient(135deg, var(--nyx-primary), var(--nyx-primary-strong));
+    }
+
+    .nyx-footer-link{
+      color: #467b7f;
+      font-weight: 700;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="nyx-login-card">
+    <div class="nyx-login-header">
+      <div class="nyx-brand">NYX<span class="nyx-logo-dot"></span></div>
+      <p class="nyx-subtitle">Ingresá a tu panel de peluquería</p>
+    </div>
+
+    <div class="nyx-login-body">
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-danger rounded-4">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+
+      <form method="post">
+        {% csrf_token %}
+
+        <div class="mb-3">
+          <label class="nyx-label" for="username">Usuario</label>
+          <input type="text" name="username" id="username" class="form-control nyx-input" required>
+        </div>
+
+        <div class="mb-4">
+          <label class="nyx-label" for="password">Contraseña</label>
+          <input type="password" name="password" id="password" class="form-control nyx-input" required>
+        </div>
+
+        <button type="submit" class="nyx-btn">Ingresar</button>
+      </form>
+
+      <div class="mt-4 text-center">
+        <a href="/" class="nyx-footer-link">Volver al sitio público</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

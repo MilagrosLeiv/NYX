@@ -1,0 +1,110 @@
+{% extends "reservas/panel/base_panel.html" %}
+
+{% block title %}{{ form_title }} | NYX{% endblock %}
+{% block panel_title %}{{ form_title }}{% endblock %}
+{% block panel_subtitle %}Configurá los datos del profesional y los servicios que realiza{% endblock %}
+
+{% block extra_css %}
+<style>
+  .nyx-form-card{
+    max-width: 900px;
+  }
+
+  .nyx-form-input{
+    border-radius: 1rem;
+    border: 1px solid var(--nyx-border);
+    padding: .85rem 1rem;
+    background: #fff;
+    color: var(--nyx-text);
+  }
+
+  .nyx-form-input:focus{
+    border-color: var(--nyx-primary);
+    box-shadow: 0 0 0 .2rem rgba(118, 207, 210, .18);
+  }
+
+  .nyx-form-label{
+    font-weight: 700;
+    margin-bottom: .45rem;
+  }
+
+  .nyx-services-box{
+    background: #fbfefe;
+    border: 1px solid var(--nyx-border);
+    border-radius: 1rem;
+    padding: 1rem;
+  }
+
+  .nyx-services-box ul{
+    list-style: none;
+    padding-left: 0;
+    margin-bottom: 0;
+    display: grid;
+    gap: .65rem;
+  }
+
+  .nyx-services-box li label{
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    font-weight: 600;
+    color: var(--nyx-text);
+  }
+</style>
+{% endblock %}
+
+{% block panel_content %}
+<div class="nyx-card p-4 nyx-form-card">
+  <form method="post">
+    {% csrf_token %}
+
+    <div class="row g-4">
+      <div class="col-md-6">
+        <label class="nyx-form-label" for="{{ form.name.id_for_label }}">Nombre</label>
+        {{ form.name }}
+        {% if form.name.errors %}
+          <div class="text-danger small mt-1">{{ form.name.errors|join:", " }}</div>
+        {% endif %}
+      </div>
+
+      <div class="col-md-6">
+        <label class="nyx-form-label" for="{{ form.phone.id_for_label }}">Teléfono</label>
+        {{ form.phone }}
+        {% if form.phone.errors %}
+          <div class="text-danger small mt-1">{{ form.phone.errors|join:", " }}</div>
+        {% endif %}
+      </div>
+
+      <div class="col-12">
+        <label class="nyx-form-label">Servicios que realiza</label>
+        <div class="nyx-services-box">
+          {{ form.services }}
+        </div>
+        {% if form.services.errors %}
+          <div class="text-danger small mt-1">{{ form.services.errors|join:", " }}</div>
+        {% endif %}
+      </div>
+
+      <div class="col-12">
+        <div class="form-check">
+          {{ form.is_active }}
+          <label class="form-check-label fw-semibold ms-1" for="{{ form.is_active.id_for_label }}">
+            Profesional activo
+          </label>
+        </div>
+      </div>
+    </div>
+
+    {% if form.non_field_errors %}
+      <div class="alert alert-danger rounded-4 mt-4">
+        {{ form.non_field_errors }}
+      </div>
+    {% endif %}
+
+    <div class="d-flex gap-2 flex-wrap mt-4">
+      <button type="submit" class="nyx-primary-btn">{{ submit_label }}</button>
+      <a href="{% url 'panel_employees' %}" class="nyx-filter-btn">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

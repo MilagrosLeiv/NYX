@@ -1,0 +1,127 @@
+{% extends "reservas/base.html" %}
+{% load custom_filters %}
+
+{% block title %}Pago de reserva | NYX{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row g-4 justify-content-center">
+    <div class="col-lg-7">
+      <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-4 p-md-5">
+          <h1 class="fw-bold mb-2">Pago de reserva</h1>
+          <p class="text-muted mb-4">
+            Completá el pago para avanzar con la confirmación de tu turno.
+          </p>
+
+          <div class="rounded-4 p-4 mb-4" style="background:#f8fbfb; border:1px solid #d7ecec;">
+            <div class="d-flex justify-content-between mb-2">
+              <span class="text-muted">Reserva</span>
+              <span class="fw-semibold">#{{ booking.id }}</span>
+            </div>
+
+            <div class="d-flex justify-content-between mb-2">
+              <span class="text-muted">Cliente</span>
+              <span class="fw-semibold">{{ booking.customer_name }}</span>
+            </div>
+
+            <div class="d-flex justify-content-between mb-2">
+              <span class="text-muted">Tipo de pago</span>
+              <span class="fw-semibold">
+                {% if booking.payment_choice == 'deposit' %}
+                  Seña
+                {% elif booking.payment_choice == 'full' %}
+                  Pago total
+                {% else %}
+                  Sin pago
+                {% endif %}
+              </span>
+            </div>
+
+            <div class="d-flex justify-content-between mb-2">
+              <span class="text-muted">Estado</span>
+              <span class="fw-semibold">{{ booking.get_payment_status_display }}</span>
+            </div>
+
+            <div class="d-flex justify-content-between mb-2">
+              <span class="text-muted">Medio</span>
+              <span class="fw-semibold">
+                {% if booking.selected_payment_method == 'transfer' %}
+                  Transferencia
+                {% elif booking.selected_payment_method == 'integrated' %}
+                  Pago integrado
+                {% else %}
+                  -
+                {% endif %}
+              </span>
+            </div>
+
+            <div class="d-flex justify-content-between">
+              <span class="text-muted">Monto a pagar</span>
+              <span class="fw-bold fs-5">${{ booking.payment_required_amount|miles_punto }}</span>
+            </div>
+          </div>
+
+          {% if booking.selected_payment_method == 'transfer' %}
+            <div class="rounded-4 p-4 mb-4" style="background:#fff; border:1px solid #d7ecec;">
+              <h5 class="fw-bold mb-2">Pago por transferencia</h5>
+
+              <div class="text-muted mb-3">
+                Para confirmar tu turno necesitás realizar la transferencia y esperar la validación del salón.
+              </div>
+
+              {% if booking.salon.payment_instructions %}
+                <div class="text-muted mb-3">
+                  {{ booking.salon.payment_instructions|linebreaksbr }}
+                </div>
+              {% endif %}
+
+              {% if booking.payment_reference %}
+                <div class="small text-muted">
+                  Referencia de pago: <strong>{{ booking.payment_reference }}</strong>
+                </div>
+              {% endif %}
+
+              {% if booking.payment_expires_at %}
+                <div class="small text-muted mt-2">
+                  Este pago vence el {{ booking.payment_expires_at|date:"d/m/Y H:i" }}.
+                </div>
+              {% endif %}
+            </div>
+
+          {% elif booking.selected_payment_method == 'integrated' %}
+            <div class="rounded-4 p-4 mb-4" style="background:#fefaf2; border:1px solid #f2dfb6;">
+              <div class="fw-semibold mb-2">Pago integrado</div>
+              <div class="text-muted">
+                Vas a continuar al checkout para completar el pago online.
+              </div>
+
+              {% if booking.payment_expires_at %}
+                <div class="small text-muted mt-2">
+                  Este pago vence el {{ booking.payment_expires_at|date:"d/m/Y H:i" }}.
+                </div>
+              {% endif %}
+            </div>
+          {% endif %}
+
+          <div class="d-flex gap-2 flex-wrap">
+            <a href="{% url 'booking_success_booking' booking.id %}" class="btn btn-outline-dark rounded-pill px-4">
+              Volver
+            </a>
+
+            {% if booking.selected_payment_method == 'integrated' %}
+              <a href="{{ booking.payment_checkout_url|default:'#' }}" class="btn rounded-pill px-4" style="background:#7ad0d4; color:#123; font-weight:700;">
+                Ir al checkout
+              </a>
+            {% else %}
+              <button type="button" class="btn rounded-pill px-4" style="background:#7ad0d4; color:#123; font-weight:700;" disabled>
+                Esperando validación del salón
+              </button>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

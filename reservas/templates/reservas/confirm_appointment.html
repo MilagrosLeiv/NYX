@@ -1,0 +1,130 @@
+{% extends "reservas/base.html" %}
+{% load custom_filters %}
+
+{% block title %}Confirmar turno | PeluqueríaApp{% endblock %}
+
+{% block content %}
+<div class="booking-page py-4">
+  <div class="container">
+    <div class="row g-4">
+      <div class="col-lg-7">
+        <div class="d-flex gap-3 small text-muted mb-4">
+          <span>Servicios</span>
+          <span>›</span>
+          <span>Profesional</span>
+          <span>›</span>
+          <span>Horario</span>
+          <span>›</span>
+          <span class="fw-semibold text-dark">Confirmar</span>
+        </div>
+
+        <h1 class="fw-bold mb-4">Confirmá tu turno</h1>
+
+        <div class="card border-0 shadow-sm rounded-4">
+          <div class="card-body p-4">
+            <form method="post">
+              {% csrf_token %}
+
+              {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                  {% for error in form.non_field_errors %}
+                    <div>{{ error }}</div>
+                  {% endfor %}
+                </div>
+              {% endif %}
+
+              {% for service_id in selected_service_ids %}
+                <input type="hidden" name="services" value="{{ service_id }}">
+              {% endfor %}
+              <input type="hidden" name="employee" value="{{ employee.id }}">
+              <input type="hidden" name="date" value="{{ selected_date }}">
+              <input type="hidden" name="start_time" value="{{ start_time }}">
+
+              <div class="mb-3">
+                <label class="form-label">{{ form.customer_name.label }}</label>
+                {{ form.customer_name }}
+                {% if form.customer_name.errors %}
+                  <div class="text-danger small mt-1">{{ form.customer_name.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">{{ form.customer_email.label }}</label>
+                {{ form.customer_email }}
+                {% if form.customer_email.errors %}
+                  <div class="text-danger small mt-1">{{ form.customer_email.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">{{ form.customer_phone.label }}</label>
+                {{ form.customer_phone }}
+                {% if form.customer_phone.errors %}
+                  <div class="text-danger small mt-1">{{ form.customer_phone.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <div class="mb-4">
+                <label class="form-label">{{ form.notes.label }}</label>
+                {{ form.notes }}
+                {% if form.notes.errors %}
+                  <div class="text-danger small mt-1">{{ form.notes.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <button type="submit" class="btn btn-dark px-4">
+                Confirmar reserva
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-5">
+        <div class="card border-0 shadow-sm rounded-4 sticky-top" style="top: 24px;">
+          <div class="card-body p-4">
+            <h5 class="fw-bold mb-1">{{ salon.name }}</h5>
+            {% if salon.address %}
+              <p class="text-muted mb-4">{{ salon.address }}</p>
+            {% endif %}
+
+            <div class="mb-4">
+              <div class="fw-semibold">{{ employee.name }}</div>
+              <div class="text-muted small">Profesional</div>
+            </div>
+
+            <div class="mb-4">
+              <div class="fw-semibold">{{ selected_date }} {{ start_time }}</div>
+              <div class="text-muted small">Fecha y hora</div>
+            </div>
+
+            <div class="d-flex flex-column gap-3 mb-4">
+              {% for service in selected_services %}
+                <div class="d-flex justify-content-between align-items-start gap-3">
+                  <div>
+                    <div class="fw-medium">{{ service.name }}</div>
+                    <div class="text-muted small">{{ service.duration_minutes }} min</div>
+                  </div>
+                  <div class="fw-medium">${{ service.price|miles_punto }}</div>
+                </div>
+              {% endfor %}
+            </div>
+
+            <hr>
+
+            <div class="d-flex justify-content-between mb-2">
+              <span class="text-muted">Duración total</span>
+              <span>{{ total_duration }} min</span>
+            </div>
+
+            <div class="d-flex justify-content-between fw-bold fs-5">
+              <span>Total</span>
+              <span>${{ total_price|miles_punto }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,258 @@
+{% extends 'reservas/base.html' %}
+
+{%block reservarTurno%}{%endblock%}
+
+{% block title %}Reservar turno | PeluqueríaApp{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-12 col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4 p-md-5">
+                <div class="mb-4">
+                    <h1 class="h2 mb-1">Reservar turno</h1>
+                    <p class="text-muted mb-0">
+                        Completá tus datos y elegí los servicios que querés reservar.
+                    </p>
+                </div>
+
+                <form method="post" novalidate>
+                    {% csrf_token %}
+
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ form.non_field_errors }}
+                        </div>
+                    {% endif %}
+
+                    <div class="row g-3">
+                        <div class="col-12 col-md-6">
+                            <label for="{{ form.customer_name.id_for_label }}" class="form-label">
+                                {{ form.customer_name.label }}
+                            </label>
+                            {{ form.customer_name }}
+                            {% if form.customer_name.errors %}
+                                <div class="text-danger small mt-1">{{ form.customer_name.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <label for="{{ form.customer_email.id_for_label }}" class="form-label">
+                                {{ form.customer_email.label }}
+                            </label>
+                            {{ form.customer_email }}
+                            {% if form.customer_email.errors %}
+                                <div class="text-danger small mt-1">{{ form.customer_email.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <label for="{{ form.customer_phone.id_for_label }}" class="form-label">
+                                {{ form.customer_phone.label }}
+                            </label>
+                            {{ form.customer_phone }}
+                            {% if form.customer_phone.errors %}
+                                <div class="text-danger small mt-1">{{ form.customer_phone.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label d-block">{{ form.services.label }}</label>
+                            <div class="border rounded p-3 bg-body-tertiary">
+                                {{ form.services }}
+                            </div>
+                            {% if form.services.errors %}
+                                <div class="text-danger small mt-1">{{ form.services.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        {% if form.employee.field.widget.input_type == 'hidden' %}
+                            {{ form.employee }}
+                        {% else %}
+                            <div class="col-12 col-md-6">
+                                <label for="{{ form.employee.id_for_label }}" class="form-label">
+                                    {{ form.employee.label }}
+                                </label>
+                                {{ form.employee }}
+                                {% if form.employee.errors %}
+                                    <div class="text-danger small mt-1">{{ form.employee.errors }}</div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+
+                        <div class="col-12 col-md-6">
+                            <label for="{{ form.date.id_for_label }}" class="form-label">
+                                {{ form.date.label }}
+                            </label>
+                            {{ form.date }}
+                            {% if form.date.errors %}
+                                <div class="text-danger small mt-1">{{ form.date.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-12">
+                            <label for="{{ form.start_time.id_for_label }}" class="form-label">
+                                {{ form.start_time.label }}
+                            </label>
+                            {{ form.start_time }}
+                            {% if form.start_time.errors %}
+                                <div class="text-danger small mt-1">{{ form.start_time.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-12">
+                            <label for="{{ form.notes.id_for_label }}" class="form-label">
+                                {{ form.notes.label }}
+                            </label>
+                            {{ form.notes }}
+                            {% if form.notes.errors %}
+                                <div class="text-danger small mt-1">{{ form.notes.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="d-flex flex-column flex-sm-row gap-2 mt-4">
+                        <button type="submit" class="btn btn-warning fw-semibold">
+                            Confirmar reserva
+                        </button>
+                        <a href="{% url 'service_list' %}" class="btn btn-outline-secondary">
+                            Volver a servicios
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const serviceCheckboxes = document.querySelectorAll('input[name="services"]');
+        const employeeSelect = document.getElementById('id_employee');
+        const dateInput = document.getElementById('id_date');
+        const startTimeSelect = document.getElementById('id_start_time');
+
+        async function loadEmployees(selectedEmployeeId = '') {
+            const selectedServiceIds = Array.from(serviceCheckboxes)
+                .filter(checkbox => checkbox.checked)
+                .map(checkbox => checkbox.value);
+
+            employeeSelect.innerHTML = '';
+            resetSlots('Primero elegí servicios y profesional');
+
+            if (!selectedServiceIds.length) {
+                employeeSelect.disabled = true;
+                employeeSelect.add(new Option('Primero elegí uno o más servicios', ''));
+                return;
+            }
+
+            const params = new URLSearchParams();
+            selectedServiceIds.forEach(id => params.append('service_ids', id));
+
+            try {
+                const response = await fetch(`/api/employees-by-services/?${params.toString()}`);
+                const data = await response.json();
+
+                if (!data.employees.length) {
+                    employeeSelect.disabled = true;
+                    employeeSelect.add(new Option('No hay profesionales que hagan todos esos servicios', ''));
+                    return;
+                }
+
+                employeeSelect.disabled = false;
+                employeeSelect.add(new Option('Seleccioná un profesional', ''));
+
+                data.employees.forEach(employee => {
+                    const option = new Option(employee.name, employee.id);
+                    if (String(employee.id) === String(selectedEmployeeId)) {
+                        option.selected = true;
+                    }
+                    employeeSelect.add(option);
+                });
+            } catch (error) {
+                employeeSelect.disabled = true;
+                employeeSelect.add(new Option('Error al cargar profesionales', ''));
+                console.error(error);
+            }
+        }
+
+        function resetSlots(message = 'Primero elegí profesional y fecha') {
+            startTimeSelect.innerHTML = '';
+            startTimeSelect.disabled = true;
+            startTimeSelect.add(new Option(message, ''));
+        }
+
+        async function loadAvailableSlots(selectedTime = '') {
+            const selectedServiceIds = Array.from(serviceCheckboxes)
+                .filter(checkbox => checkbox.checked)
+                .map(checkbox => checkbox.value);
+
+            const employeeId = employeeSelect.value;
+            const selectedDate = dateInput.value;
+
+            resetSlots();
+
+            if (!selectedServiceIds.length || !employeeId || !selectedDate) {
+                return;
+            }
+
+            const params = new URLSearchParams();
+            params.append('employee_id', employeeId);
+            params.append('date', selectedDate);
+            selectedServiceIds.forEach(id => params.append('service_ids', id));
+
+            try {
+                const response = await fetch(`/api/available-slots/?${params.toString()}`);
+                const data = await response.json();
+
+                startTimeSelect.innerHTML = '';
+
+                if (!data.slots.length) {
+                    startTimeSelect.disabled = true;
+                    startTimeSelect.add(new Option('No hay horarios disponibles', ''));
+                    return;
+                }
+
+                startTimeSelect.disabled = false;
+                startTimeSelect.add(new Option('Seleccioná un horario', ''));
+
+                data.slots.forEach(slot => {
+                    const option = new Option(slot, slot);
+                    if (slot === selectedTime) {
+                        option.selected = true;
+                    }
+                    startTimeSelect.add(option);
+                });
+            } catch (error) {
+                resetSlots('Error al cargar horarios');
+                console.error(error);
+            }
+        }
+
+        const initialEmployeeId = employeeSelect.value;
+        const initialTime = startTimeSelect.value;
+
+        loadEmployees(initialEmployeeId).then(() => {
+            loadAvailableSlots(initialTime);
+        });
+
+        serviceCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function () {
+                loadEmployees('').then(() => {
+                    resetSlots('Primero elegí profesional y fecha');
+                });
+            });
+        });
+
+        employeeSelect.addEventListener('change', function () {
+            loadAvailableSlots('');
+        });
+
+        dateInput.addEventListener('change', function () {
+            loadAvailableSlots('');
+        });
+    });
+</script>
+{% endblock %}

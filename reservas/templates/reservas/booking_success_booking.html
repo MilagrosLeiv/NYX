@@ -1,0 +1,136 @@
+{% extends "reservas/base.html" %}
+{% load custom_filters %}
+
+{% block title %}Reserva confirmada | PeluqueríaApp{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="card border-0 shadow-sm rounded-4 mx-auto" style="max-width: 760px;">
+    <div class="card-body p-4 p-md-5">
+      <div class="text-center mb-4">
+        {% if booking.payment_choice != 'none' and booking.payment_status != 'verified' and booking.status != 'expired' %}
+          <h1 class="fw-bold mb-2">Reserva en proceso</h1>
+          <p class="text-muted mb-0">
+            Falta completar el pago para confirmar tu turno.
+          </p>
+        {% elif booking.status == 'expired' %}
+          <h1 class="fw-bold mb-2">Reserva expirada</h1>
+          <p class="text-muted mb-0">
+            El tiempo para completar el pago venció y el horario volvió a quedar disponible.
+          </p>
+        {% else %}
+          <h1 class="fw-bold mb-2">¡Reserva confirmada!</h1>
+          <p class="text-muted mb-0">
+            Tu reserva fue registrada con éxito.
+          </p>
+        {% endif %}
+      </div>
+
+      {% if booking.payment_choice != 'none' and booking.payment_status != 'verified' and booking.status != 'expired' %}
+        <div class="alert alert-warning rounded-4 mb-4">
+          <div class="fw-semibold mb-1">Tu turno todavía no está confirmado.</div>
+          <div>Para asegurar la reserva, completa el pago indicado por el salon.</div>
+
+          {% if booking.payment_expires_at %}
+            <div class="small mt-2">
+              Tenés tiempo hasta el {{ booking.payment_expires_at|date:"d/m/Y H:i" }} para completar el pago.
+            </div>
+          {% endif %}
+        </div>
+      {% elif booking.status == 'expired' %}
+        <div class="alert alert-danger rounded-4 mb-4">
+          Esta reserva venció por falta de pago. Si todavía querés ese turno, vas a tener que reservarlo otra vez.
+        </div>
+      {% endif %}
+
+      <div class="mb-4">
+        <h2 class="h5 mb-3">{{ booking.salon.name }}</h2>
+        <div><strong>Cliente:</strong> {{ booking.customer_name }}</div>
+        <div><strong>Teléfono:</strong> {{ booking.customer_phone }}</div>
+        {% if booking.customer_email %}
+          <div><strong>Email:</strong> {{ booking.customer_email }}</div>
+        {% endif %}
+      </div>
+
+      <div class="mb-4">
+        <h3 class="h6 text-muted mb-3">Detalle de la reserva</h3>
+
+        <div class="d-flex flex-column gap-3">
+          {% for item in booking.items.all %}
+            <div class="border rounded-3 p-3">
+              <div class="d-flex justify-content-between gap-3">
+                <div>
+                  <div class="fw-semibold">{{ item.service.name }}</div>
+                  <div class="text-muted small">Con {{ item.employee.name }}</div>
+                </div>
+                <div class="text-end">
+                  <div class="fw-semibold">{{ item.start_datetime|date:"d/m/Y H:i" }}</div>
+                  <div class="text-muted small">
+                    hasta {{ item.end_datetime|date:"H:i" }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <hr>
+
+      <div class="d-flex justify-content-between mb-2">
+        <span class="text-muted">Duración total</span>
+        <span>{{ booking.get_total_duration_minutes }} min</span>
+      </div>
+
+      <div class="d-flex justify-content-between fw-bold fs-5 mb-4">
+        <span>Total</span>
+        <span>${{ booking.get_total_price|miles_punto }}</span>
+      </div>
+
+      {% if booking.payment_choice == 'deposit' %}
+        <div class="d-flex justify-content-between mb-2">
+          <span class="text-muted">Seña requerida</span>
+          <span class="fw-semibold">${{ booking.payment_required_amount|miles_punto }}</span>
+        </div>
+        <div class="small text-muted mb-2">
+          Estado del pago: {{ booking.get_payment_status_display }}
+        </div>
+
+      {% elif booking.payment_choice == 'full' %}
+        <div class="d-flex justify-content-between mb-2">
+          <span class="text-muted">Pago requerido</span>
+          <span class="fw-semibold">${{ booking.payment_required_amount|miles_punto }}</span>
+        </div>
+        <div class="small text-muted mb-2">
+          Estado del pago: {{ booking.get_payment_status_display }}
+        </div>
+      {% endif %}
+
+      {% if booking.selected_payment_method %}
+        <div class="small text-muted mb-3">
+          Medio de pago:
+          {% if booking.selected_payment_method == 'transfer' %}
+            Transferencia
+          {% elif booking.selected_payment_method == 'integrated' %}
+            Pago integrado
+          {% else %}
+            {{ booking.selected_payment_method }}
+          {% endif %}
+        </div>
+      {% endif %}
+
+      <div class="d-flex gap-2 flex-wrap">
+        {% if booking.payment_choice != 'none' and booking.payment_required_amount > 0 and booking.payment_status != 'verified' and booking.status != 'expired' %}
+          <a href="{{ booking.payment_checkout_url|default:'#' }}" class="btn btn-dark">
+            Ver instrucciones de pago
+          </a>
+        {% endif %}
+
+        <a href="{% url 'service_list' %}?salon={{ booking.salon.id }}" class="btn btn-outline-dark">
+          Reservar otro turno
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

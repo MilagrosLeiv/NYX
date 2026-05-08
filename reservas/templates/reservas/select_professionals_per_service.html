@@ -1,0 +1,109 @@
+{% extends "reservas/base.html" %}
+{% load custom_filters %}
+
+{% block title %}Elegir profesionales | NYX{% endblock %}
+
+{% block content %}
+<div class="booking-page py-4">
+  <div class="container">
+    <div class="row g-4">
+      <div class="col-lg-7">
+        <div class="nyx-stepper">
+          <span>Servicios</span>
+          <span class="nyx-step-separator">›</span>
+          <span class="is-current">Profesional</span>
+          <span class="nyx-step-separator">›</span>
+          <span>Horario</span>
+          <span class="nyx-step-separator">›</span>
+          <span>Confirmar</span>
+        </div>
+
+        <h1 class="nyx-page-title">Elegí un profesional para cada servicio</h1>
+        <p class="nyx-text-muted nyx-page-subtitle mb-4">
+          Después vas a elegir una sola hora de inicio y vamos a intentar acomodar todos los servicios de forma consecutiva.
+        </p>
+
+        <form method="get" action="{% url 'select_time' %}">
+          <input type="hidden" name="mode" value="per_service_consecutive">
+
+          <div class="d-flex flex-column gap-4">
+            {% for service in selected_services %}
+              <div class="card nyx-panel">
+                <div class="card-body p-4">
+                  <div class="service-card-header mb-4">
+                    <div>
+                      <h2 class="h3 mb-2">{{ service.name }}</h2>
+                      <div class="d-flex gap-2 flex-wrap align-items-center">
+                        <span class="badge nyx-badge-soft">{{ service.duration_minutes }} min</span>
+                      </div>
+                    </div>
+
+                    <div class="service-price-pill">
+                      ${{ service.price|miles_punto }}
+                    </div>
+                  </div>
+
+                  <input type="hidden" name="services" value="{{ service.id }}">
+
+                  <label class="form-label fw-semibold mb-2">Profesional</label>
+                  <select
+                    class="form-select nyx-input"
+                    name="employee_{{ service.id }}"
+                    required
+                  >
+                    <option value="">Seleccioná un profesional</option>
+                    {% for employee in employees_by_service|get_item:service.id %}
+                      <option value="{{ employee.id }}">{{ employee.name }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+
+          <div class="mt-4">
+            <button type="submit" class="btn nyx-flow-btn">
+              Continuar
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div class="col-lg-5 align-self-start">
+        <div class="card nyx-summary-card nyx-summary-align">
+          <div class="card-body p-4">
+            <h5 class="fw-bold mb-1">{{ salon.name }}</h5>
+            {% if salon.address %}
+              <p class="nyx-text-muted mb-4">{{ salon.address }}</p>
+            {% endif %}
+
+            <div class="d-flex flex-column mb-4">
+              {% for service in selected_services %}
+                <div class="nyx-summary-service">
+                  <div>
+                    <div class="fw-medium">{{ service.name }}</div>
+                    <div class="nyx-text-muted small">{{ service.duration_minutes }} min</div>
+                  </div>
+                  <div class="nyx-price-pill">${{ service.price|miles_punto }}</div>
+                </div>
+              {% endfor %}
+            </div>
+
+            <hr class="nyx-divider">
+
+            <div class="d-flex justify-content-between mb-2">
+              <span class="nyx-text-muted">Duración total</span>
+              <span>{{ total_duration }} min</span>
+            </div>
+
+            <div class="d-flex justify-content-between fw-bold fs-5">
+              <span>Total</span>
+              <span class="nyx-summary-total">${{ total_price|miles_punto }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

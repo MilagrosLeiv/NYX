@@ -1,0 +1,319 @@
+{% extends 'reservas/base.html' %}
+{% load reservas_extras %}
+
+{% block title %}Reservar por separado | PeluqueríaApp{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-12 col-xl-10">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body p-4 p-md-5">
+                <h1 class="h2 mb-2">Reservar servicios por separado</h1>
+                <p class="text-muted mb-0">
+                    Los servicios seleccionados no pueden hacerse todos con un mismo profesional,
+                    así que vas a reservar un turno por cada servicio.
+                </p>
+            </div>
+        </div>
+
+        <div class="alert alert-info">
+            El siguiente turno podrá ser elegido luego de la finalización del primer turno asignado.
+            
+        </div>
+
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            {% for service in selected_services %}
+                <input type="hidden" name="services" value="{{ service.id }}">
+            {% endfor %}
+
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-4 p-md-5">
+                    <h2 class="h4 mb-4">Datos del cliente</h2>
+
+                    <div class="row g-3">
+                        <div class="col-12 col-md-6">
+                            <label class="form-label">Nombre</label>
+                            <input
+                                type="text"
+                                name="customer_name"
+                                class="form-control"
+                                value="{{ values.customer_name|default:'' }}"
+                            >
+                            {% if errors.customer_name %}
+                                <div class="text-danger small mt-1">{{ errors.customer_name }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <label class="form-label">Teléfono</label>
+                            <input
+                                type="text"
+                                name="customer_phone"
+                                class="form-control"
+                                value="{{ values.customer_phone|default:'' }}"
+                            >
+                            {% if errors.customer_phone %}
+                                <div class="text-danger small mt-1">{{ errors.customer_phone }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% for service in selected_services %}
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body p-4 p-md-5">
+                        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-4">
+                            <div>
+                                <h2 class="h4 mb-1">{{ service.name }}</h2>
+                                <p class="text-muted mb-0">
+                                    ${{ service.price }} · {{ service.duration_minutes }} min
+                                </p>
+                            </div>
+                        </div>
+
+                        {% if errors|get_item:'general_'|default:'' %}
+                        {% endif %}
+
+                        {% if errors %}
+                            {% with general_key='general_'|add:service.id|stringformat:'s' %}
+                                {% if errors|get_item:general_key %}
+                                    <div class="alert alert-danger">
+                                        {{ errors|get_item:general_key }}
+                                    </div>
+                                {% endif %}
+                            {% endwith %}
+                        {% endif %}
+
+                        <div class="row g-3 service-block" 
+                            data-service-id="{{ service.id }}"
+                            data-duration="{{ service.duration_minutes }}"
+                        >
+                            <div class="col-12 col-md-4">
+                                <label class="form-label">Profesional</label>
+                                <select name="employee_{{ service.id }}" class="form-select employee-select">
+                                    <option value="">Seleccioná un profesional</option>
+                                    {% with employee_key='employee_'|add:service.id|stringformat:'s' %}
+                                        {% for employee in employees_by_service|get_item:service.id %}
+                                            <option
+                                                value="{{ employee.id }}"
+                                                {% if values|get_item:employee_key == employee.id|stringformat:'s' %}selected{% endif %}
+                                            >
+                                                {{ employee.name }}
+                                            </option>
+                                        {% endfor %}
+                                    {% endwith %}
+                                </select>
+                                {% with employee_key='employee_'|add:service.id|stringformat:'s' %}
+                                    {% if errors|get_item:employee_key %}
+                                        <div class="text-danger small mt-1">{{ errors|get_item:employee_key }}</div>
+                                    {% endif %}
+                                {% endwith %}
+                            </div>
+
+                            <div class="col-12 col-md-4">
+                                <label class="form-label">Fecha</label>
+                                <input
+                                    type="date"
+                                    name="date_{{ service.id }}"
+                                    class="form-control date-input"
+                                    value="{{ values|get_item:'date_'|add:service.id|stringformat:'s' }}"
+                                >
+                                {% with date_key='date_'|add:service.id|stringformat:'s' %}
+                                    {% if errors|get_item:date_key %}
+                                        <div class="text-danger small mt-1">{{ errors|get_item:date_key }}</div>
+                                    {% endif %}
+                                {% endwith %}
+                            </div>
+
+                            <div class="col-12 col-md-4">
+                                <label class="form-label">Horario disponible</label>
+                                <select
+                                    name="start_time_{{ service.id }}"
+                                    class="form-select start-time-select"
+                                    data-selected-time="{{ values|get_item:'start_time_'|add:service.id|stringformat:'s' }}"
+                                    disabled
+                                >
+                                    <option value="">Primero elegí profesional y fecha</option>
+                                </select>
+                                {% with time_key='start_time_'|add:service.id|stringformat:'s' %}
+                                    {% if errors|get_item:time_key %}
+                                        <div class="text-danger small mt-1">{{ errors|get_item:time_key }}</div>
+                                    {% endif %}
+                                {% endwith %}
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label">Notas</label>
+                                <textarea
+                                    name="notes_{{ service.id }}"
+                                    class="form-control"
+                                    rows="3"
+                                >{{ values|get_item:'notes_'|add:service.id|stringformat:'s' }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+
+            <div class="d-flex flex-column flex-sm-row gap-2">
+                <button type="submit" class="btn btn-warning fw-semibold">
+                    Confirmar reservas
+                </button>
+                <a href="{% url 'service_list' %}" class="btn btn-outline-secondary">
+                    Volver a servicios
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const serviceBlocks = Array.from(document.querySelectorAll('.service-block'));
+
+        function resetSlots(select, message = 'Primero elegí profesional y fecha') {
+            select.innerHTML = '';
+            select.disabled = true;
+            select.add(new Option(message, ''));
+        }
+
+        function addMinutesToTime(timeStr, minutesToAdd) {
+            const [hours, minutes] = timeStr.split(':').map(Number);
+            const totalMinutes = hours * 60 + minutes + Number(minutesToAdd);
+            const resultHours = Math.floor(totalMinutes / 60);
+            const resultMinutes = totalMinutes % 60;
+
+            return `${String(resultHours).padStart(2, '0')}:${String(resultMinutes).padStart(2, '0')}`;
+        }
+
+        function getPreviousConstraint(index) {
+            if (index === 0) return null;
+
+            const previousBlock = serviceBlocks[index - 1];
+            const previousDate = previousBlock.querySelector('.date-input').value;
+            const previousStartSelect = previousBlock.querySelector('.start-time-select');
+            const previousStart = previousStartSelect.value;
+            const previousDuration = previousBlock.dataset.duration;
+
+            if (!previousDate || !previousStart) return null;
+
+            return {
+                date: previousDate,
+                notBefore: addMinutesToTime(previousStart, previousDuration)
+            };
+        }
+
+        async function loadAvailableSlots(index) {
+            const block = serviceBlocks[index];
+            const serviceId = block.dataset.serviceId;
+            const employeeSelect = block.querySelector('.employee-select');
+            const dateInput = block.querySelector('.date-input');
+            const startTimeSelect = block.querySelector('.start-time-select');
+            const selectedTime = startTimeSelect.dataset.selectedTime || '';
+
+            const employeeId = employeeSelect.value;
+            const selectedDate = dateInput.value;
+
+            resetSlots(startTimeSelect);
+
+            if (!employeeId || !selectedDate) {
+                return;
+            }
+
+            const previousConstraint = getPreviousConstraint(index);
+
+            let notBefore = '';
+            if (previousConstraint && previousConstraint.date === selectedDate) {
+                notBefore = previousConstraint.notBefore;
+            }
+
+            const params = new URLSearchParams();
+            params.append('employee_id', employeeId);
+            params.append('date', selectedDate);
+            params.append('service_ids', serviceId);
+
+            if (notBefore) {
+                params.append('not_before', notBefore);
+            }
+            console.log('serviceId:', serviceId);
+            console.log('selectedDate:', selectedDate);
+            console.log('employeeId:', employeeId);
+            console.log('notBefore:', notBefore);
+            try {
+                const response = await fetch(`/api/available-slots/?${params.toString()}`);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                startTimeSelect.innerHTML = '';
+
+                if (!data.slots.length) {
+                    startTimeSelect.disabled = true;
+                    startTimeSelect.add(new Option('No hay horarios disponibles', ''));
+                    return;
+                }
+
+                startTimeSelect.disabled = false;
+                startTimeSelect.add(new Option('Seleccioná un horario', ''));
+
+                data.slots.forEach(slot => {
+                    const option = new Option(slot, slot);
+                    if (slot === selectedTime) {
+                        option.selected = true;
+                    }
+                    startTimeSelect.add(option);
+                });
+            } catch (error) {
+                resetSlots(startTimeSelect, 'Error al cargar horarios');
+                console.error('Error cargando horarios:', error);
+            }
+        }
+
+        function reloadNextBlocks(fromIndex) {
+            for (let i = fromIndex + 1; i < serviceBlocks.length; i++) {
+                const block = serviceBlocks[i];
+                const startTimeSelect = block.querySelector('.start-time-select');
+                startTimeSelect.dataset.selectedTime = '';
+                resetSlots(startTimeSelect, 'Primero elegí profesional y fecha');
+                loadAvailableSlots(i);
+            }
+        }
+
+        serviceBlocks.forEach((block, index) => {
+            const employeeSelect = block.querySelector('.employee-select');
+            const dateInput = block.querySelector('.date-input');
+            const startTimeSelect = block.querySelector('.start-time-select');
+
+            employeeSelect.addEventListener('change', function () {
+                startTimeSelect.dataset.selectedTime = '';
+                loadAvailableSlots(index).then(() => {
+                    reloadNextBlocks(index);
+                });
+            });
+
+            dateInput.addEventListener('change', function () {
+                startTimeSelect.dataset.selectedTime = '';
+                loadAvailableSlots(index).then(() => {
+                    reloadNextBlocks(index);
+                });
+            });
+
+            startTimeSelect.addEventListener('change', function () {
+                reloadNextBlocks(index);
+            });
+
+            if (employeeSelect.value && dateInput.value) {
+                loadAvailableSlots(index);
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,208 @@
+{% extends "reservas/panel/base_panel.html" %}
+
+{% block title %}Configuración | NYX{% endblock %}
+{% block panel_title %}Configuración{% endblock %}
+{% block panel_subtitle %}Datos generales de la peluquería, pagos y políticas de reserva{% endblock %}
+
+{% block extra_css %}
+<style>
+  .nyx-form-card{
+    max-width: 920px;
+  }
+
+  .nyx-form-input{
+    border-radius: 1rem;
+    border: 1px solid var(--nyx-border);
+    padding: .85rem 1rem;
+    background: #fff;
+    color: var(--nyx-text);
+  }
+
+  .nyx-form-input:focus{
+    border-color: var(--nyx-primary);
+    box-shadow: 0 0 0 .2rem rgba(118, 207, 210, .18);
+  }
+
+  .nyx-form-label{
+    font-weight: 700;
+    margin-bottom: .45rem;
+  }
+
+  .nyx-settings-box{
+    background: #fbfefe;
+    border: 1px solid var(--nyx-border);
+    border-radius: 1rem;
+    padding: 1.1rem;
+  }
+
+  .nyx-settings-box-title{
+    font-weight: 800;
+    color: var(--nyx-text);
+    margin-bottom: 1rem;
+  }
+
+  .nyx-settings-muted{
+    color: var(--nyx-muted);
+    font-size: .875rem;
+    line-height: 1.45;
+  }
+
+  .nyx-check-row{
+    min-height: 2rem;
+    display: flex;
+    align-items: center;
+  }
+</style>
+{% endblock %}
+
+{% block panel_content %}
+<div class="nyx-card p-4 nyx-form-card">
+  <form method="post">
+    {% csrf_token %}
+
+    <div class="row g-4">
+      <div class="col-md-6">
+        <label class="nyx-form-label" for="{{ form.name.id_for_label }}">Nombre</label>
+        {{ form.name }}
+      </div>
+
+      <div class="col-md-6">
+        <label class="nyx-form-label" for="{{ form.email.id_for_label }}">Email</label>
+        {{ form.email }}
+      </div>
+
+      <div class="col-md-6">
+        <label class="nyx-form-label" for="{{ form.phone.id_for_label }}">Teléfono</label>
+        {{ form.phone }}
+      </div>
+
+      <div class="col-md-6">
+        <label class="nyx-form-label" for="{{ form.address.id_for_label }}">Dirección</label>
+        {{ form.address }}
+      </div>
+
+      <div class="col-12">
+        <div class="nyx-settings-box">
+          <h5 class="nyx-settings-box-title">Configuración de pago</h5>
+
+          <div class="row g-4">
+            <div class="col-md-6">
+              <div class="form-check nyx-check-row mb-3">
+                {{ form.deposit_enabled }}
+                <label class="form-check-label fw-semibold ms-1" for="{{ form.deposit_enabled.id_for_label }}">
+                  Requerir seña
+                </label>
+              </div>
+
+              <div class="form-check nyx-check-row mb-3">
+                {{ form.allow_full_payment }}
+                <label class="form-check-label fw-semibold ms-1" for="{{ form.allow_full_payment.id_for_label }}">
+                  Permitir pago total
+                </label>
+              </div>
+
+              <div class="form-check nyx-check-row mb-3">
+                {{ form.full_payment_required }}
+                <label class="form-check-label fw-semibold ms-1" for="{{ form.full_payment_required.id_for_label }}">
+                  Requerir pago total
+                </label>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <label class="nyx-form-label" for="{{ form.payment_method.id_for_label }}">Método</label>
+              {{ form.payment_method }}
+            </div>
+
+            <div class="col-md-4">
+              <label class="nyx-form-label" for="{{ form.deposit_percentage.id_for_label }}">Porcentaje de seña</label>
+              {{ form.deposit_percentage }}
+              <div class="nyx-settings-muted mt-1">
+                Solo aplica si marcás “Requerir seña”.
+              </div>
+            </div>
+
+            <div class="col-12">
+              <label class="nyx-form-label" for="{{ form.payment_instructions.id_for_label }}">Instrucciones de pago</label>
+              {{ form.payment_instructions }}
+              <div class="nyx-settings-muted mt-1">
+                Este texto se mostrará al cliente cuando corresponda.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12">
+        <div class="nyx-settings-box">
+          <h5 class="nyx-settings-box-title">Política de cancelación y modificación</h5>
+
+          <div class="row g-4">
+            <div class="col-md-6">
+              <div class="form-check nyx-check-row mb-3">
+                {{ form.allow_client_cancellation }}
+                <label class="form-check-label fw-semibold ms-1" for="{{ form.allow_client_cancellation.id_for_label }}">
+                  Permitir cancelación online
+                </label>
+              </div>
+
+              <label class="nyx-form-label" for="{{ form.cancellation_limit_hours.id_for_label }}">
+                Horas antes del turno para cancelar sin recargo
+              </label>
+              {{ form.cancellation_limit_hours }}
+
+              {% if form.cancellation_limit_hours.errors %}
+                <div class="text-danger small mt-1">
+                  {{ form.cancellation_limit_hours.errors.0 }}
+                </div>
+              {% endif %}
+
+              <div class="nyx-settings-muted mt-1">
+                Ejemplo: si ponés 24, el cliente podrá cancelar online hasta 24 horas antes del turno.
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="form-check nyx-check-row mb-3">
+                {{ form.allow_client_reschedule }}
+                <label class="form-check-label fw-semibold ms-1" for="{{ form.allow_client_reschedule.id_for_label }}">
+                  Permitir solicitud de modificación
+                </label>
+              </div>
+
+              <label class="nyx-form-label" for="{{ form.reschedule_limit_hours.id_for_label }}">
+                Horas antes del turno para modificar sin recargo
+              </label>
+              {{ form.reschedule_limit_hours }}
+
+              {% if form.reschedule_limit_hours.errors %}
+                <div class="text-danger small mt-1">
+                  {{ form.reschedule_limit_hours.errors.0 }}
+                </div>
+              {% endif %}
+
+              <div class="nyx-settings-muted mt-1">
+                Por ahora, esta opción puede usarse para contacto por WhatsApp.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {% if form.non_field_errors %}
+        <div class="col-12">
+          <div class="alert alert-danger rounded-4 mb-0">
+            {{ form.non_field_errors }}
+          </div>
+        </div>
+      {% endif %}
+
+      <div class="col-12">
+        <div class="d-flex gap-2 flex-wrap">
+          <button type="submit" class="nyx-primary-btn">Guardar configuración</button>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}

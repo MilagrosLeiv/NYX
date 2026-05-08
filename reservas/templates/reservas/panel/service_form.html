@@ -1,0 +1,123 @@
+{% extends "reservas/panel/base_panel.html" %}
+
+{% block title %}{{ form_title }} | NYX{% endblock %}
+{% block panel_title %}{{ form_title }}{% endblock %}
+{% block panel_subtitle %}Configurá nombre, precio, duración y disponibilidad{% endblock %}
+
+{% block extra_css %}
+<style>
+  .nyx-form-card{
+    max-width: 820px;
+  }
+
+  .nyx-form-input{
+    border-radius: 1rem;
+    border: 1px solid var(--nyx-border);
+    padding: .85rem 1rem;
+    background: #fff;
+    color: var(--nyx-text);
+  }
+
+  .nyx-form-input:focus{
+    border-color: var(--nyx-primary);
+    box-shadow: 0 0 0 .2rem rgba(118, 207, 210, .18);
+  }
+
+  .nyx-form-label{
+    font-weight: 700;
+    margin-bottom: .45rem;
+  }
+
+  .nyx-primary-link{
+    color: #fff !important;
+    font-weight: 800;
+  }
+
+  .nyx-primary-link:hover{
+    color: #fff !important;
+    text-decoration: none;
+  }
+</style>
+{% endblock %}
+
+{% block panel_content %}
+<div class="nyx-card p-4 nyx-form-card">
+  <form method="post">
+    {% csrf_token %}
+
+    <div class="row g-4">
+      <div class="col-md-6">
+        <label class="nyx-form-label" for="{{ form.name.id_for_label }}">Nombre</label>
+        {{ form.name }}
+        {% if form.name.errors %}
+          <div class="text-danger small mt-1">{{ form.name.errors|join:", " }}</div>
+        {% endif %}
+      </div>
+
+      <div class="col-md-3">
+        <label class="nyx-form-label" for="{{ form.price.id_for_label }}">Precio</label>
+        {{ form.price }}
+        {% if form.price.errors %}
+          <div class="text-danger small mt-1">{{ form.price.errors|join:", " }}</div>
+        {% endif %}
+      </div>
+
+      <div class="col-md-3">
+        <label class="nyx-form-label" for="{{ form.duration_minutes.id_for_label }}">Duración (min)</label>
+        {{ form.duration_minutes }}
+        {% if form.duration_minutes.errors %}
+          <div class="text-danger small mt-1">{{ form.duration_minutes.errors|join:", " }}</div>
+        {% endif %}
+      </div>
+
+      <div class="col-12">
+        <label class="nyx-form-label" for="{{ form.description.id_for_label }}">Descripción</label>
+        {{ form.description }}
+        {% if form.description.errors %}
+          <div class="text-danger small mt-1">{{ form.description.errors|join:", " }}</div>
+        {% endif %}
+      </div>
+
+      <div class="col-12">
+        <div class="form-check">
+          {{ form.is_active }}
+          <label class="form-check-label fw-semibold ms-1" for="{{ form.is_active.id_for_label }}">
+            Servicio activo
+          </label>
+        </div>
+      </div>
+    </div>
+
+    {% if form.non_field_errors %}
+      <div class="alert alert-danger rounded-4 mt-4">
+        {{ form.non_field_errors }}
+      </div>
+    {% endif %}
+
+    <div class="d-flex gap-2 flex-wrap mt-4">
+      <button type="submit" class="nyx-primary-btn">{{ submit_label }}</button>
+      <a href="{% url 'panel_services' %}" class="nyx-filter-btn">Cancelar</a>
+    </div>
+  </form>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const priceInput = document.querySelector('.nyx-price-input');
+
+    if (!priceInput) return;
+
+    const formatThousands = (value) => {
+      const digits = value.replace(/\D/g, '');
+      if (!digits) return '';
+      return Number(digits).toLocaleString('es-AR');
+    };
+
+    priceInput.addEventListener('input', function () {
+      const formatted = formatThousands(this.value);
+      this.value = formatted;
+    });
+  });
+</script>
+
+{% endblock %}

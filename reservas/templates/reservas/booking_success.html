@@ -1,0 +1,162 @@
+{% extends 'reservas/base.html' %}
+{% load custom_filters %}
+
+{% block title %}Turno reservado | NYX{% endblock %}
+
+{% block content %}
+<div class="booking-page py-4">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-12 col-xl-10">
+                <div class="card nyx-form-card">
+                    <div class="card-body p-4 p-md-5">
+                        <div class="row g-4 align-items-start">
+                            <div class="col-lg-7">
+                                <div class="d-flex align-items-center gap-3 mb-4">
+                                    <div class="booking-avatar booking-avatar-icon" style="width: 72px; height: 72px; font-size: 1.5rem;">
+                                        ✓
+                                    </div>
+                                    <div>
+                                        <h1 class="nyx-page-title mb-1">Turno reservado con éxito</h1>
+                                        <p class="nyx-text-muted mb-0">
+                                            Tu reserva fue registrada correctamente.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div class="nyx-empty-state mb-4">
+                                    <div class="fw-semibold mb-2">Ya está todo listo</div>
+                                    <div class="nyx-text-muted">
+                                        Revisá el resumen de tu turno. Si necesitás hacer cambios, comunicate con la peluquería.
+                                    </div>
+                                </div>
+
+                                <div class="card nyx-panel">
+                                    <div class="card-body p-4">
+                                        <h2 class="h5 mb-3">Resumen del turno</h2>
+
+                                        <div class="row g-3">
+                                            <div class="col-12 col-md-6">
+                                                <div class="small nyx-text-muted">Nombre</div>
+                                                <div class="fw-semibold">{{ appointment.customer_name }}</div>
+                                            </div>
+
+                                            <div class="col-12 col-md-6">
+                                                <div class="small nyx-text-muted">Teléfono</div>
+                                                <div class="fw-semibold">{{ appointment.customer_phone }}</div>
+                                            </div>
+
+                                            {% if appointment.employee %}
+                                            <div class="col-12 col-md-6">
+                                                <div class="small nyx-text-muted">Profesional</div>
+                                                <div class="fw-semibold">{{ appointment.employee.name }}</div>
+                                            </div>
+                                            {% endif %}
+
+                                            <div class="col-12 col-md-6">
+                                                <div class="small nyx-text-muted">Fecha y hora</div>
+                                                <div class="fw-semibold">
+                                                    {{ appointment.appointment_datetime|date:"d/m/Y H:i" }}
+                                                </div>
+                                            </div>
+
+                                            <div class="col-12">
+                                                <div class="small nyx-text-muted mb-2">Servicios</div>
+                                                <div class="d-flex flex-wrap gap-2">
+                                                    {% for service in appointment.services.all %}
+                                                        <span class="badge nyx-badge-soft px-3 py-2">
+                                                            {{ service.name }}
+                                                        </span>
+                                                    {% empty %}
+                                                        {% if appointment.service %}
+                                                            <span class="badge nyx-badge-soft px-3 py-2">
+                                                                {{ appointment.service.name }}
+                                                            </span>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </div>
+                                            </div>
+
+                                            {% if appointment.notes %}
+                                                <div class="col-12">
+                                                    <div class="small nyx-text-muted">Notas</div>
+                                                    <div class="fw-semibold">{{ appointment.notes|linebreaksbr }}</div>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex flex-column flex-sm-row gap-2 mt-4">
+                                    <a href="{% url 'service_list' %}" class="btn nyx-btn-outline rounded-pill px-4">
+                                        Volver al inicio
+                                    </a>
+                                    <a href="{% url 'service_list' %}?salon={{ appointment.salon.id }}" class="btn nyx-btn-primary rounded-pill px-4">
+                                        Reservar otro turno
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-5">
+                                <div class="card nyx-summary-card">
+                                    <div class="card-body p-4">
+                                        <h5 class="fw-bold mb-1">{{ appointment.salon.name }}</h5>
+                                        {% if appointment.salon.address %}
+                                            <p class="nyx-text-muted mb-4">{{ appointment.salon.address }}</p>
+                                        {% endif %}
+
+                                        {% if appointment.employee %}
+                                            <div class="mb-4">
+                                                <div class="fw-semibold">{{ appointment.employee.name }}</div>
+                                                <div class="nyx-text-muted small">Profesional</div>
+                                            </div>
+                                        {% endif %}
+
+                                        <div class="mb-4">
+                                            <div class="fw-semibold">
+                                                {{ appointment.appointment_datetime|date:"d/m/Y H:i" }}
+                                            </div>
+                                            <div class="nyx-text-muted small">Fecha y hora</div>
+                                        </div>
+
+                                        <div class="d-flex flex-column mb-4">
+                                            {% for service in appointment.services.all %}
+                                                <div class="nyx-summary-service">
+                                                    <div>
+                                                        <div class="fw-medium">{{ service.name }}</div>
+                                                        <div class="nyx-text-muted small">{{ service.duration_minutes }} min</div>
+                                                    </div>
+                                                    <div class="nyx-price-pill">${{ service.price|miles_punto }}</div>
+                                                </div>
+                                            {% empty %}
+                                                {% if appointment.service %}
+                                                    <div class="nyx-summary-service">
+                                                        <div>
+                                                            <div class="fw-medium">{{ appointment.service.name }}</div>
+                                                            <div class="nyx-text-muted small">{{ appointment.service.duration_minutes }} min</div>
+                                                        </div>
+                                                        <div class="nyx-price-pill">${{ appointment.service.price|miles_punto }}</div>
+                                                    </div>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+
+                                        <hr class="nyx-divider">
+
+                                        {% with total_minutes=0 %}
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span class="nyx-text-muted">Estado</span>
+                                            <span class="fw-medium">{{ appointment.get_status_display|default:appointment.status }}</span>
+                                        </div>
+                                        {% endwith %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

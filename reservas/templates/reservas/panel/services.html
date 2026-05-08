@@ -1,0 +1,87 @@
+{% extends "reservas/panel/base_panel.html" %}
+{% load custom_filters %}
+
+{% block title %}Servicios | NYX{% endblock %}
+{% block panel_title %}Servicios{% endblock %}
+{% block panel_subtitle %}Gestioná los servicios, precios y duración de {{ salon.name }}{% endblock %}
+
+{% block panel_content %}
+<div class="nyx-card p-4 mb-4">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+      <h5 class="fw-bold mb-1">Listado de servicios</h5>
+      <div class="text-secondary">Editá precios, duración y disponibilidad.</div>
+    </div>
+
+    <a href="{% url 'panel_service_create' %}" class="nyx-primary-btn">
+      <span>+</span>
+      <span>Nuevo servicio</span>
+    </a>
+  </div>
+</div>
+
+<div class="nyx-card p-4">
+  {% if services %}
+    <div class="table-responsive">
+      <table class="table nyx-table align-middle">
+        <thead>
+          <tr>
+            <th>Servicio</th>
+            <th>Precio</th>
+            <th>Duración</th>
+            <th>Estado</th>
+            <th class="text-end">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for service in services %}
+            <tr>
+              <td>
+                <div class="fw-semibold">{{ service.name }}</div>
+                {% if service.description %}
+                  <div class="text-secondary small">{{ service.description|truncatechars:80 }}</div>
+                {% endif %}
+              </td>
+              <td>${{ service.price|miles_punto }}</td>
+              <td>{{ service.duration_minutes }} min</td>
+              <td>
+                {% if service.is_active %}
+                  <span class="nyx-badge">Activo</span>
+                {% else %}
+                  <span class="nyx-badge" style="background:#fff3f3;color:#b54747;border-color:#f1caca;">Inactivo</span>
+                {% endif %}
+              </td>
+              <td class="text-end">
+                <div class="d-flex justify-content-end gap-2 flex-wrap">
+                  <a href="{% url 'panel_service_edit' service.id %}" class="nyx-filter-btn">Editar</a>
+                  <a href="{% url 'panel_service_toggle_active' service.id %}" class="nyx-filter-btn">
+                    {% if service.is_active %}Desactivar{% else %}Activar{% endif %}
+                  </a>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="nyx-empty">
+      Todavía no hay servicios cargados.
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .nyx-primary-link{
+    color: #fff !important;
+    font-weight: 800;
+  }
+
+  .nyx-primary-link:hover{
+    color: #fff !important;
+    text-decoration: none;
+  }
+</style>
+{% endblock %}

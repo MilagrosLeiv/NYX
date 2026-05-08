@@ -1,0 +1,24 @@
+{% extends "reservas/base.html" %}
+
+{% block title %}Pago expirado | NYX{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="card border-0 shadow-sm rounded-4 mx-auto" style="max-width: 720px;">
+    <div class="card-body p-4 p-md-5 text-center">
+      <h1 class="fw-bold mb-3">Esta reserva expiró</h1>
+      <p class="text-muted mb-4">
+        El tiempo disponible para completar el pago ya venció, así que el horario volvió a quedar libre.
+      </p>
+
+      <div class="alert alert-warning rounded-4 mb-4">
+        Si todavía querés ese turno, vas a tener que iniciar una nueva reserva.
+      </div>
+
+      <a href="{% url 'service_list' %}?salon={{ booking.salon.id }}" class="btn btn-dark">
+        Volver a reservar
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

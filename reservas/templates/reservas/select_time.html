@@ -1,0 +1,307 @@
+{% extends "reservas/base.html" %}
+{% load custom_filters %}
+
+{% block title %}Elegir horario | NYX{% endblock %}
+
+{% block content %}
+<div class="booking-page py-4">
+  <div class="container">
+    <div class="row g-4">
+      <div class="col-lg-7">
+        <div class="nyx-stepper">
+          <span>Servicios</span>
+          <span class="nyx-step-separator">›</span>
+          <span>Profesional</span>
+          <span class="nyx-step-separator">›</span>
+          <span class="is-current">Horario</span>
+          <span class="nyx-step-separator">›</span>
+          <span>Confirmar</span>
+        </div>
+
+        <h1 class="nyx-page-title">Elegí fecha y horario</h1>
+        <p class="nyx-text-muted nyx-page-subtitle mb-4">
+          Seleccioná una fecha para ver los horarios disponibles.
+        </p>
+
+        {% if mode == 'per_service_consecutive' %}
+          {% if has_valid_per_service_assignment %}
+            <div class="card nyx-info-card mb-4">
+              <div class="card-body p-4">
+                <div class="fw-semibold fs-5 mb-3">Tu selección</div>
+
+                <div class="d-flex flex-column gap-2">
+                  {% for service in selected_services %}
+                    <div class="d-flex justify-content-between align-items-center gap-3 nyx-selection-row">
+                      <span class="fw-medium">{{ service.name }}</span>
+                      <span class="nyx-text-muted small">{{ selected_employees|get_item:service.id }}</span>
+                    </div>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+          {% else %}
+            <div class="alert nyx-alert-warning">
+              No se pudieron validar los profesionales seleccionados para todos los servicios.
+            </div>
+          {% endif %}
+        {% else %}
+          <div class="card nyx-info-card mb-4">
+            <div class="card-body p-4">
+              {% if mode == 'auto' %}
+                <div class="fw-semibold fs-5 mb-1">Asignación automática</div>
+                <div class="nyx-text-muted small">
+                  Vamos a mostrarte horarios disponibles para atenderte seguido.
+                </div>
+              {% elif employee %}
+                <div class="fw-semibold fs-5 mb-1">{{ employee.name }}</div>
+                <div class="nyx-text-muted small">
+                  Profesional seleccionado
+                </div>
+              {% else %}
+                <div class="alert nyx-alert-warning mb-0">
+                  No se pudo validar un profesional para esta reserva.
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        {% endif %}
+
+        <div class="card nyx-panel">
+          <div class="card-body p-4">
+            <form method="get" action="{% url 'select_time' %}" class="mb-0">
+              {% for service_id in selected_service_ids %}
+                <input type="hidden" name="services" value="{{ service_id }}">
+              {% endfor %}
+
+              {% if employee %}
+                <input type="hidden" name="employee" value="{{ employee.id }}">
+              {% endif %}
+
+              {% if mode == 'per_service_consecutive' %}
+                {% for service in selected_services %}
+                  {% with selected_employee=selected_employees|get_item:service.id %}
+                    {% if selected_employee %}
+                      <input type="hidden" name="employee_{{ service.id }}" value="{{ selected_employee.id }}">
+                    {% endif %}
+                  {% endwith %}
+                {% endfor %}
+              {% endif %}
+
+              <input type="hidden" name="mode" value="{{ mode }}">
+
+              <div class="row g-3 align-items-end">
+                <div class="col-sm-8 col-md-7">
+                  <label for="date" class="form-label fw-semibold">Fecha</label>
+                  <input
+                    type="date"
+                    id="date"
+                    name="date"
+                    class="form-control form-control-lg nyx-input"
+                    value="{{ selected_date }}"
+                    min="{% now 'Y-m-d' %}"
+                    {% if not employee and not has_valid_per_service_assignment and mode != 'auto' %}disabled{% endif %}
+                  >
+                </div>
+
+                <div class="col-sm-4 col-md-5">
+                  <button type="submit" class="btn nyx-flow-btn w-100">
+                    Ver horarios
+                  </button>
+                </div>
+              </div>
+            </form>
+
+            {% if selected_date and employee or selected_date and has_valid_per_service_assignment or selected_date and mode == 'auto' %}
+              <hr class="my-4 nyx-divider">
+
+              <div class="d-flex justify-content-between align-items-center gap-3 mb-3 flex-wrap">
+                <h2 class="h5 mb-0">Horarios disponibles</h2>
+                <div class="nyx-text-muted small">
+                  Fecha seleccionada: {{ selected_date }}
+                </div>
+              </div>
+
+              {% if available_slots %}
+                <form method="get" action="{% url 'confirm_booking' %}">
+                  {% for service_id in selected_service_ids %}
+                    <input type="hidden" name="services" value="{{ service_id }}">
+                  {% endfor %}
+
+                  {% if employee %}
+                    <input type="hidden" name="employee" value="{{ employee.id }}">
+                  {% endif %}
+
+                  {% if mode == 'per_service_consecutive' %}
+                    {% for service in selected_services %}
+                      {% with selected_employee=selected_employees|get_item:service.id %}
+                        {% if selected_employee %}
+                          <input type="hidden" name="employee_{{ service.id }}" value="{{ selected_employee.id }}">
+                        {% endif %}
+                      {% endwith %}
+                    {% endfor %}
+                  {% endif %}
+
+                  <input type="hidden" name="date" value="{{ selected_date }}">
+                  <input type="hidden" name="mode" value="{{ mode }}">
+
+                  <div class="d-flex flex-wrap gap-2 mb-4">
+                    {% for slot in available_slots %}
+                      <input
+                        type="radio"
+                        class="btn-check"
+                        name="start_time"
+                        id="slot-{{ forloop.counter }}"
+                        value="{{ slot }}"
+                        autocomplete="off"
+                        required
+                      >
+                      <label class="btn nyx-btn-outline px-3 py-2 booking-slot" for="slot-{{ forloop.counter }}">
+                        {{ slot }}
+                      </label>
+                    {% endfor %}
+                  </div>
+
+                  <button type="submit" class="btn nyx-flow-btn">
+                    Continuar
+                  </button>
+                </form>
+              {% else %}
+                <div class="nyx-empty-state">
+                  <div class="fw-semibold mb-2">
+                    No encontramos horarios disponibles para esa fecha.
+                  </div>
+
+                  {% if mode == 'per_service_consecutive' %}
+                    <div class="nyx-text-muted small mb-3">
+                      No pudimos acomodar todos los servicios seguidos con los profesionales seleccionados.
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-2">
+                      <a
+                        href="{% url 'select_professionals_per_service' %}?{% for service_id in selected_service_ids %}services={{ service_id }}{% if not forloop.last %}&{% endif %}{% endfor %}"
+                        class="btn nyx-btn-outline rounded-pill px-3"
+                      >
+                        Cambiar profesionales
+                      </a>
+
+                      <a
+                        href="{% url 'create_split_appointments' %}?{% for service_id in selected_service_ids %}services={{ service_id }}{% if not forloop.last %}&{% endif %}{% endfor %}"
+                        class="btn nyx-btn-outline rounded-pill px-3"
+                      >
+                        Elegir horarios separados
+                      </a>
+                    </div>
+
+                  {% elif mode == 'single_employee' %}
+                    <div class="nyx-text-muted small mb-3">
+                      No encontramos un bloque seguido con este profesional para esa fecha.
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-2">
+                      <a
+                        href="{% url 'select_professional' %}?{% for service_id in selected_service_ids %}services={{ service_id }}{% if not forloop.last %}&{% endif %}{% endfor %}"
+                        class="btn nyx-btn-outline rounded-pill px-3"
+                      >
+                        Cambiar profesional
+                      </a>
+
+                      {% if selected_services|length > 1 %}
+                        <a
+                          href="{% url 'select_time' %}?{% for service_id in selected_service_ids %}services={{ service_id }}&{% endfor %}mode=auto"
+                          class="btn nyx-btn-outline rounded-pill px-3"
+                        >
+                          Probar asignación automática
+                        </a>
+                      {% endif %}
+                    </div>
+
+                  {% else %}
+                    <div class="nyx-text-muted small mb-3">
+                      No encontramos una combinación automática seguida para esa fecha.
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-2">
+                      <a
+                        href="{% url 'select_professionals_per_service' %}?{% for service_id in selected_service_ids %}services={{ service_id }}{% if not forloop.last %}&{% endif %}{% endfor %}"
+                        class="btn nyx-btn-outline rounded-pill px-3"
+                      >
+                        Elegir por servicio
+                      </a>
+
+                      <a
+                        href="{% url 'create_split_appointments' %}?{% for service_id in selected_service_ids %}services={{ service_id }}{% if not forloop.last %}&{% endif %}{% endfor %}"
+                        class="btn nyx-btn-outline rounded-pill px-3"
+                      >
+                        Elegir horarios separados
+                      </a>
+                    </div>
+                  {% endif %}
+                </div>
+              {% endif %}
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-5">
+        <div class="card nyx-summary-card nyx-summary-align">
+          <div class="card-body p-4">
+            <h5 class="fw-bold mb-1">{{ salon.name }}</h5>
+            {% if salon.address %}
+              <p class="nyx-text-muted mb-4">{{ salon.address }}</p>
+            {% endif %}
+
+            {% if mode == 'per_service_consecutive' and has_valid_per_service_assignment %}
+              <div class="mb-4">
+                <div class="fw-semibold mb-2">Profesionales</div>
+                <div class="d-flex flex-column gap-2">
+                  {% for service in selected_services %}
+                    <div class="d-flex justify-content-between align-items-center gap-3">
+                      <span>{{ service.name }}</span>
+                      <span class="nyx-text-muted small">{{ selected_employees|get_item:service.id }}</span>
+                    </div>
+                  {% endfor %}
+                </div>
+              </div>
+            {% elif employee %}
+              <div class="mb-4">
+                <div class="fw-semibold">{{ employee.name }}</div>
+                <div class="nyx-text-muted small">Profesional</div>
+              </div>
+            {% elif mode == 'auto' %}
+              <div class="mb-4">
+                <div class="fw-semibold">Asignación automática</div>
+                <div class="nyx-text-muted small">Primera disponibilidad compatible</div>
+              </div>
+            {% endif %}
+
+            <div class="d-flex flex-column mb-4">
+              {% for service in selected_services %}
+                <div class="nyx-summary-service">
+                  <div>
+                    <div class="fw-medium">{{ service.name }}</div>
+                    <div class="nyx-text-muted small">{{ service.duration_minutes }} min</div>
+                  </div>
+                  <div class="nyx-price-pill">${{ service.price|miles_punto }}</div>
+                </div>
+              {% endfor %}
+            </div>
+
+            <hr class="nyx-divider">
+
+            <div class="d-flex justify-content-between mb-2">
+              <span class="nyx-text-muted">Duración total</span>
+              <span>{{ total_duration }} min</span>
+            </div>
+
+            <div class="d-flex justify-content-between fw-bold fs-5">
+              <span>Total</span>
+              <span class="nyx-summary-total">${{ total_price|miles_punto }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

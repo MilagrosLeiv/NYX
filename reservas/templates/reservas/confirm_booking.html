@@ -1,0 +1,321 @@
+{% extends "reservas/base.html" %}
+{% load custom_filters %}
+
+{% block title %}Confirmar turno | NYX{% endblock %}
+
+{% block content %}
+<div class="booking-page py-4">
+  <div class="container">
+    <div class="row g-4">
+      <div class="col-lg-7">
+        <div class="nyx-stepper">
+          <span>Servicios</span>
+          <span class="nyx-step-separator">›</span>
+          <span>Profesional</span>
+          <span class="nyx-step-separator">›</span>
+          <span>Horario</span>
+          <span class="nyx-step-separator">›</span>
+          <span class="is-current">Confirmar</span>
+        </div>
+
+        <h1 class="nyx-page-title mb-4">Confirmá tu turno</h1>
+
+        <div class="card nyx-form-card">
+          <div class="card-body p-4">
+            <form method="post" id="booking-confirm-form">
+              {% csrf_token %}
+
+              {% if form.non_field_errors %}
+                <div class="alert alert-danger rounded-4">
+                  {% for error in form.non_field_errors %}
+                    <div>{{ error }}</div>
+                  {% endfor %}
+                </div>
+              {% endif %}
+
+              {% for service_id in selected_service_ids %}
+                <input type="hidden" name="services" value="{{ service_id }}">
+              {% endfor %}
+
+              {% if employee %}
+                <input type="hidden" name="employee" value="{{ employee.id }}">
+              {% endif %}
+
+              {% if mode == 'per_service_consecutive' %}
+                {% for service in selected_services %}
+                  {% with selected_employee=selected_employees|get_item:service.id %}
+                    {% if selected_employee %}
+                      <input type="hidden" name="employee_{{ service.id }}" value="{{ selected_employee.id }}">
+                    {% endif %}
+                  {% endwith %}
+                {% endfor %}
+              {% endif %}
+
+              <input type="hidden" name="date" value="{{ selected_date }}">
+              <input type="hidden" name="start_time" value="{{ start_time }}">
+              <input type="hidden" name="mode" value="{{ mode }}">
+
+              <div class="mb-3">
+                <label class="form-label fw-semibold">{{ form.customer_name.label }}</label>
+                {{ form.customer_name }}
+                {% if form.customer_name.errors %}
+                  <div class="text-danger small mt-1">{{ form.customer_name.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label fw-semibold">{{ form.customer_email.label }}</label>
+                {{ form.customer_email }}
+                {% if form.customer_email.errors %}
+                  <div class="text-danger small mt-1">{{ form.customer_email.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label fw-semibold">{{ form.customer_phone.label }}</label>
+                {{ form.customer_phone }}
+                {% if form.customer_phone.errors %}
+                  <div class="text-danger small mt-1">{{ form.customer_phone.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <div class="mb-4">
+                <label class="form-label fw-semibold">{{ form.notes.label }}</label>
+                {{ form.notes }}
+                {% if form.notes.errors %}
+                  <div class="text-danger small mt-1">{{ form.notes.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <button type="submit" class="btn nyx-flow-btn"> 
+                Confirmar reserva
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-5">
+        <div class="card nyx-summary-card nyx-summary-align">
+          <div class="card-body p-4">
+            <h5 class="fw-bold mb-1">{{ salon.name }}</h5>
+            {% if salon.address %}
+              <p class="nyx-text-muted mb-4">{{ salon.address }}</p>
+            {% endif %}
+
+            {% if mode == 'per_service_consecutive' %}
+              <div class="mb-4">
+                <div class="fw-semibold mb-2">Profesionales</div>
+                <div class="d-flex flex-column gap-2">
+                  {% for service in selected_services %}
+                    <div class="d-flex justify-content-between align-items-center">
+                      <span>{{ service.name }}</span>
+                      <span class="nyx-text-muted small">{{ selected_employees|get_item:service.id }}</span>
+                    </div>
+                  {% endfor %}
+                </div>
+              </div>
+            {% else %}
+              <div class="mb-4">
+                <div class="fw-semibold">{{ employee.name }}</div>
+                <div class="nyx-text-muted small">Profesional</div>
+              </div>
+            {% endif %}
+
+            <div class="mb-4">
+              <div class="fw-semibold">{{ selected_date }} {{ start_time }}</div>
+              <div class="nyx-text-muted small">Fecha y hora</div>
+            </div>
+
+            <div class="d-flex flex-column mb-4">
+              {% for service in selected_services %}
+                <div class="nyx-summary-service">
+                  <div>
+                    <div class="fw-medium">{{ service.name }}</div>
+                    <div class="nyx-text-muted small">{{ service.duration_minutes }} min</div>
+                  </div>
+                  <div class="nyx-price-pill">${{ service.price|miles_punto }}</div>
+                </div>
+              {% endfor %}
+            </div>
+
+            <hr class="nyx-divider">
+
+            <div class="d-flex justify-content-between mb-2">
+              <span class="nyx-text-muted">Duración total</span>
+              <span class="fw-semibold">{{ total_duration }} min</span>
+            </div>
+
+            {% if full_payment_required %}
+              <div class="d-flex justify-content-between mb-2">
+                <span class="nyx-text-muted">Total</span>
+                <span class="fw-semibold">${{ full_amount|miles_punto }}</span>
+              </div>
+
+              <div class="mt-3 p-3 rounded-4" style="background:#f5fbfb; border:1px solid #d7ecec;">
+                <div class="fw-semibold mb-1">Pago total requerido</div>
+                <div class="small text-muted">
+                  Para confirmar este turno se solicitará el pago total de ${{ full_amount|miles_punto }}.
+                </div>
+                {% if payment_instructions %}
+                  <div class="small text-muted mt-2">{{ payment_instructions }}</div>
+                {% endif %}
+              </div>
+
+            {% elif deposit_enabled and allow_full_payment %}
+              <div class="mb-3">
+                <span class="badge nyx-badge-soft px-3 py-2">
+                  Seña requerida: {{ deposit_percentage }}%
+                </span>
+              </div>
+
+              <div class="d-flex justify-content-between mb-2">
+                <span class="nyx-text-muted">Total</span>
+                <span class="fw-semibold">${{ total_price|miles_punto }}</span>
+              </div>
+
+              <div class="d-flex justify-content-between mb-2">
+                <span class="nyx-text-muted">Seña requerida ({{ deposit_percentage }}%)</span>
+                <span class="fw-semibold">${{ deposit_amount|miles_punto }}</span>
+              </div>
+
+              <div class="d-flex justify-content-between mb-3">
+                <span class="nyx-text-muted">Pago total opcional</span>
+                <span class="fw-semibold">${{ full_amount|miles_punto }}</span>
+              </div>
+
+              <div class="mt-3 p-3 rounded-4" style="background:#f5fbfb; border:1px solid #d7ecec;">
+                <div class="fw-semibold mb-2">Elegí cómo querés pagar</div>
+
+                <div class="form-check mb-2">
+                  <input
+                    class="form-check-input"
+                    type="radio"
+                    name="payment_choice"
+                    id="payment_choice_deposit"
+                    value="deposit"
+                    form="booking-confirm-form"
+                    {% if selected_payment_choice == 'deposit' or not selected_payment_choice %}checked{% endif %}
+                  >
+                  <label class="form-check-label" for="payment_choice_deposit">
+                    Pagar seña ahora (${{ deposit_amount|miles_punto }})
+                  </label>
+                </div>
+
+                <div class="form-check mb-2">
+                  <input
+                    class="form-check-input"
+                    type="radio"
+                    name="payment_choice"
+                    id="payment_choice_full"
+                    value="full"
+                    form="booking-confirm-form"
+                    {% if selected_payment_choice == 'full' %}checked{% endif %}
+                  >
+                  <label class="form-check-label" for="payment_choice_full">
+                    Pagar total ahora (${{ full_amount|miles_punto }})
+                  </label>
+                </div>
+
+                <div class="small text-muted mt-2">
+                  Para reservar se requiere una seña, pero también podés abonar el total si preferís.
+                </div>
+
+                {% if payment_instructions %}
+                  <div class="small text-muted mt-2">
+                    {{ payment_instructions }}
+                  </div>
+                {% endif %}
+              </div>
+              {% if payment_method == 'both' %}
+                <div class="mt-3 p-3 rounded-4" style="background:#f5fbfb; border:1px solid #d7ecec;">
+                  <div class="fw-semibold mb-2">Elegí el medio de pago</div>
+
+                  <div class="form-check mb-2">
+                    <input
+                      class="form-check-input"
+                      type="radio"
+                      name="selected_payment_method"
+                      id="selected_payment_method_transfer"
+                      value="transfer"
+                      form="booking-confirm-form"
+                      {% if selected_payment_method == 'transfer' or not selected_payment_method %}checked{% endif %}
+                    >
+                    <label class="form-check-label" for="selected_payment_method_transfer">
+                      Transferencia
+                    </label>
+                  </div>
+
+                  <div class="form-check mb-2">
+                    <input
+                      class="form-check-input"
+                      type="radio"
+                      name="selected_payment_method"
+                      id="selected_payment_method_integrated"
+                      value="integrated"
+                      form="booking-confirm-form"
+                      {% if selected_payment_method == 'integrated' %}checked{% endif %}
+                    >
+                    <label class="form-check-label" for="selected_payment_method_integrated">
+                      Pago integrado
+                    </label>
+                  </div>
+                </div>
+              {% endif %}
+
+            {% elif deposit_enabled %}
+              <div class="mb-3">
+                <span class="badge nyx-badge-soft px-3 py-2">
+                  Seña requerida: {{ deposit_percentage }}%
+                </span>
+              </div>
+
+              <div class="d-flex justify-content-between mb-2">
+                <span class="nyx-text-muted">Total</span>
+                <span class="fw-semibold">${{ total_price|miles_punto }}</span>
+              </div>
+
+              <div class="d-flex justify-content-between mb-2">
+                <span class="nyx-text-muted">Seña requerida ({{ deposit_percentage }}%)</span>
+                <span class="fw-semibold">${{ deposit_amount|miles_punto }}</span>
+              </div>
+
+              <div class="mt-3 p-3 rounded-4" style="background:#f5fbfb; border:1px solid #d7ecec;">
+                <div class="fw-semibold mb-1">Reserva con seña</div>
+                <div class="small text-muted">
+                  Para confirmar este turno se solicitará una seña de ${{ deposit_amount|miles_punto }}.
+                </div>
+                {% if payment_instructions %}
+                  <div class="small text-muted mt-2">{{ payment_instructions }}</div>
+                {% endif %}
+              </div>
+
+            {% elif allow_full_payment %}
+              <div class="d-flex justify-content-between mb-2">
+                <span class="nyx-text-muted">Total</span>
+                <span class="fw-semibold">${{ full_amount|miles_punto }}</span>
+              </div>
+
+              <div class="mt-3 p-3 rounded-4" style="background:#f5fbfb; border:1px solid #d7ecec;">
+                <div class="fw-semibold mb-1">Pago total opcional</div>
+                <div class="small text-muted">
+                  Más adelante vas a poder elegir pagar el total si querés.
+                </div>
+                {% if payment_instructions %}
+                  <div class="small text-muted mt-2">{{ payment_instructions }}</div>
+                {% endif %}
+              </div>
+
+            {% else %}
+              <div class="d-flex justify-content-between mb-2">
+                <span class="nyx-text-muted">Total</span>
+                <span class="fw-semibold">${{ total_price|miles_punto }}</span>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
