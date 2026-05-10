@@ -100,7 +100,14 @@ def build_independent_booking_items(*, booking, item_data_list):
 
     return items
 
-def get_consecutive_slots_for_service_assignments(*, salon, service_employee_pairs, selected_date, slot_minutes=15, exclude_booking_id=None):
+def get_consecutive_slots_for_service_assignments(
+    *,
+    salon,
+    service_employee_pairs,
+    selected_date,
+    slot_minutes=15,
+    exclude_booking_id=None
+):
     """
     service_employee_pairs = [
         (service_obj, employee_obj),
@@ -114,6 +121,7 @@ def get_consecutive_slots_for_service_assignments(*, salon, service_employee_pai
         return []
 
     weekday = selected_date.weekday()
+
     business_hours = BusinessHours.objects.filter(
         salon=salon,
         weekday=weekday
@@ -122,48 +130,63 @@ def get_consecutive_slots_for_service_assignments(*, salon, service_employee_pai
     if not business_hours or business_hours.is_closed:
         return []
 
+    current_tz = timezone.get_current_timezone()
+
     day_start = timezone.make_aware(
         datetime.combine(selected_date, business_hours.start_time),
-        timezone.get_current_timezone()
-    )
-    day_end = timezone.make_aware(
-        datetime.combine(selected_date, business_hours.end_time),
-        timezone.get_current_timezone()
+        current_tz
     )
 
-    total_duration = sum(service.duration_minutes for service, _employee in service_employee_pairs)
+    day_end = timezone.make_aware(
+        datetime.combine(selected_date, business_hours.end_time),
+        current_tz
+    )
+
+    total_duration = sum(
+        service.duration_minutes
+        for service, _employee in service_employee_pairs
+    )
+
     if total_duration <= 0:
         return []
 
-    employees = {employee.id: employee for _service, employee in service_employee_pairs}
+    employees = {
+        employee.id: employee
+        for _service, employee in service_employee_pairs
+    }
 
     existing_items_by_employee = {}
 
     for employee in employees.values():
-        items = BookingItem.objects.select_related('booking').filter(
-        employee=employee,
-        start_datetime__date=selected_date
-    ).exclude(
-        booking__status__in=['cancelled', 'expired']
-    )
+        items = BookingItem.objects.select_related("booking").filter(
+            employee=employee,
+            start_datetime__date=selected_date
+        ).exclude(
+            booking__status__in=["cancelled", "expired"]
+        )
 
-    if exclude_booking_id:
-        items = items.exclude(booking_id=exclude_booking_id)
+        if exclude_booking_id:
+            items = items.exclude(booking_id=exclude_booking_id)
 
         existing_items_by_employee[employee.id] = [
             item for item in items
             if item.booking.is_blocking_slot()
         ]
+
     existing_appointments_by_employee = {}
+
     for employee in employees.values():
         existing_appointments_by_employee[employee.id] = list(
             Appointment.objects.filter(
                 employee=employee,
                 appointment_datetime__date=selected_date
-            ).exclude(status='cancelled').prefetch_related('services', 'service')
+            ).exclude(
+                status="cancelled"
+            ).prefetch_related("services", "service")
         )
-    
+
     existing_time_off_by_employee = {}
+
     for employee in employees.values():
         existing_time_off_by_employee[employee.id] = list(
             EmployeeTimeOff.objects.filter(
@@ -188,9 +211,13 @@ def get_consecutive_slots_for_service_assignments(*, salon, service_employee_pai
         for service, employee in service_employee_pairs:
             block_end = block_start + timedelta(minutes=service.duration_minutes)
 
-            # Validar superposición con BookingItem
+            # Validar superposición con BookingItem nuevo
             for item in existing_items_by_employee.get(employee.id, []):
-                overlaps = block_start < item.end_datetime and block_end > item.start_datetime
+                overlaps = (
+                    block_start < item.end_datetime
+                    and block_end > item.start_datetime
+                )
+
                 if overlaps:
                     is_valid = False
                     break
@@ -201,9 +228,15 @@ def get_consecutive_slots_for_service_assignments(*, salon, service_employee_pai
             # Validar superposición con Appointment viejo
             for appointment in existing_appointments_by_employee.get(employee.id, []):
                 appointment_start = appointment.appointment_datetime
-                appointment_end = appointment_start + timedelta(minutes=appointment.get_total_duration_minutes())
+                appointment_end = appointment_start + timedelta(
+                    minutes=appointment.get_total_duration_minutes()
+                )
 
-                overlaps = block_start < appointment_end and block_end > appointment_start
+                overlaps = (
+                    block_start < appointment_end
+                    and block_end > appointment_start
+                )
+
                 if overlaps:
                     is_valid = False
                     break
@@ -213,7 +246,11 @@ def get_consecutive_slots_for_service_assignments(*, salon, service_employee_pai
 
             # Validar superposición con bloqueos del profesional
             for block in existing_time_off_by_employee.get(employee.id, []):
-                overlaps = block_start < block.end_datetime and block_end > block.start_datetime
+                overlaps = (
+                    block_start < block.end_datetime
+                    and block_end > block.start_datetime
+                )
+
                 if overlaps:
                     is_valid = False
                     break
@@ -224,11 +261,11 @@ def get_consecutive_slots_for_service_assignments(*, salon, service_employee_pai
             block_start = block_end
 
         if is_valid:
-            slots.append(sequence_start.strftime('%H:%M'))
+            slots.append(sequence_start.strftime("%H:%M"))
 
         current_start += timedelta(minutes=slot_minutes)
 
-        return slots
+    return slots
 
 def find_auto_assignment_for_start(*, salon, services, selected_date, start_time, slot_minutes=15):
     """
