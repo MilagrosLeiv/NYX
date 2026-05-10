@@ -189,7 +189,7 @@ def get_consecutive_slots_for_service_assignments(*, salon, service_employee_pai
             block_end = block_start + timedelta(minutes=service.duration_minutes)
 
             # Validar superposición con BookingItem
-            for item in existing_items_by_employee[employee.id]:
+            for item in existing_items_by_employee.get(employee.id, []):
                 overlaps = block_start < item.end_datetime and block_end > item.start_datetime
                 if overlaps:
                     is_valid = False
@@ -199,7 +199,7 @@ def get_consecutive_slots_for_service_assignments(*, salon, service_employee_pai
                 break
 
             # Validar superposición con Appointment viejo
-            for appointment in existing_appointments_by_employee[employee.id]:
+            for appointment in existing_appointments_by_employee.get(employee.id, []):
                 appointment_start = appointment.appointment_datetime
                 appointment_end = appointment_start + timedelta(minutes=appointment.get_total_duration_minutes())
 
@@ -210,9 +210,9 @@ def get_consecutive_slots_for_service_assignments(*, salon, service_employee_pai
 
             if not is_valid:
                 break
-            
+
             # Validar superposición con bloqueos del profesional
-            for block in existing_time_off_by_employee[employee.id]:
+            for block in existing_time_off_by_employee.get(employee.id, []):
                 overlaps = block_start < block.end_datetime and block_end > block.start_datetime
                 if overlaps:
                     is_valid = False
@@ -228,7 +228,7 @@ def get_consecutive_slots_for_service_assignments(*, salon, service_employee_pai
 
         current_start += timedelta(minutes=slot_minutes)
 
-    return slots
+        return slots
 
 def find_auto_assignment_for_start(*, salon, services, selected_date, start_time, slot_minutes=15):
     """
