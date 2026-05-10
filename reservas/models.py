@@ -58,6 +58,11 @@ class Salon(models.Model):
         'Horas límite para modificar online',
         default=24
     )
+    notification_email = models.EmailField(
+        blank=True,
+        null=True,
+        verbose_name="Email para notificaciones"
+    )
 
     class Meta:
         verbose_name = 'Peluquería'
