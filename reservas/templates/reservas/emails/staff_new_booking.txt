@@ -1,0 +1,25 @@
+Nuevo turno asignado - {{ salon.name }}
+
+Hola {{ employee.name }},
+
+Tenés un nuevo turno asignado.
+
+Cliente: {{ booking.customer_name }}
+Teléfono: {{ booking.customer_phone }}
+{% if booking.customer_email %}Email: {{ booking.customer_email }}{% endif %}
+{% if booking.notes %}Notas: {{ booking.notes }}{% endif %}
+
+Servicios asignados:
+{% for item in items %}
+- {{ item.service.name }}: {{ item.start_datetime|date:"d/m/Y H:i" }} a {{ item.end_datetime|date:"H:i" }}
+{% endfor %}
+
+Duración asignada: {{ total_duration }} minutos
+Estado: {{ booking.get_status_display }}
+
+{% if booking.requires_payment %}
+Importante: esta reserva tiene un pago pendiente.
+Estado del pago: {{ booking.get_payment_status_display }}
+{% endif %}
+
+Aviso generado automáticamente por NYX.

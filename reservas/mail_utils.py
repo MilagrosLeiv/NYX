@@ -2,6 +2,7 @@ from django.conf import settings
 from django.core.mail import send_mail, EmailMultiAlternatives
 from django.urls import reverse
 from django.template.loader import render_to_string
+from collections import defaultdict
 
 
 def send_booking_confirmed_email(booking, request=None):
@@ -962,3 +963,76 @@ def send_salon_booking_rescheduled_email(booking):
         print(f"Mail salón turno modificado enviado. Booking ID: {booking.id}. sent_count: {sent_count}")
     except Exception as exc:
         print(f"ERROR enviando mail de turno modificado al salón. Booking ID: {booking.id}. Error: {exc}")
+
+
+def send_staff_new_booking_emails(booking):
+    items = booking.items.select_related(
+        "service",
+        "employee",
+        "booking",
+        "booking__salon",
+    ).order_by("start_datetime")
+
+    items_by_employee = defaultdict(list)
+
+    for item in items:
+        employee = item.employee
+
+        if not employee.email:
+            continue
+
+        if not getattr(employee, "notify_by_email", False):
+            continue
+
+        items_by_employee[employee].append(item)
+
+    for employee, employee_items in items_by_employee.items():
+        context = {
+            "booking": booking,
+            "salon": booking.salon,
+            "employee": employee,
+            "items": employee_items,
+            "total_duration": sum(
+                item.service.duration_minutes for item in employee_items
+            ),
+        }
+
+        if booking.status == "confirmed":
+            subject = f"Nuevo turno asignado - {booking.salon.name}"
+        elif booking.payment_choice == "deposit":
+            subject = f"Turno pendiente de seña asignado - {booking.salon.name}"
+        elif booking.payment_choice == "full":
+            subject = f"Turno pendiente de pago asignado - {booking.salon.name}"
+        else:
+            subject = f"Nueva reserva asignada - {booking.salon.name}"
+
+        text_body = render_to_string(
+            "reservas/emails/staff_new_booking.txt",
+            context
+        )
+
+        html_body = render_to_string(
+            "reservas/emails/staff_new_booking.html",
+            context
+        )
+
+        email = EmailMultiAlternatives(
+            subject=subject,
+            body=text_body,
+            from_email=getattr(settings, "DEFAULT_FROM_EMAIL", None),
+            to=[employee.email],
+        )
+
+        email.attach_alternative(html_body, "text/html")
+
+        try:
+            sent_count = email.send(fail_silently=False)
+            print(
+                f"Mail staff enviado a {employee.email}. "
+                f"Booking ID: {booking.id}. sent_count: {sent_count}"
+            )
+        except Exception as exc:
+            print(
+                f"ERROR enviando mail al staff {employee.email}. "
+                f"Booking ID: {booking.id}. Error: {exc}"
+            )

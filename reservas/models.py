@@ -153,6 +153,16 @@ class Employee(models.Model):
         related_name='employees',
         verbose_name='Peluquería',
     )
+    email = models.EmailField(
+        "Email",
+        blank=True,
+        null=True
+    )
+
+    notify_by_email = models.BooleanField(
+        "Recibir notificaciones por email",
+        default=False
+    )
 
     def __str__(self):
         return self.name

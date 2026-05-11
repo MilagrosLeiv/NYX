@@ -152,9 +152,9 @@ class EmployeeAdminForm(forms.ModelForm):
 @admin.register(Employee)
 class EmployeeAdmin(admin.ModelAdmin):
     form = EmployeeAdminForm
-    list_display = ('name', 'salon', 'user', 'phone', 'is_active')
-    list_filter = ('salon', 'is_active')
-    search_fields = ('name', 'phone', 'salon__name', 'user__username')
+    list_display = ('name', 'salon', 'email', 'user', 'phone', 'is_active')
+    list_filter = ('salon','email', 'is_active')
+    search_fields = ('name', 'phone','email', 'salon__name', 'user__username')
     filter_horizontal = ('services',)
 
     class Media:

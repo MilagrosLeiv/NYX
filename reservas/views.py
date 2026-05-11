@@ -36,7 +36,8 @@ from .mail_utils import (
     send_booking_cancelled_email,
     send_booking_rescheduled_email,
     send_salon_new_booking_email,
-    send_salon_booking_rescheduled_email
+    send_salon_booking_rescheduled_email,
+    send_staff_new_booking_emails,
 )
 
 def get_common_employees(service_ids, salon=None):
@@ -1145,10 +1146,12 @@ def confirm_booking(request):
 
                     send_booking_confirmed_email(booking, request=request)
                     send_salon_new_booking_email(booking)
+                    send_staff_new_booking_emails(booking)
 
-                elif booking.selected_payment_method == 'transfer':
+                elif booking.selected_payment_method == 'transferencia':
                     send_booking_payment_pending_email(booking, request=request)
                     send_salon_new_booking_email(booking)
+                    send_staff_new_booking_emails(booking)
 
                 return redirect('booking_success_booking', booking_id=booking.id)
     else:
@@ -1290,6 +1293,7 @@ def payment_webhook(request):
 
         send_booking_confirmed_email(booking, request=request)
         send_salon_new_booking_email(booking)
+        send_staff_new_booking_emails(booking)
 
     return HttpResponse(status=200)
 

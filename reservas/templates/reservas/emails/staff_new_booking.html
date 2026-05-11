@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Nuevo turno asignado - {{ salon.name }}</title>
+</head>
+
+<body style="margin:0; padding:0; background:#edfafa; font-family:Arial, Helvetica, sans-serif; color:#173333;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#edfafa; padding:28px 12px;">
+    <tr>
+      <td align="center">
+
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width:640px; background:#ffffff; border-radius:22px; overflow:hidden; border:1px solid #cceeee; box-shadow:0 18px 45px rgba(64,136,136,0.16);">
+
+          <tr>
+            <td style="background:linear-gradient(135deg, #408888 0%, #73d6d6 100%); padding:30px 28px;">
+              <p style="margin:0 0 8px; color:#eaffff; font-size:13px; font-weight:700; letter-spacing:1.4px; text-transform:uppercase;">
+                {% if booking.status == "confirmed" %}
+                  NYX · Turno asignado
+                {% elif booking.payment_choice == "deposit" %}
+                  NYX · Pendiente de seña
+                {% elif booking.payment_choice == "full" %}
+                  NYX · Pendiente de pago
+                {% else %}
+                  NYX · Nueva reserva
+                {% endif %}
+              </p>
+
+              <h1 style="margin:0; color:#ffffff; font-size:27px; line-height:1.25; font-weight:800;">
+                Tenés un nuevo turno
+              </h1>
+
+              <p style="margin:10px 0 0; color:#f2ffff; font-size:15px;">
+                {{ salon.name }} · {{ employee.name }}
+              </p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:28px;">
+
+              {% if booking.requires_payment %}
+                <table width="100%" cellpadding="0" cellspacing="0" style="background:#fff8e6; border:1px solid #f3d27b; border-radius:18px; margin-bottom:22px;">
+                  <tr>
+                    <td style="padding:20px;">
+                      <h2 style="margin:0 0 8px; color:#5c4300; font-size:18px; font-weight:800;">
+                        Reserva pendiente de pago
+                      </h2>
+
+                      <p style="margin:0; color:#6b5200; font-size:15px; line-height:1.6;">
+                        Esta reserva todavía no está confirmada hasta que se verifique el pago correspondiente.
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              {% endif %}
+
+              <table width="100%" cellpadding="0" cellspacing="0" style="background:#f6ffff; border:1px solid #d7f3f3; border-radius:18px; margin-bottom:22px;">
+                <tr>
+                  <td style="padding:22px;">
+                    <h2 style="margin:0 0 16px; color:#173333; font-size:19px; font-weight:800;">
+                      Datos del cliente
+                    </h2>
+
+                    <p style="margin:0 0 9px; color:#315f5f; font-size:15px;">
+                      <strong style="color:#173333;">Nombre:</strong> {{ booking.customer_name }}
+                    </p>
+
+                    <p style="margin:0 0 9px; color:#315f5f; font-size:15px;">
+                      <strong style="color:#173333;">Teléfono:</strong> {{ booking.customer_phone }}
+                    </p>
+
+                    {% if booking.customer_email %}
+                      <p style="margin:0 0 9px; color:#315f5f; font-size:15px;">
+                        <strong style="color:#173333;">Email:</strong>
+                        <a href="mailto:{{ booking.customer_email }}" style="color:#408888; text-decoration:none; font-weight:700;">
+                          {{ booking.customer_email }}
+                        </a>
+                      </p>
+                    {% endif %}
+
+                    {% if booking.notes %}
+                      <p style="margin:14px 0 0; padding:14px; background:#ffffff; border-left:4px solid #73d6d6; border-radius:12px; color:#315f5f; font-size:14px;">
+                        <strong style="color:#173333;">Notas:</strong> {{ booking.notes }}
+                      </p>
+                    {% endif %}
+                  </td>
+                </tr>
+              </table>
+
+              <h2 style="margin:0 0 14px; color:#173333; font-size:19px; font-weight:800;">
+                Tus servicios asignados
+              </h2>
+
+              {% for item in items %}
+                <table width="100%" cellpadding="0" cellspacing="0" style="background:#ffffff; border:1px solid #d7eeee; border-radius:16px; margin-bottom:12px;">
+                  <tr>
+                    <td style="padding:18px 20px;">
+                      <p style="margin:0 0 8px; color:#173333; font-size:16px; font-weight:800;">
+                        {{ item.service.name }}
+                      </p>
+
+                      <p style="margin:0; color:#315f5f; font-size:14px;">
+                        <strong>Horario:</strong>
+                        {{ item.start_datetime|date:"d/m/Y H:i" }} a {{ item.end_datetime|date:"H:i" }}
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              {% endfor %}
+
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:22px; background:#f0fbfb; border:1px solid #cceeee; border-radius:18px;">
+                <tr>
+                  <td style="padding:20px;">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="padding:6px 0; color:#5d7f7f; font-size:14px;">
+                          Duración asignada
+                        </td>
+                        <td align="right" style="padding:6px 0; color:#173333; font-size:15px; font-weight:800;">
+                          {{ total_duration }} min
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <td style="padding:6px 0; color:#5d7f7f; font-size:14px;">
+                          Estado
+                        </td>
+                        <td align="right" style="padding:6px 0;">
+                          <span style="display:inline-block; padding:7px 13px; background:#dff7f7; color:#2f7777; border:1px solid #bceeee; border-radius:999px; font-size:13px; font-weight:800;">
+                            {{ booking.get_status_display }}
+                          </span>
+                        </td>
+                      </tr>
+
+                      {% if booking.requires_payment %}
+                        <tr>
+                          <td style="padding:6px 0; color:#5d7f7f; font-size:14px;">
+                            Pago
+                          </td>
+                          <td align="right" style="padding:6px 0; color:#9a6a00; font-size:14px; font-weight:800;">
+                            {{ booking.get_payment_status_display }}
+                          </td>
+                        </tr>
+                      {% endif %}
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:24px 0 0; color:#6f8f8f; font-size:13px; line-height:1.6;">
+                Este aviso fue generado automáticamente por <strong style="color:#408888;">NYX</strong>.
+                Revisá la agenda del panel para más información.
+              </p>
+
+            </td>
+          </tr>
+
+        </table>
+
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
