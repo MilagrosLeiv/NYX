@@ -36,6 +36,7 @@ from .mail_utils import (
     send_booking_cancelled_email,
     send_booking_rescheduled_email,
     send_salon_new_booking_email,
+    send_salon_booking_rescheduled_email
 )
 
 def get_common_employees(service_ids, salon=None):
@@ -1447,10 +1448,10 @@ def reschedule_booking(request, token):
             return redirect(f"{reverse('reschedule_booking', args=[booking.client_manage_token])}?date={selected_date_raw}")
 
         send_booking_rescheduled_email(booking, request=request)
+        send_salon_booking_rescheduled_email(booking)
 
         messages.success(request, "Tu turno fue modificado correctamente.")
         return redirect('manage_booking', token=booking.client_manage_token)
-
     context = {
         'booking': booking,
         'booking_items': booking_items,

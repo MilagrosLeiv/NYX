@@ -927,3 +927,49 @@ def send_salon_new_booking_email(booking):
 
     email.attach_alternative(html_body, "text/html")
     email.send(fail_silently=False)
+
+
+def send_salon_booking_rescheduled_email(booking):
+    salon = booking.salon
+
+    if not salon.notification_email:
+        return
+
+    items = booking.items.select_related("service", "employee").order_by(
+        "start_datetime"
+    )
+
+    context = {
+        "booking": booking,
+        "salon": salon,
+        "items": items,
+        "total_price": booking.get_total_price(),
+        "total_duration": booking.get_total_duration_minutes(),
+    }
+
+    subject = f"Turno modificado - {booking.customer_name}"
+
+    text_body = render_to_string(
+        "reservas/emails/salon_booking_rescheduled.txt",
+        context
+    )
+
+    html_body = render_to_string(
+        "reservas/emails/salon_booking_rescheduled.html",
+        context
+    )
+
+    email = EmailMultiAlternatives(
+        subject=subject,
+        body=text_body,
+        from_email=getattr(settings, "DEFAULT_FROM_EMAIL", None),
+        to=[salon.notification_email],
+    )
+
+    email.attach_alternative(html_body, "text/html")
+
+    try:
+        sent_count = email.send(fail_silently=False)
+        print(f"Mail salón turno modificado enviado. Booking ID: {booking.id}. sent_count: {sent_count}")
+    except Exception as exc:
+        print(f"ERROR enviando mail de turno modificado al salón. Booking ID: {booking.id}. Error: {exc}")
