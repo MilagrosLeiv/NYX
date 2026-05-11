@@ -390,22 +390,16 @@
             <div class="nyx-payment-alert">
               {% if booking.payment_choice == "deposit" %}
                 <strong>Seña pendiente</strong>
-                <span>Para confirmar el turno, seguí las instrucciones de pago.</span>
+                <span>Para confirmar el turno, seguí las instrucciones de pago indicadas por el salón.</span>
               {% elif booking.payment_choice == "full" %}
                 <strong>Pago pendiente</strong>
                 <span>Para confirmar el turno, completá el pago correspondiente.</span>
               {% endif %}
             </div>
 
-            {% if booking.payment_checkout_url %}
-              <a class="nyx-btn nyx-btn-primary" href="{{ booking.payment_checkout_url }}">
-                Ir al checkout
-              </a>
-            {% else %}
-              <a class="nyx-btn nyx-btn-primary" href="{% url 'booking_payment' booking.id %}">
-                Ver instrucciones de pago
-              </a>
-            {% endif %}
+            <a class="nyx-btn nyx-btn-primary" href="{% url 'booking_payment' booking.id %}">
+              Ver instrucciones de pago
+            </a>
           {% endif %}
         </div>
 
@@ -413,12 +407,6 @@
           <a class="nyx-btn nyx-btn-outline" href="{% url 'service_list' %}">
             Reservar otro turno
           </a>
-
-          {% if booking.client_manage_token %}
-            <a class="nyx-btn nyx-btn-soft" href="{% url 'manage_booking' booking.client_manage_token %}">
-              Gestionar mi turno
-            </a>
-          {% endif %}
         </div>
 
       </div>
