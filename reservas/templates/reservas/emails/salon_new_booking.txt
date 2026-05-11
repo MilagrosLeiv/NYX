@@ -11,6 +11,8 @@ Servicios:
 {% endfor %}
 
 Duración total: {{ total_duration }} minutos
-Total: ${{ total_price }}
+Total: ${{ total_price|floatformat:"0" }}
 
 Estado: {{ booking.get_status_display }}
+
+Aviso generado automáticamente por NYX.
