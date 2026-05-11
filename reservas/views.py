@@ -1148,7 +1148,7 @@ def confirm_booking(request):
                     send_salon_new_booking_email(booking)
                     send_staff_new_booking_emails(booking)
 
-                elif booking.selected_payment_method == 'transferencia':
+                elif booking.selected_payment_method == 'transfer':
                     send_booking_payment_pending_email(booking, request=request)
                     send_salon_new_booking_email(booking)
                     send_staff_new_booking_emails(booking)
