@@ -1036,3 +1036,4 @@ def send_staff_new_booking_emails(booking):
                 f"ERROR enviando mail al staff {employee.email}. "
                 f"Booking ID: {booking.id}. Error: {exc}"
             )
+
