@@ -42,8 +42,8 @@ def get_user_employee(user):
 
 @admin.register(Salon)
 class SalonAdmin(admin.ModelAdmin):
-    list_display = ('name', 'email', 'phone', 'is_active', 'created_at')
-    search_fields = ('name', 'email', 'phone')
+    list_display = ('name', 'email', 'phone', 'is_active', 'created_at','notification_email',)
+    search_fields = ('name', 'email', 'phone', 'notification_email',)
     list_filter = ('is_active',)
 
     def get_queryset(self, request):

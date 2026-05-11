@@ -1,0 +1,16 @@
+Nuevo turno reservado - {{ salon.name }}
+
+Cliente: {{ booking.customer_name }}
+Teléfono: {{ booking.customer_phone }}
+{% if booking.customer_email %}Email: {{ booking.customer_email }}{% endif %}
+{% if booking.notes %}Notas: {{ booking.notes }}{% endif %}
+
+Servicios:
+{% for item in items %}
+- {{ item.service.name }} con {{ item.employee.name }}: {{ item.start_datetime|date:"d/m/Y H:i" }} a {{ item.end_datetime|date:"H:i" }}
+{% endfor %}
+
+Duración total: {{ total_duration }} minutos
+Total: ${{ total_price }}
+
+Estado: {{ booking.get_status_display }}

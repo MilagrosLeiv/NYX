@@ -1,6 +1,7 @@
 from django.conf import settings
-from django.core.mail import send_mail
+from django.core.mail import send_mail, EmailMultiAlternatives
 from django.urls import reverse
+from django.template.loader import render_to_string
 
 
 def send_booking_confirmed_email(booking, request=None):
@@ -870,3 +871,50 @@ def send_booking_rescheduled_email(booking, request=None):
         )
 
     return True
+
+
+def send_salon_new_booking_email(booking):
+    salon = booking.salon
+
+    print("=== MAIL SALON DEBUG ===")
+    print("Booking ID:", booking.id)
+    print("Salon:", salon.name)
+    print("Notification email:", salon.notification_email)
+
+    if not salon.notification_email:
+        print("NO SE ENVIA: salon.notification_email está vacío")
+        return
+
+    items = booking.items.select_related("service", "employee").order_by(
+        "start_datetime"
+    )
+
+    context = {
+        "booking": booking,
+        "salon": salon,
+        "items": items,
+        "total_price": booking.get_total_price(),
+        "total_duration": booking.get_total_duration_minutes(),
+    }
+
+    subject = f"Nuevo turno reservado - {salon.name}"
+
+    text_body = render_to_string(
+        "reservas/emails/salon_new_booking.txt",
+        context
+    )
+
+    html_body = render_to_string(
+        "reservas/emails/salon_new_booking.html",
+        context
+    )
+
+    email = EmailMultiAlternatives(
+        subject=subject,
+        body=text_body,
+        from_email=getattr(settings, "DEFAULT_FROM_EMAIL", None),
+        to=[salon.notification_email],
+    )
+
+    email.attach_alternative(html_body, "text/html")
+    email.send(fail_silently=False)

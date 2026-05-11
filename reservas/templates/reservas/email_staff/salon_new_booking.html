@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Nuevo turno reservado</title>
+</head>
+<body style="margin:0; padding:0; background:#f3f4f6; font-family:Arial, sans-serif; color:#111827;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6; padding:24px 0;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width:620px; background:#ffffff; border-radius:16px; overflow:hidden; border:1px solid #d7eeee;">
+          <tr>
+            <td style="background:#408888; padding:24px;">
+              <h1 style="margin:0; color:#ffffff; font-size:22px;">
+                Nuevo turno reservado
+              </h1>
+              <p style="margin:6px 0 0; color:#e6fffb; font-size:14px;">
+                {{ salon.name }}
+              </p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:24px;">
+              <h2 style="margin:0 0 12px; font-size:18px;">
+                Datos del cliente
+              </h2>
+
+              <p style="margin:0 0 6px;"><strong>Nombre:</strong> {{ booking.customer_name }}</p>
+              <p style="margin:0 0 6px;"><strong>Teléfono:</strong> {{ booking.customer_phone }}</p>
+
+              {% if booking.customer_email %}
+                <p style="margin:0 0 6px;"><strong>Email:</strong> {{ booking.customer_email }}</p>
+              {% endif %}
+
+              {% if booking.notes %}
+                <p style="margin:0 0 6px;"><strong>Notas:</strong> {{ booking.notes }}</p>
+              {% endif %}
+
+              <hr style="border:none; border-top:1px solid #e5e7eb; margin:24px 0;">
+
+              <h2 style="margin:0 0 12px; font-size:18px;">
+                Detalle del turno
+              </h2>
+
+              {% for item in items %}
+                <div style="padding:14px 0; border-bottom:1px solid #f3f4f6;">
+                  <p style="margin:0 0 4px; font-weight:700;">
+                    {{ item.service.name }}
+                  </p>
+                  <p style="margin:0 0 4px; color:#374151;">
+                    Profesional: {{ item.employee.name }}
+                  </p>
+                  <p style="margin:0; color:#374151;">
+                    {{ item.start_datetime|date:"d/m/Y H:i" }} a {{ item.end_datetime|date:"H:i" }}
+                  </p>
+                </div>
+              {% endfor %}
+
+              <div style="margin-top:20px; padding:16px; background:#f0fbfb; border-radius:12px; border:1px solid #cceeee;">
+                <p style="margin:0 0 8px; font-size:16px;">
+                  <strong>Duración total:</strong> {{ total_duration }} minutos
+                </p>
+                <p style="margin:0 0 8px; font-size:16px;">
+                  <strong>Total:</strong> ${{ total_price }}
+                </p>
+                <p style="margin:0; font-size:14px; color:#6b7280;">
+                  Estado: {{ booking.get_status_display }}
+                </p>
+              </div>
+
+              <p style="margin:24px 0 0; color:#6b7280; font-size:13px;">
+                Este aviso fue generado automáticamente por NYX.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
