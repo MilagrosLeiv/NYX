@@ -5,7 +5,107 @@
 {% block panel_subtitle %}Horarios no disponibles y ausencias cargadas{% endblock %}
 
 {% block panel_content %}
+
+{% if messages %}
+  <div class="mb-3">
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} mb-2">
+        {{ message }}
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
+<div class="nyx-card p-4 mb-4">
+  <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-3">
+    <div>
+      <h2 class="h5 fw-bold mb-1">Cargar bloqueo</h2>
+
+      {% if panel_role == 'staff' %}
+        <p class="text-muted mb-0">
+          Vas a bloquear horarios solo para tu agenda.
+        </p>
+      {% else %}
+        <p class="text-muted mb-0">
+          Elegí un profesional y cargá un horario no disponible.
+        </p>
+      {% endif %}
+    </div>
+  </div>
+
+  <form method="post" class="row g-3">
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+      <div class="col-12">
+        <div class="alert alert-danger mb-0">
+          {{ form.non_field_errors }}
+        </div>
+      </div>
+    {% endif %}
+
+    {% if panel_role == 'owner' %}
+      <div class="col-12 col-md-4">
+        <label class="form-label fw-semibold">{{ form.employee.label }}</label>
+        {{ form.employee }}
+        {% if form.employee.errors %}
+          <div class="text-danger small mt-1">{{ form.employee.errors }}</div>
+        {% endif %}
+      </div>
+    {% else %}
+      {{ form.employee }}
+    {% endif %}
+
+    <div class="col-12 col-md-4">
+      <label class="form-label fw-semibold">{{ form.start_date.label }}</label>
+      {{ form.start_date }}
+      {% if form.start_date.errors %}
+        <div class="text-danger small mt-1">{{ form.start_date.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="col-6 col-md-2">
+      <label class="form-label fw-semibold">{{ form.start_time.label }}</label>
+      {{ form.start_time }}
+      {% if form.start_time.errors %}
+        <div class="text-danger small mt-1">{{ form.start_time.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="col-6 col-md-2">
+      <label class="form-label fw-semibold">{{ form.end_time.label }}</label>
+      {{ form.end_time }}
+      {% if form.end_time.errors %}
+        <div class="text-danger small mt-1">{{ form.end_time.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="col-12">
+      <label class="form-label fw-semibold">{{ form.reason.label }}</label>
+      {{ form.reason }}
+      {% if form.reason.errors %}
+        <div class="text-danger small mt-1">{{ form.reason.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="col-12 d-flex justify-content-end">
+      <button type="submit" class="btn nyx-btn-primary px-4">
+        Cargar bloqueo
+      </button>
+    </div>
+  </form>
+</div>
+
 <div class="nyx-card p-4">
+  <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap mb-3">
+    <div>
+      <h2 class="h5 fw-bold mb-1">Bloqueos cargados</h2>
+      <p class="text-muted mb-0">
+        Estos horarios no aparecerán disponibles para reservas.
+      </p>
+    </div>
+  </div>
+
   {% if blocks %}
     <div class="table-responsive">
       <table class="table nyx-table align-middle">
@@ -20,6 +120,7 @@
             <th>Creado por</th>
           </tr>
         </thead>
+
         <tbody>
           {% for block in blocks %}
             <tr>
@@ -41,4 +142,5 @@
     </div>
   {% endif %}
 </div>
+
 {% endblock %}

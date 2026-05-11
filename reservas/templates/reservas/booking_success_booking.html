@@ -1,136 +1,429 @@
 {% extends "reservas/base.html" %}
-{% load custom_filters %}
-
-{% block title %}Reserva confirmada | PeluqueríaApp{% endblock %}
 
 {% block content %}
-<div class="container py-5">
-  <div class="card border-0 shadow-sm rounded-4 mx-auto" style="max-width: 760px;">
-    <div class="card-body p-4 p-md-5">
-      <div class="text-center mb-4">
-        {% if booking.payment_choice != 'none' and booking.payment_status != 'verified' and booking.status != 'expired' %}
-          <h1 class="fw-bold mb-2">Reserva en proceso</h1>
-          <p class="text-muted mb-0">
-            Falta completar el pago para confirmar tu turno.
-          </p>
-        {% elif booking.status == 'expired' %}
-          <h1 class="fw-bold mb-2">Reserva expirada</h1>
-          <p class="text-muted mb-0">
-            El tiempo para completar el pago venció y el horario volvió a quedar disponible.
-          </p>
-        {% else %}
-          <h1 class="fw-bold mb-2">¡Reserva confirmada!</h1>
-          <p class="text-muted mb-0">
-            Tu reserva fue registrada con éxito.
-          </p>
-        {% endif %}
+<style>
+  .nyx-success-page {
+    min-height: calc(100vh - 80px);
+    padding: 64px 20px;
+    background:
+      radial-gradient(circle at top left, rgba(140, 220, 220, 0.28), transparent 34%),
+      linear-gradient(180deg, #f4ffff 0%, #eefafa 100%);
+  }
+
+  .nyx-success-shell {
+    max-width: 820px;
+    margin: 0 auto;
+  }
+
+  .nyx-success-card {
+    background: rgba(255, 255, 255, 0.96);
+    border: 1px solid #cceeee;
+    border-radius: 28px;
+    box-shadow: 0 24px 70px rgba(64, 136, 136, 0.16);
+    overflow: hidden;
+  }
+
+  .nyx-success-header {
+    padding: 42px 36px 34px;
+    text-align: center;
+    background: linear-gradient(135deg, #408888 0%, #73d6d6 100%);
+    color: #ffffff;
+  }
+
+  .nyx-success-badge {
+    display: inline-flex;
+    margin-bottom: 18px;
+    padding: 8px 15px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.32);
+    color: #f4ffff;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.9px;
+    text-transform: uppercase;
+  }
+
+  .nyx-success-icon {
+    width: 58px;
+    height: 58px;
+    margin: 0 auto 16px;
+    display: grid;
+    place-items: center;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #408888;
+    font-size: 34px;
+    font-weight: 900;
+    box-shadow: 0 12px 28px rgba(15, 45, 58, 0.18);
+  }
+
+  .nyx-success-header h1 {
+    margin: 0;
+    font-size: clamp(30px, 4vw, 44px);
+    line-height: 1.08;
+    font-weight: 900;
+    letter-spacing: -0.04em;
+  }
+
+  .nyx-success-header p {
+    max-width: 520px;
+    margin: 12px auto 0;
+    color: #efffff;
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  .nyx-success-body {
+    padding: 34px 36px 38px;
+  }
+
+  .nyx-info-panel {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 30px;
+    padding: 22px;
+    border: 1px solid #d7f3f3;
+    border-radius: 22px;
+    background: #f6ffff;
+  }
+
+  .nyx-label {
+    display: block;
+    margin-bottom: 5px;
+    color: #6a8989;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .nyx-info-panel strong {
+    color: #173333;
+    font-size: 15px;
+    word-break: break-word;
+  }
+
+  .nyx-section-title h2 {
+    margin: 0 0 14px;
+    color: #173333;
+    font-size: 21px;
+    font-weight: 900;
+  }
+
+  .nyx-items-list {
+    display: grid;
+    gap: 12px;
+  }
+
+  .nyx-booking-item {
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 18px 20px;
+    border: 1px solid #d7eeee;
+    border-radius: 18px;
+    background: #ffffff;
+  }
+
+  .nyx-booking-item h3 {
+    margin: 0 0 5px;
+    color: #173333;
+    font-size: 16px;
+    font-weight: 900;
+  }
+
+  .nyx-booking-item p {
+    margin: 0;
+    color: #5d7f7f;
+    font-size: 14px;
+  }
+
+  .nyx-booking-time {
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .nyx-booking-time strong {
+    display: block;
+    color: #173333;
+    font-size: 15px;
+    font-weight: 900;
+  }
+
+  .nyx-booking-time span {
+    display: block;
+    margin-top: 4px;
+    color: #6a8989;
+    font-size: 13px;
+  }
+
+  .nyx-summary-box {
+    margin-top: 26px;
+    padding: 22px;
+    border: 1px solid #cceeee;
+    border-radius: 22px;
+    background: #f0fbfb;
+  }
+
+  .nyx-summary-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 7px 0;
+    color: #5d7f7f;
+    font-size: 15px;
+  }
+
+  .nyx-summary-row strong {
+    color: #173333;
+    font-weight: 900;
+  }
+
+  .nyx-summary-total {
+    margin-top: 8px;
+    padding-top: 15px;
+    border-top: 1px solid #d2eeee;
+  }
+
+  .nyx-summary-total span {
+    color: #173333;
+    font-size: 18px;
+    font-weight: 900;
+  }
+
+  .nyx-summary-total strong {
+    color: #408888;
+    font-size: 25px;
+    font-weight: 950;
+  }
+
+  .nyx-payment-alert {
+    margin-top: 18px;
+    padding: 16px;
+    border: 1px solid #f1d48a;
+    border-radius: 16px;
+    background: #fff8e6;
+    color: #6b5200;
+  }
+
+  .nyx-payment-alert strong {
+    display: block;
+    margin-bottom: 5px;
+    color: #5c4300;
+    font-size: 15px;
+  }
+
+  .nyx-payment-alert span {
+    display: block;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .nyx-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 26px;
+  }
+
+  .nyx-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 46px;
+    padding: 12px 20px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 900;
+    text-decoration: none;
+    border: none;
+  }
+
+  .nyx-btn-primary {
+    width: 100%;
+    margin-top: 18px;
+    background: linear-gradient(135deg, #408888 0%, #73d6d6 100%);
+    color: #ffffff;
+    box-shadow: 0 14px 30px rgba(64, 136, 136, 0.22);
+  }
+
+  .nyx-btn-outline {
+    border: 1px solid #408888;
+    color: #408888;
+    background: #ffffff;
+  }
+
+  .nyx-btn-soft {
+    border: 1px solid #cceeee;
+    color: #2f7777;
+    background: #eaffff;
+  }
+
+  @media (max-width: 640px) {
+    .nyx-success-page {
+      padding: 28px 14px;
+    }
+
+    .nyx-success-header {
+      padding: 34px 22px 30px;
+    }
+
+    .nyx-success-body {
+      padding: 24px 18px 28px;
+    }
+
+    .nyx-info-panel {
+      grid-template-columns: 1fr;
+      padding: 18px;
+    }
+
+    .nyx-booking-item {
+      flex-direction: column;
+    }
+
+    .nyx-booking-time {
+      text-align: left;
+      white-space: normal;
+    }
+
+    .nyx-actions {
+      flex-direction: column;
+    }
+
+    .nyx-btn {
+      width: 100%;
+    }
+  }
+</style>
+
+<section class="nyx-success-page">
+  <div class="nyx-success-shell">
+
+    <div class="nyx-success-card">
+
+      <div class="nyx-success-header">
+        <div class="nyx-success-badge">
+          {% if booking.requires_payment %}
+            Reserva registrada
+          {% else %}
+            Turno confirmado
+          {% endif %}
+        </div>
+
+        <div class="nyx-success-icon">✓</div>
+
+        <h1>
+          {% if booking.requires_payment %}
+            ¡Reserva registrada!
+          {% else %}
+            ¡Reserva confirmada!
+          {% endif %}
+        </h1>
+
+        <p>
+          {% if booking.requires_payment %}
+            Tu reserva fue registrada. Para confirmar el turno, seguí las instrucciones de pago.
+          {% else %}
+            Tu turno fue registrado correctamente. Guardá esta información para tenerla a mano.
+          {% endif %}
+        </p>
       </div>
 
-      {% if booking.payment_choice != 'none' and booking.payment_status != 'verified' and booking.status != 'expired' %}
-        <div class="alert alert-warning rounded-4 mb-4">
-          <div class="fw-semibold mb-1">Tu turno todavía no está confirmado.</div>
-          <div>Para asegurar la reserva, completa el pago indicado por el salon.</div>
+      <div class="nyx-success-body">
 
-          {% if booking.payment_expires_at %}
-            <div class="small mt-2">
-              Tenés tiempo hasta el {{ booking.payment_expires_at|date:"d/m/Y H:i" }} para completar el pago.
+        <div class="nyx-info-panel">
+          <div>
+            <span class="nyx-label">Peluquería</span>
+            <strong>{{ booking.salon.name }}</strong>
+          </div>
+
+          <div>
+            <span class="nyx-label">Cliente</span>
+            <strong>{{ booking.customer_name }}</strong>
+          </div>
+
+          <div>
+            <span class="nyx-label">Teléfono</span>
+            <strong>{{ booking.customer_phone }}</strong>
+          </div>
+
+          {% if booking.customer_email %}
+            <div>
+              <span class="nyx-label">Email</span>
+              <strong>{{ booking.customer_email }}</strong>
             </div>
           {% endif %}
         </div>
-      {% elif booking.status == 'expired' %}
-        <div class="alert alert-danger rounded-4 mb-4">
-          Esta reserva venció por falta de pago. Si todavía querés ese turno, vas a tener que reservarlo otra vez.
+
+        <div class="nyx-section-title">
+          <h2>Detalle de la reserva</h2>
         </div>
-      {% endif %}
 
-      <div class="mb-4">
-        <h2 class="h5 mb-3">{{ booking.salon.name }}</h2>
-        <div><strong>Cliente:</strong> {{ booking.customer_name }}</div>
-        <div><strong>Teléfono:</strong> {{ booking.customer_phone }}</div>
-        {% if booking.customer_email %}
-          <div><strong>Email:</strong> {{ booking.customer_email }}</div>
-        {% endif %}
-      </div>
-
-      <div class="mb-4">
-        <h3 class="h6 text-muted mb-3">Detalle de la reserva</h3>
-
-        <div class="d-flex flex-column gap-3">
+        <div class="nyx-items-list">
           {% for item in booking.items.all %}
-            <div class="border rounded-3 p-3">
-              <div class="d-flex justify-content-between gap-3">
-                <div>
-                  <div class="fw-semibold">{{ item.service.name }}</div>
-                  <div class="text-muted small">Con {{ item.employee.name }}</div>
-                </div>
-                <div class="text-end">
-                  <div class="fw-semibold">{{ item.start_datetime|date:"d/m/Y H:i" }}</div>
-                  <div class="text-muted small">
-                    hasta {{ item.end_datetime|date:"H:i" }}
-                  </div>
-                </div>
+            <div class="nyx-booking-item">
+              <div>
+                <h3>{{ item.service.name }}</h3>
+                <p>Con {{ item.employee.name }}</p>
+              </div>
+
+              <div class="nyx-booking-time">
+                <strong>{{ item.start_datetime|date:"d/m/Y H:i" }}</strong>
+                <span>hasta {{ item.end_datetime|date:"H:i" }}</span>
               </div>
             </div>
           {% endfor %}
         </div>
-      </div>
 
-      <hr>
+        <div class="nyx-summary-box">
+          <div class="nyx-summary-row">
+            <span>Duración total</span>
+            <strong>{{ booking.get_total_duration_minutes }} min</strong>
+          </div>
 
-      <div class="d-flex justify-content-between mb-2">
-        <span class="text-muted">Duración total</span>
-        <span>{{ booking.get_total_duration_minutes }} min</span>
-      </div>
+          <div class="nyx-summary-row nyx-summary-total">
+            <span>Total</span>
+            <strong>${{ booking.get_total_price|floatformat:"0" }}</strong>
+          </div>
 
-      <div class="d-flex justify-content-between fw-bold fs-5 mb-4">
-        <span>Total</span>
-        <span>${{ booking.get_total_price|miles_punto }}</span>
-      </div>
+          {% if booking.requires_payment %}
+            <div class="nyx-payment-alert">
+              {% if booking.payment_choice == "deposit" %}
+                <strong>Seña pendiente</strong>
+                <span>Para confirmar el turno, seguí las instrucciones de pago.</span>
+              {% elif booking.payment_choice == "full" %}
+                <strong>Pago pendiente</strong>
+                <span>Para confirmar el turno, completá el pago correspondiente.</span>
+              {% endif %}
+            </div>
 
-      {% if booking.payment_choice == 'deposit' %}
-        <div class="d-flex justify-content-between mb-2">
-          <span class="text-muted">Seña requerida</span>
-          <span class="fw-semibold">${{ booking.payment_required_amount|miles_punto }}</span>
-        </div>
-        <div class="small text-muted mb-2">
-          Estado del pago: {{ booking.get_payment_status_display }}
-        </div>
-
-      {% elif booking.payment_choice == 'full' %}
-        <div class="d-flex justify-content-between mb-2">
-          <span class="text-muted">Pago requerido</span>
-          <span class="fw-semibold">${{ booking.payment_required_amount|miles_punto }}</span>
-        </div>
-        <div class="small text-muted mb-2">
-          Estado del pago: {{ booking.get_payment_status_display }}
-        </div>
-      {% endif %}
-
-      {% if booking.selected_payment_method %}
-        <div class="small text-muted mb-3">
-          Medio de pago:
-          {% if booking.selected_payment_method == 'transfer' %}
-            Transferencia
-          {% elif booking.selected_payment_method == 'integrated' %}
-            Pago integrado
-          {% else %}
-            {{ booking.selected_payment_method }}
+            {% if booking.payment_checkout_url %}
+              <a class="nyx-btn nyx-btn-primary" href="{{ booking.payment_checkout_url }}">
+                Ir al checkout
+              </a>
+            {% else %}
+              <a class="nyx-btn nyx-btn-primary" href="{% url 'booking_payment' booking.id %}">
+                Ver instrucciones de pago
+              </a>
+            {% endif %}
           {% endif %}
         </div>
-      {% endif %}
 
-      <div class="d-flex gap-2 flex-wrap">
-        {% if booking.payment_choice != 'none' and booking.payment_required_amount > 0 and booking.payment_status != 'verified' and booking.status != 'expired' %}
-          <a href="{{ booking.payment_checkout_url|default:'#' }}" class="btn btn-dark">
-            Ver instrucciones de pago
+        <div class="nyx-actions">
+          <a class="nyx-btn nyx-btn-outline" href="{% url 'service_list' %}">
+            Reservar otro turno
           </a>
-        {% endif %}
 
-        <a href="{% url 'service_list' %}?salon={{ booking.salon.id }}" class="btn btn-outline-dark">
-          Reservar otro turno
-        </a>
+          {% if booking.client_manage_token %}
+            <a class="nyx-btn nyx-btn-soft" href="{% url 'manage_booking' booking.client_manage_token %}">
+              Gestionar mi turno
+            </a>
+          {% endif %}
+        </div>
+
       </div>
     </div>
+
   </div>
-</div>
+</section>
 {% endblock %}

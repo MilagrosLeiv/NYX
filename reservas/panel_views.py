@@ -4,7 +4,7 @@ from urllib import request
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.shortcuts import get_object_or_404, render, redirect
 from django.utils import timezone
 
@@ -14,6 +14,7 @@ from .panel_forms import (
     PanelBusinessHoursForm,
     PanelServiceForm,
     PanelEmployeeForm,
+    EmployeeTimeOffForm,
     PanelSalonSettingsForm,
 )
 from .booking_utils import (
@@ -159,7 +160,6 @@ def panel_agenda(request):
     }
     return render(request, 'reservas/panel/agenda.html', context)
 
-
 @login_required
 def panel_bloqueos(request):
     if request.user.is_superuser:
@@ -171,25 +171,66 @@ def panel_bloqueos(request):
     if not salon:
         raise PermissionDenied("Tu usuario no está asociado a ninguna peluquería.")
 
+    is_owner = is_owner_user(request.user)
+    is_staff = is_staff_user(request.user)
+
+    if not is_owner and not (is_staff and employee):
+        raise PermissionDenied("No tenés permisos para gestionar bloqueos.")
+
+    if request.method == "POST":
+        form = EmployeeTimeOffForm(
+            request.POST,
+            salon=salon,
+            employee=employee,
+            is_owner=is_owner,
+        )
+
+        if form.is_valid():
+            try:
+                block = form.save(commit=False)
+                block.created_by = request.user
+                block.full_clean()
+                block.save()
+
+                messages.success(request, "Bloqueo cargado correctamente.")
+                return redirect("panel_bloqueos")
+
+            except ValidationError as e:
+                form.add_error(
+                    None,
+                    e.messages[0] if getattr(e, "messages", None) else "No se pudo cargar el bloqueo."
+                )
+    else:
+        form = EmployeeTimeOffForm(
+            salon=salon,
+            employee=employee,
+            is_owner=is_owner,
+        )
+
     blocks = EmployeeTimeOff.objects.select_related(
-        'employee', 'employee__salon', 'created_by'
+        "employee",
+        "employee__salon",
+        "created_by",
     )
 
-    if is_owner_user(request.user):
+    if is_owner:
         blocks = blocks.filter(employee__salon=salon)
-    elif is_staff_user(request.user) and employee:
+    elif is_staff and employee:
         blocks = blocks.filter(employee=employee)
     else:
         blocks = blocks.none()
 
-    blocks = blocks.order_by('start_datetime')
+    blocks = blocks.order_by("start_datetime")
 
     context = {
-        'panel_role': 'owner' if is_owner_user(request.user) else 'staff',
-        'salon': salon,
-        'blocks': blocks,
+        "panel_role": "owner" if is_owner else "staff",
+        "salon": salon,
+        "employee": employee,
+        "blocks": blocks,
+        "form": form,
     }
-    return render(request, 'reservas/panel/bloqueos.html', context)
+
+    return render(request, "reservas/panel/bloqueos.html", context)
 
 @login_required
 def panel_services(request):

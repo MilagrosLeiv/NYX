@@ -1,8 +1,9 @@
 from decimal import Decimal, InvalidOperation
 
 from django import forms
+from django.utils import timezone
 
-from .models import Service, Employee, BusinessHours, Salon
+from .models import Service, Employee, BusinessHours, Salon,EmployeeTimeOff
 
 
 class PanelServiceForm(forms.ModelForm):
@@ -107,6 +108,110 @@ class PanelEmployeeForm(forms.ModelForm):
                     )
 
         return services
+    
+class EmployeeTimeOffForm(forms.ModelForm):
+    start_date = forms.DateField(
+        label="Fecha",
+        widget=forms.DateInput(attrs={
+            "type": "date",
+            "class": "form-control nyx-input",
+        })
+    )
+
+    start_time = forms.TimeField(
+        label="Hora inicio",
+        widget=forms.TimeInput(attrs={
+            "type": "time",
+            "class": "form-control nyx-input",
+        })
+    )
+
+    end_time = forms.TimeField(
+        label="Hora fin",
+        widget=forms.TimeInput(attrs={
+            "type": "time",
+            "class": "form-control nyx-input",
+        })
+    )
+
+    class Meta:
+        model = EmployeeTimeOff
+        fields = ["employee", "reason"]
+        widgets = {
+            "employee": forms.Select(attrs={
+                "class": "form-select nyx-input",
+            }),
+            "reason": forms.TextInput(attrs={
+                "class": "form-control nyx-input",
+                "placeholder": "Ej: almuerzo, trámite, ausencia, descanso",
+            }),
+        }
+
+    def __init__(self, *args, salon=None, employee=None, is_owner=False, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.salon = salon
+        self.fixed_employee = employee
+        self.is_owner = is_owner
+
+        if is_owner:
+            self.fields["employee"].queryset = Employee.objects.filter(
+                salon=salon,
+                is_active=True
+            ).order_by("name")
+            self.fields["employee"].label = "Profesional"
+        else:
+            self.fields["employee"].required = False
+            self.fields["employee"].widget = forms.HiddenInput()
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        start_date = cleaned_data.get("start_date")
+        start_time = cleaned_data.get("start_time")
+        end_time = cleaned_data.get("end_time")
+
+        if self.is_owner:
+            employee = cleaned_data.get("employee")
+        else:
+            employee = self.fixed_employee
+            cleaned_data["employee"] = employee
+
+        if not employee:
+            raise forms.ValidationError("No encontramos el profesional asociado a tu usuario.")
+
+        if employee.salon_id != self.salon.id:
+            raise forms.ValidationError("Ese profesional no pertenece a esta peluquería.")
+
+        if start_date and start_time and end_time:
+            start_datetime = timezone.make_aware(
+                timezone.datetime.combine(start_date, start_time),
+                timezone.get_current_timezone()
+            )
+            end_datetime = timezone.make_aware(
+                timezone.datetime.combine(start_date, end_time),
+                timezone.get_current_timezone()
+            )
+
+            cleaned_data["start_datetime"] = start_datetime
+            cleaned_data["end_datetime"] = end_datetime
+
+            if end_datetime <= start_datetime:
+                raise forms.ValidationError("La hora de fin debe ser posterior a la hora de inicio.")
+
+        return cleaned_data
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.employee = self.cleaned_data["employee"]
+        instance.start_datetime = self.cleaned_data["start_datetime"]
+        instance.end_datetime = self.cleaned_data["end_datetime"]
+
+        if commit:
+            instance.full_clean()
+            instance.save()
+
+        return instance
     
 class PanelBusinessHoursForm(forms.ModelForm):
     class Meta:
