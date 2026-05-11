@@ -704,7 +704,6 @@ def send_booking_cancelled_email(booking):
 
 def send_booking_rescheduled_email(booking, request=None):
     customer_email = (booking.customer_email or "").strip()
-    salon_email = (booking.salon.email or "").strip()
     from_email = (settings.DEFAULT_FROM_EMAIL or "").strip()
 
     if not from_email:
@@ -856,16 +855,6 @@ def send_booking_rescheduled_email(booking, request=None):
             message=plain_message,
             from_email=from_email,
             recipient_list=[customer_email],
-            fail_silently=False,
-            html_message=html_message,
-        )
-
-    if salon_email:
-        send_mail(
-            subject=f'Turno modificado - {booking.customer_name}',
-            message=plain_message,
-            from_email=from_email,
-            recipient_list=[salon_email],
             fail_silently=False,
             html_message=html_message,
         )
