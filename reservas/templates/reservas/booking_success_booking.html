@@ -2,7 +2,7 @@
 
 {% block title %}
   {% if booking.requires_payment %}
-    Reserva registrada | NYX
+    Reserva en proceso | NYX
   {% else %}
     Reserva confirmada | NYX
   {% endif %}
@@ -22,7 +22,7 @@
         <div>
           <h1 class="nyx-page-title mb-2">
             {% if booking.requires_payment %}
-              Reserva registrada
+              Reserva en proceso
             {% else %}
               Reserva confirmada
             {% endif %}
@@ -30,7 +30,7 @@
 
           <p class="nyx-page-subtitle nyx-text-muted mb-0">
             {% if booking.requires_payment %}
-              Tu reserva fue registrada. Para confirmar el turno, seguí las instrucciones de pago.
+            Para confirmar el turno, seguí las instrucciones de pago.
             {% else %}
               Tu turno fue registrado correctamente. Guardá esta información para tenerla a mano.
             {% endif %}
