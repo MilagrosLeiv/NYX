@@ -16,11 +16,27 @@
           <tr>
             <td style="background:linear-gradient(135deg, #408888 0%, #73d6d6 100%); padding:30px 28px;">
               <p style="margin:0 0 8px; color:#eaffff; font-size:13px; font-weight:700; letter-spacing:1.4px; text-transform:uppercase;">
-                NYX · Nueva reserva
+                {% if booking.status == "confirmed" %}
+                  NYX · Turno confirmado
+                {% elif booking.payment_choice == "deposit" %}
+                  NYX · Pendiente de seña
+                {% elif booking.payment_choice == "full" %}
+                  NYX · Pendiente de pago
+                {% else %}
+                  NYX · Nueva reserva
+                {% endif %}
               </p>
 
               <h1 style="margin:0; color:#ffffff; font-size:27px; line-height:1.25; font-weight:800;">
-                Nuevo turno reservado
+                {% if booking.status == "confirmed" %}
+                  Nuevo turno confirmado
+                {% elif booking.payment_choice == "deposit" %}
+                  Reserva pendiente de seña
+                {% elif booking.payment_choice == "full" %}
+                  Reserva pendiente de pago
+                {% else %}
+                  Nueva reserva pendiente
+                {% endif %}
               </h1>
 
               <p style="margin:10px 0 0; color:#f2ffff; font-size:15px;">
@@ -93,6 +109,42 @@
                 </table>
               {% endfor %}
 
+              {% if booking.requires_payment %}
+                <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:22px; background:#fff8e6; border:1px solid #f3d27b; border-radius:18px;">
+                  <tr>
+                    <td style="padding:20px;">
+                      <h2 style="margin:0 0 12px; color:#5c4300; font-size:18px; font-weight:800;">
+                        Pago pendiente
+                      </h2>
+
+                      {% if booking.payment_choice == "deposit" %}
+                        <p style="margin:0 0 8px; color:#6b5200; font-size:15px;">
+                          Esta reserva requiere una seña para quedar confirmada.
+                        </p>
+                      {% elif booking.payment_choice == "full" %}
+                        <p style="margin:0 0 8px; color:#6b5200; font-size:15px;">
+                          Esta reserva requiere el pago total para quedar confirmada.
+                        </p>
+                      {% endif %}
+
+                      <p style="margin:0 0 8px; color:#6b5200; font-size:15px;">
+                        <strong>Monto a pagar:</strong> ${{ payment_required_amount|floatformat:"0" }}
+                      </p>
+
+                      <p style="margin:0 0 8px; color:#6b5200; font-size:15px;">
+                        <strong>Estado del pago:</strong> {{ booking.get_payment_status_display }}
+                      </p>
+
+                      {% if booking.selected_payment_method %}
+                        <p style="margin:0; color:#6b5200; font-size:15px;">
+                          <strong>Método elegido:</strong> {{ booking.selected_payment_method }}
+                        </p>
+                      {% endif %}
+                    </td>
+                  </tr>
+                </table>
+              {% endif %}
+
               <!-- Resumen -->
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:22px; background:#f0fbfb; border:1px solid #cceeee; border-radius:18px;">
                 <tr>
@@ -122,7 +174,11 @@
                         </td>
                         <td align="right" style="padding:6px 0;">
                           <span style="display:inline-block; padding:7px 13px; background:#dff7f7; color:#2f7777; border:1px solid #bceeee; border-radius:999px; font-size:13px; font-weight:800;">
-                            {{ booking.get_status_display }}
+                            {% if booking.status == "pending" and booking.requires_payment %}
+                              <p style="margin:10px 0 0; color:#9a6a00; font-size:13px; font-weight:700;">
+                                Aún no está confirmado: falta verificar el pago.
+                              </p>
+                            {% endif %}
                           </span>
                         </td>
                       </tr>
