@@ -1,0 +1,23 @@
+<h1>Nuevo turno reservado - {{ salon.name }}</h1>
+
+<p><strong>Cliente:</strong> {{ booking.customer_name }}</p>
+<p><strong>Teléfono:</strong> {{ booking.customer_phone }}</p>
+
+{% if booking.customer_email %}
+<p><strong>Email:</strong> {{ booking.customer_email }}</p>
+{% endif %}
+
+<h2>Servicios</h2>
+
+<ul>
+  {% for item in items %}
+    <li>
+      {{ item.service.name }} con {{ item.employee.name }}:
+      {{ item.start_datetime|date:"d/m/Y H:i" }} a {{ item.end_datetime|date:"H:i" }}
+    </li>
+  {% endfor %}
+</ul>
+
+<p><strong>Duración total:</strong> {{ total_duration }} minutos</p>
+<p><strong>Total:</strong> ${{ total_price }}</p>
+<p><strong>Estado:</strong> {{ booking.get_status_display }}</p>
