@@ -602,6 +602,13 @@ select.form-select:focus {
     color: #7a6230;
 }
 
+.nyx-alert-success {
+  background: #ecfdf5;
+  border: 1px solid #bbf7d0;
+  color: #14532d;
+  border-radius: 18px;
+}
+
 /* =========================
    RESPONSIVE
 ========================= */

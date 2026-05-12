@@ -1244,11 +1244,37 @@ def booking_success_booking(request, booking_id):
     expire_unpaid_bookings()
 
     booking = get_object_or_404(
-        Booking.objects.prefetch_related('items__service', 'items__employee').select_related('salon'),
+        Booking.objects
+        .prefetch_related('items__service', 'items__employee')
+        .select_related('salon'),
         pk=booking_id
     )
+
+    is_integrated_payment = booking.selected_payment_method == 'integrated'
+    is_transfer_payment = booking.selected_payment_method == 'transfer'
+
+    integrated_payment_verified = (
+        is_integrated_payment
+        and booking.payment_status == 'verified'
+    )
+
+    integrated_payment_pending = (
+        is_integrated_payment
+        and booking.payment_status == 'pending'
+    )
+
+    integrated_payment_rejected = (
+        is_integrated_payment
+        and booking.payment_status == 'rejected'
+    )
+
     return render(request, 'reservas/booking_success_booking.html', {
         'booking': booking,
+        'is_integrated_payment': is_integrated_payment,
+        'is_transfer_payment': is_transfer_payment,
+        'integrated_payment_verified': integrated_payment_verified,
+        'integrated_payment_pending': integrated_payment_pending,
+        'integrated_payment_rejected': integrated_payment_rejected,
     })
 
 def booking_payment(request, booking_id):
