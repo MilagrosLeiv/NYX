@@ -116,6 +116,36 @@ class SalonMembership(models.Model):
 
     def __str__(self):
         return f"{self.user} - {self.salon} - {self.role}"
+    
+class SalonPaymentSettings(models.Model):
+    salon = models.OneToOneField(
+        Salon,
+        on_delete=models.CASCADE,
+        related_name="payment_settings"
+    )
+
+    mercadopago_enabled = models.BooleanField(default=False)
+    mercadopago_connected = models.BooleanField(default=False)
+
+    mp_user_id = models.CharField(max_length=100, blank=True, default="")
+    mp_access_token = models.TextField(blank=True, default="")
+    mp_refresh_token = models.TextField(blank=True, default="")
+    mp_public_key = models.CharField(max_length=255, blank=True, default="")
+    mp_token_expires_at = models.DateTimeField(null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def has_valid_mercadopago_connection(self):
+        return (
+            self.mercadopago_enabled
+            and self.mercadopago_connected
+            and bool(self.mp_access_token)
+        )
+
+    def __str__(self):
+        return f"Configuración de pagos - {self.salon.name}"
+    
 
 class Service(models.Model):
     name = models.CharField(max_length=100)

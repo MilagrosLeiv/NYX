@@ -9,7 +9,11 @@ from datetime import timedelta
 User = get_user_model()
 
 from .forms import AppointmentForm
-from .models import Service, Employee, Appointment, BusinessHours, Salon, Booking, BookingItem, SalonMembership, EmployeeTimeOff
+from .models import (Appointment, Service, Employee,
+                     Appointment, BusinessHours,
+                     Salon, Booking, BookingItem, 
+                     SalonMembership, EmployeeTimeOff, SalonPaymentSettings
+                     )
 
 
 def get_user_membership(user):
@@ -693,3 +697,24 @@ class BookingItemAdmin(admin.ModelAdmin):
         return obj.booking.salon.name
     salon_name.short_description = 'Peluquería'
 
+@admin.register(SalonPaymentSettings)
+class SalonPaymentSettingsAdmin(admin.ModelAdmin):
+    list_display = (
+        "salon",
+        "mercadopago_enabled",
+        "mercadopago_connected",
+        "mp_user_id",
+        "updated_at",
+    )
+    list_filter = (
+        "mercadopago_enabled",
+        "mercadopago_connected",
+    )
+    search_fields = (
+        "salon__name",
+        "mp_user_id",
+    )
+    readonly_fields = (
+        "created_at",
+        "updated_at",
+    )

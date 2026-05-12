@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views, panel_views
-
+from .views import mercadopago_oauth_connect, mercadopago_oauth_callback
 urlpatterns = [
     path('', views.service_list, name='service_list'),
 
@@ -66,5 +66,17 @@ urlpatterns = [
         'panel/reservas/<int:booking_id>/marcar-pago-verificado/',
         panel_views.panel_booking_mark_payment_verified,
         name='panel_booking_mark_payment_verified'
+    ),
+
+    #PAGOS INTEGRADOS - MERCADOPAGO
+    path(
+        "pagos/mercadopago/oauth/connect/<int:salon_id>/",
+        views.mercadopago_oauth_connect,
+        name="mercadopago_oauth_connect"
+    ),
+    path(
+        "pagos/mercadopago/oauth/callback/",
+        views.mercadopago_oauth_callback,
+        name="mercadopago_oauth_callback"
     ),
 ]

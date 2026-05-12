@@ -85,9 +85,26 @@
         </span>
       </div>
 
-      <div class="d-flex justify-content-between mb-2">
+      <div class="d-flex justify-content-between align-items-center mb-2">
         <span class="text-secondary">Estado</span>
-        <span class="fw-semibold">{{ booking.get_payment_status_display }}</span>
+
+        {% if booking.payment_status == 'verified' %}
+          <span class="nyx-badge" style="background:#dff7f7; color:#2f7777; border:1px solid #bceeee;">
+            Recibido
+          </span>
+        {% elif booking.payment_status == 'pending' %}
+          <span class="nyx-badge" style="background:#fff8e6; color:#9a6a00; border:1px solid #f3d27b;">
+            Pendiente
+          </span>
+        {% elif booking.payment_status == 'rejected' %}
+          <span class="nyx-badge" style="background:#ffe8e8; color:#b42318; border:1px solid #ffc9c9;">
+            Rechazado
+          </span>
+        {% else %}
+          <span class="nyx-badge">
+            {{ booking.get_payment_status_display }}
+          </span>
+        {% endif %}
       </div>
 
       <div class="d-flex justify-content-between mb-2">
@@ -95,11 +112,36 @@
         <span class="fw-semibold">${{ booking.payment_required_amount|miles_punto }}</span>
       </div>
 
+      {% if booking.selected_payment_method %}
+        <div class="d-flex justify-content-between mb-2">
+          <span class="text-secondary">Medio</span>
+          <span class="fw-semibold">
+            {% if booking.selected_payment_method == "transfer" %}
+              Transferencia
+            {% elif booking.selected_payment_method == "integrated" %}
+              Mercado Pago
+            {% else %}
+              {{ booking.selected_payment_method }}
+            {% endif %}
+          </span>
+        </div>
+      {% endif %}
+
       {% if booking.salon.payment_instructions %}
         <div class="mt-3 p-3 rounded-4" style="background:#f5fbfb; border:1px solid #d7ecec;">
           <div class="fw-semibold mb-1">Instrucciones de pago</div>
           <div class="small text-muted">
             {{ booking.salon.payment_instructions }}
+          </div>
+        </div>
+      {% endif %}
+      {% if booking.selected_payment_method == "transfer" and booking.payment_status == "pending" %}
+        <div class="mt-3 p-3 rounded-4" style="background:#fff8e6; border:1px solid #f3d27b; color:#6b5200;">
+          <div class="fw-bold mb-1">
+            Pago pendiente por transferencia
+          </div>
+          <div class="small">
+            El turno ya está reservado en la agenda. Esta marca es solo administrativa: si recibís la seña, podés registrarla como recibida. Si no se acredita, podés cancelar la reserva manualmente.
           </div>
         </div>
       {% endif %}
@@ -114,8 +156,12 @@
     {% if booking.payment_choice != 'none' and booking.payment_status != 'verified' and booking.status != 'cancelled' and booking.status != 'expired' %}
       <form method="post" action="{% url 'panel_booking_mark_payment_verified' booking.id %}">
         {% csrf_token %}
-        <button type="submit" class="btn nyx-flow-btn rounded-pill px-4">
-          Marcar seña como recibida
+        <button type="submit" class="btn nyx-btn-outline rounded-pill px-4">
+          {% if booking.payment_choice == "deposit" %}
+            Marcar seña como recibida
+          {% else %}
+            Marcar pago como recibido
+          {% endif %}
         </button>
       </form>
     {% endif %}

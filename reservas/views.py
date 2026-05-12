@@ -1,5 +1,8 @@
 import json
 import mercadopago
+import secrets
+import requests
+from urllib.parse import quote
 
 
 from datetime import datetime, timedelta
@@ -17,11 +20,12 @@ from django.db.models import Count,Q
 from django.core.exceptions import ValidationError
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.decorators import login_required
 
 
 from .payment_utils import create_pending_payment_session
 from .forms import AppointmentForm, PublicAppointmentForm, AppointmentConfirmForm
-from .models import Appointment, Employee, Salon, Service, Booking
+from .models import Appointment, Employee, Salon, Service, Booking, SalonPaymentSettings, SalonMembership
 from .utils import get_available_slots
 from .booking_utils import (
     expire_unpaid_bookings,
@@ -1483,3 +1487,127 @@ def reschedule_booking(request, token):
     }
 
     return render(request, 'reservas/reschedule_booking.html', context)
+
+#SECTOR PAGOS INTEGRADOS............
+def user_is_salon_owner(user, salon):
+    return SalonMembership.objects.filter(
+        user=user,
+        salon=salon,
+        role='owner',
+        is_active=True
+    ).exists()
+
+@login_required
+def mercadopago_oauth_connect(request, salon_id):
+    salon = get_object_or_404(Salon, id=salon_id)
+
+    if not user_is_salon_owner(request.user, salon):
+        messages.error(request, "No tenés permisos para configurar los pagos de este salón.")
+        return redirect("owner_dashboard")
+
+    if not settings.MERCADOPAGO_CLIENT_ID:
+        messages.error(request, "Falta configurar MERCADOPAGO_CLIENT_ID.")
+        return redirect("owner_dashboard")
+
+    state = secrets.token_urlsafe(32)
+
+    request.session["mp_oauth_state"] = state
+    request.session["mp_oauth_salon_id"] = salon.id
+
+    redirect_uri = f"{settings.SITE_URL}{reverse('mercadopago_oauth_callback')}"
+
+    auth_url = (
+        "https://auth.mercadopago.com.ar/authorization"
+        f"?client_id={settings.MERCADOPAGO_CLIENT_ID}"
+        "&response_type=code"
+        "&platform_id=mp"
+        f"&redirect_uri={quote(redirect_uri, safe='')}"
+        f"&state={state}"
+    )
+
+    return redirect(auth_url)
+
+@login_required
+def mercadopago_oauth_callback(request):
+    code = request.GET.get("code")
+    state = request.GET.get("state")
+
+    expected_state = request.session.get("mp_oauth_state")
+    salon_id = request.session.get("mp_oauth_salon_id")
+
+    if not code:
+        messages.error(request, "Mercado Pago no devolvió el código de autorización.")
+        return redirect("owner_dashboard")
+
+    if not expected_state or not state or state != expected_state:
+        messages.error(request, "No se pudo validar la conexión con Mercado Pago.")
+        return redirect("owner_dashboard")
+
+    salon = get_object_or_404(Salon, id=salon_id)
+
+    if not user_is_salon_owner(request.user, salon):
+        messages.error(request, "No tenés permisos para configurar los pagos de este salón.")
+        return redirect("owner_dashboard")
+
+    if not settings.MERCADOPAGO_CLIENT_ID or not settings.MERCADOPAGO_CLIENT_SECRET:
+        messages.error(request, "Faltan configurar las credenciales OAuth de Mercado Pago.")
+        return redirect("owner_dashboard")
+
+    redirect_uri = f"{settings.SITE_URL}{reverse('mercadopago_oauth_callback')}"
+
+    payload = {
+        "client_id": settings.MERCADOPAGO_CLIENT_ID,
+        "client_secret": settings.MERCADOPAGO_CLIENT_SECRET,
+        "grant_type": "authorization_code",
+        "code": code,
+        "redirect_uri": redirect_uri,
+    }
+
+    try:
+        response = requests.post(
+            "https://api.mercadopago.com/oauth/token",
+            json=payload,
+            headers={
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            },
+            timeout=15,
+        )
+        data = response.json()
+    except requests.RequestException:
+        messages.error(request, "No se pudo conectar con Mercado Pago. Intentá nuevamente.")
+        return redirect("owner_dashboard")
+
+    if response.status_code not in [200, 201]:
+        messages.error(request, f"No se pudo conectar Mercado Pago: {data}")
+        return redirect("owner_dashboard")
+
+    payment_settings, _ = SalonPaymentSettings.objects.get_or_create(salon=salon)
+
+    payment_settings.mercadopago_enabled = True
+    payment_settings.mercadopago_connected = True
+    payment_settings.mp_user_id = str(data.get("user_id", ""))
+    payment_settings.mp_access_token = data.get("access_token", "")
+    payment_settings.mp_refresh_token = data.get("refresh_token", "")
+    payment_settings.mp_public_key = data.get("public_key", "")
+
+    expires_in = data.get("expires_in")
+    if expires_in:
+        payment_settings.mp_token_expires_at = timezone.now() + timedelta(seconds=int(expires_in))
+
+    payment_settings.save(update_fields=[
+        "mercadopago_enabled",
+        "mercadopago_connected",
+        "mp_user_id",
+        "mp_access_token",
+        "mp_refresh_token",
+        "mp_public_key",
+        "mp_token_expires_at",
+        "updated_at",
+    ])
+
+    request.session.pop("mp_oauth_state", None)
+    request.session.pop("mp_oauth_salon_id", None)
+
+    messages.success(request, "Mercado Pago conectado correctamente.")
+    return redirect("owner_dashboard")
