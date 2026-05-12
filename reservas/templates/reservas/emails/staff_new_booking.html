@@ -15,15 +15,7 @@
           <tr>
             <td style="background:linear-gradient(135deg, #408888 0%, #73d6d6 100%); padding:30px 28px;">
               <p style="margin:0 0 8px; color:#eaffff; font-size:13px; font-weight:700; letter-spacing:1.4px; text-transform:uppercase;">
-                {% if booking.status == "confirmed" %}
-                  NYX · Turno asignado
-                {% elif booking.payment_choice == "deposit" %}
-                  NYX · Pendiente de seña
-                {% elif booking.payment_choice == "full" %}
-                  NYX · Pendiente de pago
-                {% else %}
-                  NYX · Nueva reserva
-                {% endif %}
+                NYX · Turno asignado
               </p>
 
               <h1 style="margin:0; color:#ffffff; font-size:27px; line-height:1.25; font-weight:800;">
@@ -44,11 +36,11 @@
                   <tr>
                     <td style="padding:20px;">
                       <h2 style="margin:0 0 8px; color:#5c4300; font-size:18px; font-weight:800;">
-                        Reserva pendiente de pago
+                        Pago pendiente
                       </h2>
 
                       <p style="margin:0; color:#6b5200; font-size:15px; line-height:1.6;">
-                        Esta reserva todavía no está confirmada hasta que se verifique el pago correspondiente.
+                        Este turno ya está asignado en tu agenda. El pago queda pendiente de verificación por el salón.
                       </p>
                     </td>
                   </tr>

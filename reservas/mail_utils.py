@@ -889,7 +889,14 @@ def send_salon_new_booking_email(booking):
         "remaining_amount": booking.get_total_price() - booking.payment_required_amount,
     }
 
-    if booking.status == "confirmed":
+    if booking.selected_payment_method == "transfer" and booking.requires_payment():
+        if booking.payment_choice == "deposit":
+            subject = f"Nuevo turno reservado · seña pendiente - {salon.name}"
+        elif booking.payment_choice == "full":
+            subject = f"Nuevo turno reservado · pago pendiente - {salon.name}"
+        else:
+            subject = f"Nuevo turno reservado · pago pendiente - {salon.name}"
+    elif booking.status == "confirmed":
         subject = f"Nuevo turno confirmado - {salon.name}"
     elif booking.payment_choice == "deposit":
         subject = f"Nueva reserva pendiente de seña - {salon.name}"
@@ -997,7 +1004,9 @@ def send_staff_new_booking_emails(booking):
             ),
         }
 
-        if booking.status == "confirmed":
+        if booking.selected_payment_method == "transfer" and booking.requires_payment():
+            subject = f"Nuevo turno asignado - {booking.salon.name}"
+        elif booking.status == "confirmed":
             subject = f"Nuevo turno asignado - {booking.salon.name}"
         elif booking.payment_choice == "deposit":
             subject = f"Turno pendiente de seña asignado - {booking.salon.name}"

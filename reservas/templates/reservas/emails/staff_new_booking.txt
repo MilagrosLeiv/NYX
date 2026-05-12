@@ -18,8 +18,8 @@ Duración asignada: {{ total_duration }} minutos
 Estado: {{ booking.get_status_display }}
 
 {% if booking.requires_payment %}
-Importante: esta reserva tiene un pago pendiente.
-Estado del pago: {{ booking.get_payment_status_display }}
+Pago: {{ booking.get_payment_status_display }}
+El turno ya está asignado en tu agenda.
 {% endif %}
 
 Aviso generado automáticamente por NYX.

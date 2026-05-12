@@ -16,7 +16,15 @@
           <tr>
             <td style="background:linear-gradient(135deg, #408888 0%, #73d6d6 100%); padding:30px 28px;">
               <p style="margin:0 0 8px; color:#eaffff; font-size:13px; font-weight:700; letter-spacing:1.4px; text-transform:uppercase;">
-                {% if booking.status == "confirmed" %}
+                {% if booking.selected_payment_method == "transfer" and booking.requires_payment %}
+                  {% if booking.payment_choice == "deposit" %}
+                    NYX · Seña pendiente
+                  {% elif booking.payment_choice == "full" %}
+                    NYX · Pago pendiente
+                  {% else %}
+                    NYX · Pago pendiente
+                  {% endif %}
+                {% elif booking.status == "confirmed" %}
                   NYX · Turno confirmado
                 {% elif booking.payment_choice == "deposit" %}
                   NYX · Pendiente de seña
@@ -28,7 +36,15 @@
               </p>
 
               <h1 style="margin:0; color:#ffffff; font-size:27px; line-height:1.25; font-weight:800;">
-                {% if booking.status == "confirmed" %}
+                {% if booking.selected_payment_method == "transfer" and booking.requires_payment %}
+                  {% if booking.payment_choice == "deposit" %}
+                    Nuevo turno reservado · seña pendiente
+                  {% elif booking.payment_choice == "full" %}
+                    Nuevo turno reservado · pago pendiente
+                  {% else %}
+                    Nuevo turno reservado · pago pendiente
+                  {% endif %}
+                {% elif booking.status == "confirmed" %}
                   Nuevo turno confirmado
                 {% elif booking.payment_choice == "deposit" %}
                   Reserva pendiente de seña
@@ -119,11 +135,11 @@
 
                       {% if booking.payment_choice == "deposit" %}
                         <p style="margin:0 0 8px; color:#6b5200; font-size:15px;">
-                          Esta reserva requiere una seña para quedar confirmada.
+                          El turno ya fue reservado en la agenda. Queda pendiente verificar la seña por transferencia.
                         </p>
                       {% elif booking.payment_choice == "full" %}
                         <p style="margin:0 0 8px; color:#6b5200; font-size:15px;">
-                          Esta reserva requiere el pago total para quedar confirmada.
+                          El turno ya fue reservado en la agenda. Queda pendiente verificar el pago correspondiente.
                         </p>
                       {% endif %}
 
@@ -133,6 +149,10 @@
 
                       <p style="margin:0 0 8px; color:#6b5200; font-size:15px;">
                         <strong>Estado del pago:</strong> {{ booking.get_payment_status_display }}
+                      </p>
+                      
+                      <p style="margin:10px 0 0; color:#6b5200; font-size:14px; line-height:1.5;">
+                        Si el pago no se acredita, podés cancelar el turno manualmente desde el panel.
                       </p>
 
                       {% if booking.selected_payment_method %}
@@ -174,11 +194,7 @@
                         </td>
                         <td align="right" style="padding:6px 0;">
                           <span style="display:inline-block; padding:7px 13px; background:#dff7f7; color:#2f7777; border:1px solid #bceeee; border-radius:999px; font-size:13px; font-weight:800;">
-                            {% if booking.status == "pending" and booking.requires_payment %}
-                              <p style="margin:10px 0 0; color:#9a6a00; font-size:13px; font-weight:700;">
-                                Aún no está confirmado: falta verificar el pago.
-                              </p>
-                            {% endif %}
+                            {{ booking.get_status_display }}
                           </span>
                         </td>
                       </tr>

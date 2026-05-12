@@ -472,6 +472,7 @@ class Booking(models.Model):
         blank=True,
         default=''
     )
+    
 
     def get_total_duration_minutes(self):
         items = self.items.select_related('service').all()

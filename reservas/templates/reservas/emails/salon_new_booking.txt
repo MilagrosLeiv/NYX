@@ -1,5 +1,10 @@
 Nuevo turno reservado - {{ salon.name }}
 
+{% if booking.requires_payment %}
+Pago pendiente: {{ booking.get_payment_status_display }}
+El turno ya fue reservado en la agenda. Si el pago no se acredita, podés cancelarlo desde el panel.
+{% endif %}
+
 Cliente: {{ booking.customer_name }}
 Teléfono: {{ booking.customer_phone }}
 {% if booking.customer_email %}Email: {{ booking.customer_email }}{% endif %}

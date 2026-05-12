@@ -1071,6 +1071,25 @@ def confirm_booking(request):
                             payment_status = 'not_required'
                             payment_required_amount = 0
 
+                    requires_manual_transfer_payment = (
+                        payment_choice != 'none'
+                        and payment_required_amount > 0
+                        and final_payment_method == 'transfer'
+                    )
+
+                    requires_integrated_payment = (
+                        payment_choice != 'none'
+                        and payment_required_amount > 0
+                        and final_payment_method == 'integrated'
+                    )
+
+                    if requires_manual_transfer_payment:
+                        initial_status = 'confirmed'
+                    elif requires_integrated_payment:
+                        initial_status = 'pending'
+                    else:
+                        initial_status = 'confirmed'
+
                     booking = Booking.objects.create(
                         salon=salon,
                         customer_name=form.cleaned_data['customer_name'],
@@ -1078,7 +1097,7 @@ def confirm_booking(request):
                         customer_phone=form.cleaned_data['customer_phone'],
                         notes=form.cleaned_data['notes'],
                         booking_mode='consecutive' if mode != 'independent' else 'independent',
-                        status='pending',
+                        status='initial_status',
                         payment_choice=payment_choice,
                         payment_status=payment_status,
                         payment_required_amount=payment_required_amount,
@@ -1127,11 +1146,10 @@ def confirm_booking(request):
                     for item in items:
                         item.save()
 
-                    if booking.requires_payment():
+                    if requires_integrated_payment:
                         booking.payment_expires_at = timezone.now() + timedelta(minutes=15)
                         booking.save(update_fields=['payment_expires_at'])
 
-                    if booking.payment_choice != 'none' and booking.payment_required_amount > 0:
                         create_pending_payment_session(booking)
 
             except ValidationError as e:
@@ -1140,18 +1158,18 @@ def confirm_booking(request):
                     e.messages[0] if getattr(e, 'messages', None) else 'No se pudo reservar el turno.'
                 )
             else:
-                if not booking.requires_payment():
-                    booking.status = 'confirmed'
-                    booking.save(update_fields=['status'])
+                if booking.selected_payment_method == 'transfer' and booking.requires_payment():
+                    send_booking_payment_pending_email(booking, request=request)
+                    send_salon_new_booking_email(booking)
+                    send_staff_new_booking_emails(booking)
 
+                elif not booking.requires_payment():
                     send_booking_confirmed_email(booking, request=request)
                     send_salon_new_booking_email(booking)
                     send_staff_new_booking_emails(booking)
 
-                elif booking.selected_payment_method == 'transfer':
+                elif booking.selected_payment_method == 'integrated':
                     send_booking_payment_pending_email(booking, request=request)
-                    send_salon_new_booking_email(booking)
-                    send_staff_new_booking_emails(booking)
 
                 return redirect('booking_success_booking', booking_id=booking.id)
     else:
