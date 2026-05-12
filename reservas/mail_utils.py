@@ -380,21 +380,19 @@ def send_booking_payment_pending_email(booking, request=None):
                     '''}
             
 
-                    {f'''
-                    <div style="font-size:14px; font-weight:700; color:#b45309; margin-bottom:6px;">
-                        {payment_label}
+                    <div style="margin:0 0 24px; padding:22px; background-color:#f6ffff; border:1px solid #d7f3f3; border-radius:18px;">
+                        <div style="font-size:16px; font-weight:700; color:#0f2d3a; margin-bottom:12px;">
+                            Instrucciones de pago
+                        </div>
+
+                        <div style="font-size:14px; line-height:1.7; color:#315f5f;">
+                            {(booking.salon.payment_instructions or "Contactate con el salón para completar el pago.").replace(chr(10), "<br>")}
+                        </div>
+
+                        <div style="font-size:13px; line-height:1.6; color:#6b8484; margin-top:14px;">
+                            Tu turno ya quedó reservado en la agenda. Para mantener la reserva, realizá la seña indicada. Si el pago no se acredita, el salón puede cancelar el turno.
+                        </div>
                     </div>
-                    <div style="font-size:14px; line-height:1.6; color:#9a3412;">
-                        Tu turno ya quedó reservado en la agenda. Para mantener la reserva, realizá el pago indicado por el salón. Si el pago no se acredita, el salón puede cancelar el turno.
-                    </div>
-                    ''' if booking.selected_payment_method == 'transfer' else f'''
-                    <div style="font-size:14px; font-weight:700; color:#b45309; margin-bottom:6px;">
-                        Falta completar el pago
-                    </div>
-                    <div style="font-size:14px; line-height:1.6; color:#9a3412;">
-                        Para confirmar tu turno necesitás completar el pago indicado por el salón.
-                    </div>
-                    '''}
 
                     <div style="background-color:#f9fbfb; border:1px solid #e3ecec; border-radius:18px; padding:22px; margin-bottom:24px;">
                         <div style="font-size:16px; font-weight:700; color:#0f2d3a; margin-bottom:16px;">
@@ -444,17 +442,7 @@ def send_booking_payment_pending_email(booking, request=None):
 
                     {manage_button_html}
 
-                    <div style="background-color:#ffffff; border:1px solid #e3ecec; border-radius:18px; padding:22px; margin-top:24px;">
-                        <div style="font-size:16px; font-weight:700; color:#0f2d3a; margin-bottom:12px;">
-                            Instrucciones de pago
-                        </div>
-                        <div style="font-size:14px; line-height:1.7; color:#4b5563;">
-                            {(booking.salon.payment_instructions or "Contactate con el salón para completar el pago.").replace(chr(10), "<br>")}
-                        </div>
-                        <div style="font-size:14px; line-height:1.7; color:#4b5563; margin-top:14px;">
-                            {plain_footer}
-                        </div>
-                    </div>
+                    
                 </div>
 
                 <div style="border-top:1px solid #e5e7eb; background-color:#fafafa; padding:20px 32px; text-align:center;">
