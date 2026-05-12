@@ -1176,6 +1176,9 @@ def confirm_booking(request):
                 elif booking.selected_payment_method == 'integrated':
                     send_booking_payment_pending_email(booking, request=request)
 
+                if booking.requires_payment() and booking.selected_payment_method == 'integrated':
+                    return redirect('booking_payment', booking_id=booking.id)
+
                 return redirect('booking_success_booking', booking_id=booking.id)
     else:
         form = AppointmentConfirmForm()
@@ -1250,8 +1253,11 @@ def booking_success_booking(request, booking_id):
         pk=booking_id
     )
 
+    mp_return = request.GET.get("mp_return")
+
     is_integrated_payment = booking.selected_payment_method == 'integrated'
     is_transfer_payment = booking.selected_payment_method == 'transfer'
+    came_from_mercadopago = mp_return in ["success", "pending", "failure"]
 
     integrated_payment_verified = (
         is_integrated_payment
@@ -1272,6 +1278,8 @@ def booking_success_booking(request, booking_id):
         'booking': booking,
         'is_integrated_payment': is_integrated_payment,
         'is_transfer_payment': is_transfer_payment,
+        'came_from_mercadopago': came_from_mercadopago,
+        'mp_return': mp_return,
         'integrated_payment_verified': integrated_payment_verified,
         'integrated_payment_pending': integrated_payment_pending,
         'integrated_payment_rejected': integrated_payment_rejected,

@@ -52,6 +52,21 @@ def create_pending_payment_session(booking):
 
         reference = build_payment_reference(booking)
 
+        success_url = (
+            build_absolute_url(reverse("booking_success_booking", args=[booking.id]))
+            + "?mp_return=success"
+        )
+
+        pending_url = (
+            build_absolute_url(reverse("booking_success_booking", args=[booking.id]))
+            + "?mp_return=pending"
+        )
+
+        failure_url = (
+            build_absolute_url(reverse("booking_success_booking", args=[booking.id]))
+            + "?mp_return=failure"
+        )
+
         preference_data = {
             "items": [
                 {
@@ -67,12 +82,18 @@ def create_pending_payment_session(booking):
                 + f"?booking_id={booking.id}"
             ),
             "back_urls": {
-                "success": build_absolute_url(reverse('booking_success_booking', args=[booking.id])),
-                "pending": build_absolute_url(reverse('booking_success_booking', args=[booking.id])),
-                "failure": build_absolute_url(reverse('booking_success_booking', args=[booking.id])),
+                "success": success_url,
+                "pending": pending_url,
+                "failure": failure_url,
             },
             "auto_return": "approved",
         }
+
+        print("MP NOTIFICATION URL:", preference_data.get("notification_url"))
+
+        response = sdk.preference().create(preference_data)
+        
+        
         print("MP NOTIFICATION URL:", preference_data.get("notification_url"))
         response = sdk.preference().create(preference_data)
 

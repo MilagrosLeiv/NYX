@@ -34,12 +34,12 @@
             {% if booking.selected_payment_method == "integrated" %}
               {% if booking.payment_status == "verified" %}
                 Reserva confirmada
-              {% elif booking.payment_status == "pending" %}
-                Pago en proceso
               {% elif booking.payment_status == "rejected" %}
                 Pago rechazado
+              {% elif came_from_mercadopago %}
+                Pago en proceso
               {% else %}
-                Reserva recibida
+                Completá el pago de tu reserva
               {% endif %}
 
             {% elif booking.requires_payment %}
@@ -54,12 +54,12 @@
             {% if booking.selected_payment_method == "integrated" %}
               {% if booking.payment_status == "verified" %}
                 Tu pago fue aprobado por Mercado Pago y tu turno quedó confirmado correctamente.
-              {% elif booking.payment_status == "pending" %}
-                Si ya pagaste, no vuelvas a pagar. Estamos esperando la confirmación automática de Mercado Pago. Esto puede tardar unos segundos.
               {% elif booking.payment_status == "rejected" %}
                 No pudimos confirmar tu pago. Podés volver a intentarlo o comunicarte con el salón.
+              {% elif came_from_mercadopago %}
+                Si ya pagaste, no vuelvas a pagar. Estamos esperando la confirmación automática de Mercado Pago. Esto puede tardar unos segundos.
               {% else %}
-                Recibimos tu reserva y estamos revisando el estado del pago.
+                Tu reserva fue creada correctamente. Para confirmar el turno, completá el pago mediante Mercado Pago.
               {% endif %}
 
             {% elif booking.requires_payment %}
@@ -82,11 +82,19 @@
               </div>
             </div>
 
-          {% elif booking.payment_status == "pending" %}
+          {% elif booking.payment_status == "pending" and came_from_mercadopago %}
             <div class="nyx-alert-warning p-3 mb-4">
               <strong>Pago pendiente de confirmación.</strong>
               <div class="mt-1">
                 Si ya realizaste el pago, esperá unos segundos. La página se actualizará automáticamente.
+              </div>
+            </div>
+
+          {% elif booking.payment_status == "pending" %}
+            <div class="nyx-alert-warning p-3 mb-4">
+              <strong>Pago pendiente.</strong>
+              <div class="mt-1">
+                Para confirmar tu turno, completá el pago mediante Mercado Pago.
               </div>
             </div>
 
@@ -242,11 +250,10 @@
   </div>
 </div>
 
-{% if booking.selected_payment_method == "integrated" and booking.payment_status == "pending" %}
+{% if came_from_mercadopago and booking.selected_payment_method == "integrated" and booking.payment_status == "pending" %}
   <script>
     setTimeout(function () {
       window.location.reload();
     }, 4000);
   </script>
 {% endif %}
-{% endblock %}

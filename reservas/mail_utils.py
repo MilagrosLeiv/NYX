@@ -344,7 +344,7 @@ def send_booking_payment_pending_email(booking, request=None):
         f'{expiration_text}\n'
         f'{manage_text_plain}'
         f'Instrucciones de pago:\n'
-        f'{booking.salon.payment_instructions or "Contactate con el salón para completar el pago."}\n\n'
+        f'{booking.salon.payment_instructions }\n'
         f'{plain_footer}'
     )
     html_message = f"""
@@ -386,7 +386,7 @@ def send_booking_payment_pending_email(booking, request=None):
                         </div>
 
                         <div style="font-size:14px; line-height:1.7; color:#315f5f;">
-                            {(booking.salon.payment_instructions or "Contactate con el salón para completar el pago.").replace(chr(10), "<br>")}
+                            {(booking.salon.payment_instructions ).replace(chr(10), "<br>")}
                         </div>
 
                         <div style="font-size:13px; line-height:1.6; color:#6b8484; margin-top:14px;">
