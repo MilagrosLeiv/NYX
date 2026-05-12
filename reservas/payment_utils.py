@@ -62,7 +62,10 @@ def create_pending_payment_session(booking):
                 }
             ],
             "external_reference": reference,
-            "notification_url": build_absolute_url(reverse('payment_webhook')),
+            "notification_url": (
+                build_absolute_url(reverse("payment_webhook"))
+                + f"?booking_id={booking.id}"
+            ),
             "back_urls": {
                 "success": build_absolute_url(reverse('booking_success_booking', args=[booking.id])),
                 "pending": build_absolute_url(reverse('booking_success_booking', args=[booking.id])),
@@ -70,7 +73,7 @@ def create_pending_payment_session(booking):
             },
             "auto_return": "approved",
         }
-
+        print("MP NOTIFICATION URL:", preference_data.get("notification_url"))
         response = sdk.preference().create(preference_data)
 
         status = response.get("status")
@@ -81,7 +84,10 @@ def create_pending_payment_session(booking):
         if status not in [200, 201]:
             raise ValueError(f"Mercado Pago no pudo crear la preferencia: {preference}")
 
-        checkout_url = preference.get("sandbox_init_point") or preference.get("init_point")
+        if settings.MERCADOPAGO_USE_SANDBOX:
+            checkout_url = preference.get("sandbox_init_point")
+        else:
+            checkout_url = preference.get("init_point")
         preference_id = preference.get("id", "")
 
         if not checkout_url:
