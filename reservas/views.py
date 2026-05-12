@@ -1275,47 +1275,87 @@ def booking_payment(request, booking_id):
 
 @csrf_exempt
 def payment_webhook(request):
-    if request.method != 'POST':
+    if request.method != "POST":
         return HttpResponse(status=405)
 
+    booking_id = request.GET.get("booking_id")
+
     try:
-        payload = json.loads(request.body.decode('utf-8') or '{}')
+        payload = json.loads(request.body.decode("utf-8") or "{}")
     except Exception:
         payload = {}
 
-    event_type = payload.get('type')
-    data = payload.get('data', {})
-    payment_id = data.get('id')
+    event_type = payload.get("type")
+    data = payload.get("data", {})
+    payment_id = data.get("id")
 
-    if event_type != 'payment' or not payment_id:
+    if event_type != "payment" or not payment_id:
         return HttpResponse(status=200)
 
-    if not settings.MERCADOPAGO_ACCESS_TOKEN:
-        return HttpResponse(status=500)
+    if not booking_id:
+        return HttpResponse(status=200)
 
-    sdk = mercadopago.SDK(settings.MERCADOPAGO_ACCESS_TOKEN)
+    booking = (
+        Booking.objects
+        .select_related("salon")
+        .filter(id=booking_id)
+        .first()
+    )
+
+    if not booking:
+        return HttpResponse(status=200)
+
+    payment_settings = getattr(booking.salon, "payment_settings", None)
+
+    if not payment_settings or not payment_settings.has_valid_mercadopago_connection():
+        return HttpResponse(status=200)
+
+    sdk = mercadopago.SDK(payment_settings.mp_access_token)
+
     payment_response = sdk.payment().get(payment_id)
-    payment = payment_response.get('response', {})
+    payment = payment_response.get("response", {})
 
-    external_reference = payment.get('external_reference')
-    status = payment.get('status')
+    mp_status = payment.get("status")
+    external_reference = payment.get("external_reference")
+    transaction_amount = payment.get("transaction_amount")
 
     if not external_reference:
         return HttpResponse(status=200)
 
-    booking = Booking.objects.filter(payment_reference=external_reference).first()
-    if not booking:
+    if external_reference != booking.payment_reference:
         return HttpResponse(status=200)
 
-    if status == 'approved':
-        booking.payment_status = 'verified'
-        booking.status = 'confirmed'
+    try:
+        paid_amount = Decimal(str(transaction_amount))
+    except Exception:
+        return HttpResponse(status=200)
+
+    if paid_amount != booking.payment_required_amount:
+        return HttpResponse(status=200)
+
+    if mp_status == "approved":
+        if booking.payment_status == "verified" and booking.status == "confirmed":
+            return HttpResponse(status=200)
+
+        booking.payment_status = "verified"
+        booking.status = "confirmed"
         booking.payment_verified_at = timezone.now()
-        booking.save(update_fields=['payment_status', 'status', 'payment_verified_at'])
+        booking.external_payment_id = str(payment_id)
+
+        booking.save(update_fields=[
+            "payment_status",
+            "status",
+            "payment_verified_at",
+            "external_payment_id",
+        ])
 
         send_booking_confirmed_email(booking, request=request)
         send_salon_new_booking_email(booking)
         send_staff_new_booking_emails(booking)
+
+    elif mp_status in ["rejected", "cancelled"]:
+        booking.payment_status = "rejected"
+        booking.save(update_fields=["payment_status"])
 
     return HttpResponse(status=200)
 

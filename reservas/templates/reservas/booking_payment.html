@@ -111,7 +111,7 @@
 
             {% if booking.selected_payment_method == 'integrated' %}
               <a href="{{ booking.payment_checkout_url|default:'#' }}" class="btn rounded-pill px-4" style="background:#7ad0d4; color:#123; font-weight:700;">
-                Ir al checkout
+                Pagar ahora
               </a>
             {% else %}
               <button type="button" class="btn rounded-pill px-4" style="background:#7ad0d4; color:#123; font-weight:700;" disabled>
