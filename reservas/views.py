@@ -3,6 +3,7 @@ import mercadopago
 import secrets
 import requests
 from urllib.parse import quote
+from decimal import Decimal
 
 
 from datetime import datetime, timedelta
@@ -1275,6 +1276,11 @@ def booking_payment(request, booking_id):
 
 @csrf_exempt
 def payment_webhook(request):
+    print("MP WEBHOOK HIT")
+    print("MP WEBHOOK METHOD:", request.method)
+    print("MP WEBHOOK GET:", dict(request.GET))
+    print("MP WEBHOOK BODY:", request.body)
+
     if request.method != "POST":
         return HttpResponse(status=405)
 
@@ -1285,14 +1291,33 @@ def payment_webhook(request):
     except Exception:
         payload = {}
 
-    event_type = payload.get("type")
-    data = payload.get("data", {})
-    payment_id = data.get("id")
+    event_type = (
+        payload.get("type")
+        or request.GET.get("type")
+        or request.GET.get("topic")
+    )
 
-    if event_type != "payment" or not payment_id:
+    data = payload.get("data") or {}
+
+    payment_id = (
+        data.get("id")
+        or request.GET.get("data.id")
+        or request.GET.get("id")
+    )
+
+    print("MP EVENT TYPE:", event_type)
+    print("MP PAYMENT ID:", payment_id)
+    print("MP BOOKING ID:", booking_id)
+
+    if event_type not in ["payment", "payments"]:
+        return HttpResponse(status=200)
+
+    if not payment_id:
+        print("MP WEBHOOK WITHOUT PAYMENT ID")
         return HttpResponse(status=200)
 
     if not booking_id:
+        print("MP WEBHOOK WITHOUT BOOKING ID")
         return HttpResponse(status=200)
 
     booking = (
@@ -1303,11 +1328,13 @@ def payment_webhook(request):
     )
 
     if not booking:
+        print("BOOKING NOT FOUND:", booking_id)
         return HttpResponse(status=200)
 
     payment_settings = getattr(booking.salon, "payment_settings", None)
 
     if not payment_settings or not payment_settings.has_valid_mercadopago_connection():
+        print("SALON HAS NO VALID MP CONNECTION:", booking.salon_id)
         return HttpResponse(status=200)
 
     sdk = mercadopago.SDK(payment_settings.mp_access_token)
@@ -1315,26 +1342,35 @@ def payment_webhook(request):
     payment_response = sdk.payment().get(payment_id)
     payment = payment_response.get("response", {})
 
+    print("MP PAYMENT RESPONSE:", payment_response)
+
     mp_status = payment.get("status")
     external_reference = payment.get("external_reference")
     transaction_amount = payment.get("transaction_amount")
 
-    if not external_reference:
-        return HttpResponse(status=200)
+    print("MP STATUS:", mp_status)
+    print("MP EXTERNAL REFERENCE:", external_reference)
+    print("BOOKING REFERENCE:", booking.payment_reference)
+    print("MP AMOUNT:", transaction_amount)
+    print("BOOKING REQUIRED AMOUNT:", booking.payment_required_amount)
 
     if external_reference != booking.payment_reference:
+        print("REFERENCE DOES NOT MATCH")
         return HttpResponse(status=200)
 
     try:
         paid_amount = Decimal(str(transaction_amount))
     except Exception:
+        print("INVALID TRANSACTION AMOUNT")
         return HttpResponse(status=200)
 
     if paid_amount != booking.payment_required_amount:
+        print("AMOUNT DOES NOT MATCH")
         return HttpResponse(status=200)
 
     if mp_status == "approved":
         if booking.payment_status == "verified" and booking.status == "confirmed":
+            print("BOOKING ALREADY CONFIRMED")
             return HttpResponse(status=200)
 
         booking.payment_status = "verified"
@@ -1349,6 +1385,8 @@ def payment_webhook(request):
             "external_payment_id",
         ])
 
+        print("BOOKING CONFIRMED:", booking.id)
+
         send_booking_confirmed_email(booking, request=request)
         send_salon_new_booking_email(booking)
         send_staff_new_booking_emails(booking)
@@ -1356,6 +1394,7 @@ def payment_webhook(request):
     elif mp_status in ["rejected", "cancelled"]:
         booking.payment_status = "rejected"
         booking.save(update_fields=["payment_status"])
+        print("BOOKING PAYMENT REJECTED:", booking.id)
 
     return HttpResponse(status=200)
 
