@@ -903,6 +903,21 @@ def send_salon_new_booking_email(booking):
         "start_datetime"
     )
 
+    is_integrated_verified = (
+        booking.selected_payment_method == "integrated"
+        and booking.payment_status == "verified"
+    )
+
+    is_transfer_pending = (
+        booking.selected_payment_method == "transfer"
+        and booking.requires_payment()
+    )
+
+    is_payment_pending = (
+        booking.requires_payment()
+        and booking.payment_status != "verified"
+    )
+
     context = {
         "booking": booking,
         "salon": salon,
@@ -911,6 +926,9 @@ def send_salon_new_booking_email(booking):
         "total_duration": booking.get_total_duration_minutes(),
         "payment_required_amount": booking.payment_required_amount,
         "remaining_amount": booking.get_total_price() - booking.payment_required_amount,
+        "is_integrated_verified": is_integrated_verified,
+        "is_transfer_pending": is_transfer_pending,
+        "is_payment_pending": is_payment_pending,
     }
 
     if booking.selected_payment_method == "transfer" and booking.requires_payment():
@@ -1018,6 +1036,22 @@ def send_staff_new_booking_emails(booking):
         items_by_employee[employee].append(item)
 
     for employee, employee_items in items_by_employee.items():
+        
+        is_integrated_verified = (
+            booking.selected_payment_method == "integrated"
+            and booking.payment_status == "verified"
+        )
+
+        is_transfer_pending = (
+            booking.selected_payment_method == "transfer"
+            and booking.requires_payment()
+        )
+
+        is_payment_pending = (
+            booking.requires_payment()
+            and booking.payment_status != "verified"
+        )
+
         context = {
             "booking": booking,
             "salon": booking.salon,
@@ -1026,6 +1060,9 @@ def send_staff_new_booking_emails(booking):
             "total_duration": sum(
                 item.service.duration_minutes for item in employee_items
             ),
+            "is_integrated_verified": is_integrated_verified,
+            "is_transfer_pending": is_transfer_pending,
+            "is_payment_pending": is_payment_pending,
         }
 
         if booking.selected_payment_method == "transfer" and booking.requires_payment():

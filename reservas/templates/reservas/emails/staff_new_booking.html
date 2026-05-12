@@ -32,19 +32,36 @@
             <td style="padding:28px;">
 
               {% if booking.requires_payment %}
-                <table width="100%" cellpadding="0" cellspacing="0" style="background:#fff8e6; border:1px solid #f3d27b; border-radius:18px; margin-bottom:22px;">
-                  <tr>
-                    <td style="padding:20px;">
-                      <h2 style="margin:0 0 8px; color:#5c4300; font-size:18px; font-weight:800;">
-                        Pago pendiente
-                      </h2>
+                {% if is_integrated_verified %}
+                  <table width="100%" cellpadding="0" cellspacing="0" style="background:#ecfdf5; border:1px solid #bbf7d0; border-radius:18px; margin-bottom:22px;">
+                    <tr>
+                      <td style="padding:20px;">
+                        <h2 style="margin:0 0 8px; color:#14532d; font-size:18px; font-weight:800;">
+                          Pago aprobado
+                        </h2>
 
-                      <p style="margin:0; color:#6b5200; font-size:15px; line-height:1.6;">
-                        Este turno ya está asignado en tu agenda. El pago queda pendiente de verificación por el salón.
-                      </p>
-                    </td>
-                  </tr>
-                </table>
+                        <p style="margin:0; color:#166534; font-size:15px; line-height:1.6;">
+                          Mercado Pago confirmó el pago automáticamente. Este turno ya quedó confirmado en tu agenda.
+                        </p>
+                      </td>
+                    </tr>
+                  </table>
+
+                {% elif is_transfer_pending %}
+                  <table width="100%" cellpadding="0" cellspacing="0" style="background:#fff8e6; border:1px solid #f3d27b; border-radius:18px; margin-bottom:22px;">
+                    <tr>
+                      <td style="padding:20px;">
+                        <h2 style="margin:0 0 8px; color:#5c4300; font-size:18px; font-weight:800;">
+                          Pago pendiente
+                        </h2>
+
+                        <p style="margin:0; color:#6b5200; font-size:15px; line-height:1.6;">
+                          Este turno ya está asignado en tu agenda. La seña queda pendiente de verificación por transferencia.
+                        </p>
+                      </td>
+                    </tr>
+                  </table>
+                {% endif %}
               {% endif %}
 
               <table width="100%" cellpadding="0" cellspacing="0" style="background:#f6ffff; border:1px solid #d7f3f3; border-radius:18px; margin-bottom:22px;">
