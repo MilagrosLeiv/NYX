@@ -745,9 +745,13 @@ def panel_booking_mark_payment_verified(request, booking_id):
     if not was_already_verified or not was_already_confirmed:
         send_booking_confirmed_email(booking, request=request)
 
-    messages.success(
-        request,
-        f'Pago de la reserva #{booking.id} marcado como verificado y turno confirmado.'
-    )
+    
+    if booking.payment_choice == 'deposit':
+        message = f'Seña de la reserva #{booking.id} marcada como recibida.'
+    else:
+        message = f'Pago de la reserva #{booking.id} marcado como recibido.'
+
+    messages.success(request, message)
+    
 
     return redirect('panel_booking_detail', booking_id=booking.id)

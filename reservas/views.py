@@ -1097,7 +1097,7 @@ def confirm_booking(request):
                         customer_phone=form.cleaned_data['customer_phone'],
                         notes=form.cleaned_data['notes'],
                         booking_mode='consecutive' if mode != 'independent' else 'independent',
-                        status='initial_status',
+                        status=initial_status,
                         payment_choice=payment_choice,
                         payment_status=payment_status,
                         payment_required_amount=payment_required_amount,

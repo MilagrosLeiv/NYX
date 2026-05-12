@@ -311,11 +311,29 @@ def send_booking_payment_pending_email(booking, request=None):
             </tr>
         """
 
+    if booking.selected_payment_method == 'transfer':
+        plain_intro = (
+            f'Hola {booking.customer_name}, tu turno fue reservado correctamente.\n\n'
+            f'Para mantener la reserva, realizá el pago indicado por el salón. '
+            f'Si el pago no se acredita, el salón puede cancelar el turno.\n\n'
+        )
+        plain_footer = (
+            f'El turno ya quedó reservado en la agenda. '
+            f'Guardá este correo para tener a mano los datos de pago.'
+        )
+        plain_title = 'Turno reservado - pago pendiente'
+    else:
+        plain_intro = (
+            f'Hola {booking.customer_name}, tu reserva fue creada pero todavía no está confirmada.\n\n'
+            f'Para confirmar tu turno tenés que completar el pago indicado por el salón.\n\n'
+        )
+        plain_footer = 'Una vez validado el pago, te llegará la confirmación final del turno.'
+        plain_title = 'Reserva creada - pago pendiente'
+
     plain_message = (
         f'{booking.salon.name}\n'
-        f'Reserva creada - pago pendiente\n\n'
-        f'Hola {booking.customer_name}, tu reserva fue creada pero todavía no está confirmada.\n\n'
-        f'Para confirmar tu turno tenés que completar el pago indicado por el salón.\n\n'
+        f'{plain_title}\n\n'
+        f'{plain_intro}'
         f'Resumen de tu reserva:\n'
         f'- Servicios: {services_text}\n'
         f'- Profesionales: {professionals_text_plain}\n'
@@ -327,15 +345,14 @@ def send_booking_payment_pending_email(booking, request=None):
         f'{manage_text_plain}'
         f'Instrucciones de pago:\n'
         f'{booking.salon.payment_instructions or "Contactate con el salón para completar el pago."}\n\n'
-        f'Una vez validado el pago, te llegará la confirmación final del turno.'
+        f'{plain_footer}'
     )
-
     html_message = f"""
     <!DOCTYPE html>
     <html lang="es">
     <head>
         <meta charset="UTF-8">
-        <title>Reserva creada - pago pendiente</title>
+        <title>{plain_title}</title>
     </head>
     <body style="margin:0; padding:0; background-color:#eef4f4; font-family:Arial, Helvetica, sans-serif; color:#1f2937;">
         <div style="width:100%; background-color:#eef4f4; padding:32px 16px;">
@@ -346,23 +363,38 @@ def send_booking_payment_pending_email(booking, request=None):
                         {booking.salon.name}
                     </div>
                     <div style="margin-top:8px; font-size:14px; color:#c7d9df; letter-spacing:0.2px;">
-                        Reserva creada - pago pendiente
+                        {plain_title}
                     </div>
                 </div>
 
                 <div style="padding:32px;">
+    
+                        {f'''
+                    <p style="margin:0 0 18px; font-size:17px; line-height:1.6; color:#1f2937;">
+                        Hola <strong>{booking.customer_name}</strong>, tu turno fue reservado correctamente.
+                    </p>
+                    ''' if booking.selected_payment_method == 'transfer' else f'''
                     <p style="margin:0 0 18px; font-size:17px; line-height:1.6; color:#1f2937;">
                         Hola <strong>{booking.customer_name}</strong>, tu reserva fue creada pero todavía no está confirmada.
                     </p>
+                    '''}
+            
 
-                    <div style="margin:0 0 24px; padding:16px 18px; background-color:#fff7ed; border:1px solid #f3d3a1; border-radius:14px;">
-                        <div style="font-size:14px; font-weight:700; color:#b45309; margin-bottom:6px;">
-                            Falta completar el pago
-                        </div>
-                        <div style="font-size:14px; line-height:1.6; color:#9a3412;">
-                            Para confirmar tu turno necesitás completar el pago indicado por el salón.
-                        </div>
+                    {f'''
+                    <div style="font-size:14px; font-weight:700; color:#b45309; margin-bottom:6px;">
+                        {payment_label}
                     </div>
+                    <div style="font-size:14px; line-height:1.6; color:#9a3412;">
+                        Tu turno ya quedó reservado en la agenda. Para mantener la reserva, realizá el pago indicado por el salón. Si el pago no se acredita, el salón puede cancelar el turno.
+                    </div>
+                    ''' if booking.selected_payment_method == 'transfer' else f'''
+                    <div style="font-size:14px; font-weight:700; color:#b45309; margin-bottom:6px;">
+                        Falta completar el pago
+                    </div>
+                    <div style="font-size:14px; line-height:1.6; color:#9a3412;">
+                        Para confirmar tu turno necesitás completar el pago indicado por el salón.
+                    </div>
+                    '''}
 
                     <div style="background-color:#f9fbfb; border:1px solid #e3ecec; border-radius:18px; padding:22px; margin-bottom:24px;">
                         <div style="font-size:16px; font-weight:700; color:#0f2d3a; margin-bottom:16px;">
@@ -420,7 +452,7 @@ def send_booking_payment_pending_email(booking, request=None):
                             {(booking.salon.payment_instructions or "Contactate con el salón para completar el pago.").replace(chr(10), "<br>")}
                         </div>
                         <div style="font-size:14px; line-height:1.7; color:#4b5563; margin-top:14px;">
-                            Una vez validado el pago, te llegará la confirmación final del turno.
+                            {plain_footer}
                         </div>
                     </div>
                 </div>
@@ -435,9 +467,13 @@ def send_booking_payment_pending_email(booking, request=None):
     </body>
     </html>
     """
-
+    subject = (
+        f'Turno reservado en {booking.salon.name} - {payment_label.lower()}'
+        if booking.selected_payment_method == 'transfer'
+        else f'Reserva creada en {booking.salon.name} - falta completar el pago'
+    )
     send_mail(
-        subject=f'Reserva creada en {booking.salon.name} - falta completar el pago',
+        subject=subject,
         message=plain_message,
         from_email=from_email,
         recipient_list=[customer_email],
