@@ -1503,11 +1503,11 @@ def mercadopago_oauth_connect(request, salon_id):
 
     if not user_is_salon_owner(request.user, salon):
         messages.error(request, "No tenés permisos para configurar los pagos de este salón.")
-        return redirect("owner_dashboard")
+        return redirect("panel_settings")
 
     if not settings.MERCADOPAGO_CLIENT_ID:
         messages.error(request, "Falta configurar MERCADOPAGO_CLIENT_ID.")
-        return redirect("owner_dashboard")
+        return redirect("panel_settings")
 
     state = secrets.token_urlsafe(32)
 
@@ -1537,21 +1537,21 @@ def mercadopago_oauth_callback(request):
 
     if not code:
         messages.error(request, "Mercado Pago no devolvió el código de autorización.")
-        return redirect("owner_dashboard")
+        return redirect("panel_settings")
 
     if not expected_state or not state or state != expected_state:
         messages.error(request, "No se pudo validar la conexión con Mercado Pago.")
-        return redirect("owner_dashboard")
+        return redirect("panel_settings")
 
     salon = get_object_or_404(Salon, id=salon_id)
 
     if not user_is_salon_owner(request.user, salon):
         messages.error(request, "No tenés permisos para configurar los pagos de este salón.")
-        return redirect("owner_dashboard")
+        return redirect("panel_settings")
 
     if not settings.MERCADOPAGO_CLIENT_ID or not settings.MERCADOPAGO_CLIENT_SECRET:
         messages.error(request, "Faltan configurar las credenciales OAuth de Mercado Pago.")
-        return redirect("owner_dashboard")
+        return redirect("panel_settings")
 
     redirect_uri = f"{settings.SITE_URL}{reverse('mercadopago_oauth_callback')}"
 
@@ -1576,11 +1576,11 @@ def mercadopago_oauth_callback(request):
         data = response.json()
     except requests.RequestException:
         messages.error(request, "No se pudo conectar con Mercado Pago. Intentá nuevamente.")
-        return redirect("owner_dashboard")
+        return redirect("panel_settings")
 
     if response.status_code not in [200, 201]:
         messages.error(request, f"No se pudo conectar Mercado Pago: {data}")
-        return redirect("owner_dashboard")
+        return redirect("panel_settings")
 
     payment_settings, _ = SalonPaymentSettings.objects.get_or_create(salon=salon)
 
@@ -1610,4 +1610,4 @@ def mercadopago_oauth_callback(request):
     request.session.pop("mp_oauth_salon_id", None)
 
     messages.success(request, "Mercado Pago conectado correctamente.")
-    return redirect("owner_dashboard")
+    return redirect("panel_settings")
