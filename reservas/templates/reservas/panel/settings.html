@@ -56,6 +56,9 @@
 {% endblock %}
 
 {% block panel_content %}
+<p style="color:red;">
+  DEBUG SALON ID: {{ salon.id }}
+</p>
 <div class="nyx-card p-4 nyx-form-card">
   <form method="post">
     {% csrf_token %}
@@ -196,6 +199,22 @@
           </div>
         </div>
       {% endif %}
+        
+      <div class="col-12">
+        <div class="nyx-settings-box mb-3">
+          <h5 class="mb-2">Mercado Pago</h5>
+
+          <p class="nyx-settings-muted mb-3">
+            Conectá tu cuenta de Mercado Pago para recibir pagos online de las reservas.
+          </p>
+
+          <a href="{% url 'mercadopago_oauth_connect' salon.id %}"
+            class="btn rounded-pill px-4"
+            style="background:#7ad0d4; color:#123; font-weight:700;">
+            Conectar Mercado Pago
+          </a>
+        </div>
+      </div>
 
       <div class="col-12">
         <div class="d-flex gap-2 flex-wrap">
