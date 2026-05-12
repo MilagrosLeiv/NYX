@@ -10,10 +10,9 @@ def build_payment_reference(booking):
 
 
 def build_absolute_url(path: str) -> str:
-    # Ajustalo cuando pases a producción
-    base_url = "http://127.0.0.1:8000"
-    return f"{base_url}{path}"
-
+    base = settings.SITE_URL.rstrip("/")
+    path = path if path.startswith("/") else f"/{path}"
+    return f"{base}{path}"
 
 def create_pending_payment_session(booking):
     reference = build_payment_reference(booking)
@@ -41,10 +40,15 @@ def create_pending_payment_session(booking):
 
     # Pago integrado con Mercado Pago
     if booking.selected_payment_method == 'integrated':
-        if not settings.MERCADOPAGO_ACCESS_TOKEN:
-            raise ValueError("Falta configurar MERCADOPAGO_ACCESS_TOKEN.")
+        payment_settings = getattr(booking.salon, "payment_settings", None)
 
-        sdk = mercadopago.SDK(settings.MERCADOPAGO_ACCESS_TOKEN)
+        if not payment_settings:
+            raise ValueError("El salón no tiene configuración de pagos.")
+
+        if not payment_settings.has_valid_mercadopago_connection():
+            raise ValueError("El salón no tiene Mercado Pago conectado correctamente.")
+
+        sdk = mercadopago.SDK(payment_settings.mp_access_token)
 
         reference = build_payment_reference(booking)
 
@@ -58,13 +62,13 @@ def create_pending_payment_session(booking):
                 }
             ],
             "external_reference": reference,
-            #"notification_url": build_absolute_url(reverse('payment_webhook')),
-            #"back_urls": {
-            #    "success": build_absolute_url(reverse('booking_success_booking', args=[booking.id])),
-            #    "pending": build_absolute_url(reverse('booking_success_booking', args=[booking.id])),
-            #    "failure": build_absolute_url(reverse('booking_success_booking', args=[booking.id])),
-            #},
-            #"auto_return": "approved",
+            "notification_url": build_absolute_url(reverse('payment_webhook')),
+            "back_urls": {
+                "success": build_absolute_url(reverse('booking_success_booking', args=[booking.id])),
+                "pending": build_absolute_url(reverse('booking_success_booking', args=[booking.id])),
+                "failure": build_absolute_url(reverse('booking_success_booking', args=[booking.id])),
+            },
+            "auto_return": "approved",
         }
 
         response = sdk.preference().create(preference_data)
