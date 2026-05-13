@@ -256,6 +256,7 @@ class PanelSalonSettingsForm(forms.ModelForm):
             'name',
             'email',
             'notification_email',
+            'notify_new_bookings_by_email',
             'phone',
             'address',
             'deposit_enabled',
@@ -281,6 +282,9 @@ class PanelSalonSettingsForm(forms.ModelForm):
             'notification_email': forms.EmailInput(attrs={
                 'class': 'form-control nyx-form-input',
                 'placeholder': 'Email donde querés recibir los avisos de nuevos turnos',
+            }),
+            'notify_new_bookings_by_email': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',
             }),
             'phone': forms.TextInput(attrs={
                 'class': 'form-control nyx-form-input',

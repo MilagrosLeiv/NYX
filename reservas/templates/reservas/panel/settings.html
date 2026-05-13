@@ -52,6 +52,13 @@
     display: flex;
     align-items: center;
   }
+
+  .nyx-settings-section-description{
+    color: var(--nyx-muted);
+    font-size: .92rem;
+    line-height: 1.55;
+    margin-bottom: 1rem;
+  }
 </style>
 {% endblock %}
 
@@ -69,12 +76,16 @@
 
           <div class="row g-4">
             <div class="col-md-6">
-              <label class="nyx-form-label" for="{{ form.name.id_for_label }}">Nombre</label>
+              <label class="nyx-form-label" for="{{ form.name.id_for_label }}">
+                Nombre
+              </label>
               {{ form.name }}
             </div>
 
             <div class="col-md-6">
-              <label class="nyx-form-label" for="{{ form.email.id_for_label }}">Email público / de contacto</label>
+              <label class="nyx-form-label" for="{{ form.email.id_for_label }}">
+                Email público / de contacto
+              </label>
               {{ form.email }}
               <div class="nyx-settings-muted mt-1">
                 Este email puede mostrarse como contacto general del salón.
@@ -82,12 +93,16 @@
             </div>
 
             <div class="col-md-6">
-              <label class="nyx-form-label" for="{{ form.phone.id_for_label }}">Teléfono</label>
+              <label class="nyx-form-label" for="{{ form.phone.id_for_label }}">
+                Teléfono
+              </label>
               {{ form.phone }}
             </div>
 
             <div class="col-md-6">
-              <label class="nyx-form-label" for="{{ form.address.id_for_label }}">Dirección</label>
+              <label class="nyx-form-label" for="{{ form.address.id_for_label }}">
+                Dirección
+              </label>
               {{ form.address }}
             </div>
           </div>
@@ -98,6 +113,11 @@
       <div class="col-12">
         <div class="nyx-settings-box">
           <h5 class="nyx-settings-box-title">Notificaciones</h5>
+
+          <p class="nyx-settings-section-description">
+            Configurá si el salón recibirá avisos automáticos cuando entren nuevos turnos,
+            cancelaciones o modificaciones.
+          </p>
 
           <div class="row g-4">
             {% if form.notify_new_bookings_by_email %}
@@ -112,11 +132,19 @@
             {% endif %}
 
             <div class="col-md-6">
-              <label class="nyx-form-label" for="{{ form.notification_email.id_for_label }}">Email para notificaciones</label>
+              <label class="nyx-form-label" for="{{ form.notification_email.id_for_label }}">
+                Email para notificaciones
+              </label>
               {{ form.notification_email }}
               <div class="nyx-settings-muted mt-1">
                 Acá llegan los avisos de nuevos turnos, cancelaciones y cambios.
               </div>
+
+              {% if form.notification_email.errors %}
+                <div class="text-danger small mt-1">
+                  {{ form.notification_email.errors.0 }}
+                </div>
+              {% endif %}
             </div>
           </div>
         </div>
@@ -126,6 +154,10 @@
       <div class="col-12">
         <div class="nyx-settings-box">
           <h5 class="nyx-settings-box-title">Política de pago</h5>
+
+          <p class="nyx-settings-section-description">
+            Definí si el cliente debe pagar una seña, puede pagar el total o si el pago total es obligatorio.
+          </p>
 
           <div class="row g-4">
             <div class="col-md-6">
@@ -152,8 +184,17 @@
             </div>
 
             <div class="col-md-4">
-              <label class="nyx-form-label" for="{{ form.deposit_percentage.id_for_label }}">Porcentaje de seña</label>
+              <label class="nyx-form-label" for="{{ form.deposit_percentage.id_for_label }}">
+                Porcentaje de seña
+              </label>
               {{ form.deposit_percentage }}
+
+              {% if form.deposit_percentage.errors %}
+                <div class="text-danger small mt-1">
+                  {{ form.deposit_percentage.errors.0 }}
+                </div>
+              {% endif %}
+
               <div class="nyx-settings-muted mt-1">
                 Solo aplica si marcás “Requerir seña”.
               </div>
@@ -167,21 +208,60 @@
         <div class="nyx-settings-box">
           <h5 class="nyx-settings-box-title">Métodos de pago aceptados</h5>
 
+          <p class="nyx-settings-section-description">
+            Elegí qué opciones de pago verá el cliente al reservar. Podés tener Mercado Pago conectado
+            aunque no esté visible para clientes.
+          </p>
+
           <div class="row g-4">
             <div class="col-md-6">
-              <label class="nyx-form-label" for="{{ form.payment_method.id_for_label }}">Método disponible para clientes</label>
+              <label class="nyx-form-label" for="{{ form.payment_method.id_for_label }}">
+                Método disponible para clientes
+              </label>
               {{ form.payment_method }}
+
+              {% if form.payment_method.errors %}
+                <div class="text-danger small mt-1">
+                  {{ form.payment_method.errors.0 }}
+                </div>
+              {% endif %}
+
               <div class="nyx-settings-muted mt-1">
                 Elegí si el cliente podrá pagar por transferencia, Mercado Pago o ambas opciones.
               </div>
             </div>
 
             <div class="col-12">
-              <label class="nyx-form-label" for="{{ form.payment_instructions.id_for_label }}">Instrucciones para transferencia</label>
+              <label class="nyx-form-label" for="{{ form.payment_instructions.id_for_label }}">
+                Instrucciones para transferencia
+              </label>
               {{ form.payment_instructions }}
+
+              {% if form.payment_instructions.errors %}
+                <div class="text-danger small mt-1">
+                  {{ form.payment_instructions.errors.0 }}
+                </div>
+              {% endif %}
+
               <div class="nyx-settings-muted mt-1">
                 Se mostrarán al cliente cuando elija transferencia. Ejemplo: alias, titular, CBU/CVU y dónde enviar comprobante.
               </div>
+
+              {% if accepts_transfer %}
+                <div class="alert alert-info rounded-4 mt-3 mb-0">
+                  <strong>Transferencia activa.</strong>
+                  <div class="small mt-1">
+                    Estas instrucciones se mostrarán a los clientes que elijan transferencia.
+                  </div>
+                </div>
+              {% else %}
+                <div class="alert alert-light border rounded-4 mt-3 mb-0">
+                  <strong>Transferencia no visible para clientes.</strong>
+                  <div class="small mt-1">
+                    Las instrucciones quedan guardadas, pero no se mostrarán mientras el método seleccionado sea solo Mercado Pago.
+                  </div>
+                </div>
+              {% endif %}
             </div>
           </div>
         </div>
@@ -192,18 +272,34 @@
         <div class="nyx-settings-box">
           <h5 class="nyx-settings-box-title">Mercado Pago</h5>
 
-          <p class="nyx-settings-muted mb-3">
-            Conectá la cuenta donde querés recibir los pagos online. Antes de continuar, asegurate de haber iniciado sesión en Mercado Pago con la cuenta correcta.
-            La disponibilidad del dinero depende de los plazos y comisiones de Mercado Pago.
+          <p class="nyx-settings-section-description">
+            Conectá la cuenta donde querés recibir los pagos online. Antes de continuar, asegurate de haber iniciado sesión
+            en Mercado Pago con la cuenta correcta. La disponibilidad del dinero depende de los plazos y comisiones de Mercado Pago.
           </p>
 
           {% if payment_settings and payment_settings.mercadopago_connected %}
-            <div class="alert alert-success rounded-4 mb-3">
-              <strong>Mercado Pago conectado.</strong>
-              <div class="small mt-1">
-                Los pagos online ingresarán en la cuenta autorizada.
+            {% if mercadopago_visible_to_clients %}
+              <div class="alert alert-success rounded-4 mb-3">
+                <strong>Mercado Pago activo para clientes.</strong>
+                <div class="small mt-1">
+                  Tus clientes podrán pagar online con Mercado Pago.
+                </div>
               </div>
-            </div>
+            {% elif accepts_integrated %}
+              <div class="alert alert-warning rounded-4 mb-3">
+                <strong>Mercado Pago conectado, pero revisá la configuración.</strong>
+                <div class="small mt-1">
+                  El método integrado está seleccionado, pero falta validar la conexión.
+                </div>
+              </div>
+            {% else %}
+              <div class="alert alert-info rounded-4 mb-3">
+                <strong>Mercado Pago conectado, pero no visible para clientes.</strong>
+                <div class="small mt-1">
+                  Actualmente elegiste otro método de pago. Para mostrar Mercado Pago, cambiá el método a “Pago integrado” o “Transferencia y pago integrado”.
+                </div>
+              </div>
+            {% endif %}
 
             <button type="submit"
                     formaction="{% url 'mercadopago_oauth_disconnect' salon.id %}"
@@ -212,6 +308,22 @@
               Desconectar Mercado Pago
             </button>
           {% else %}
+            {% if accepts_integrated %}
+              <div class="alert alert-warning rounded-4 mb-3">
+                <strong>Mercado Pago no conectado.</strong>
+                <div class="small mt-1">
+                  Elegiste ofrecer pago integrado, pero todavía falta conectar una cuenta de Mercado Pago.
+                </div>
+              </div>
+            {% else %}
+              <div class="alert alert-light border rounded-4 mb-3">
+                <strong>Mercado Pago no conectado.</strong>
+                <div class="small mt-1">
+                  Podés conectarlo ahora y activarlo para clientes cuando lo necesites.
+                </div>
+              </div>
+            {% endif %}
+
             <a href="{% url 'mercadopago_oauth_connect' salon.id %}"
                class="btn rounded-pill px-4"
                style="background:#7ad0d4; color:#123; font-weight:700;">
@@ -225,6 +337,10 @@
       <div class="col-12">
         <div class="nyx-settings-box">
           <h5 class="nyx-settings-box-title">Política de cancelación y modificación</h5>
+
+          <p class="nyx-settings-section-description">
+            Definí hasta cuándo el cliente puede cancelar o solicitar cambios de su turno desde el enlace de gestión.
+          </p>
 
           <div class="row g-4">
             <div class="col-md-6">
@@ -288,7 +404,9 @@
 
       <div class="col-12">
         <div class="d-flex gap-2 flex-wrap">
-          <button type="submit" class="nyx-primary-btn">Guardar configuración</button>
+          <button type="submit" class="nyx-primary-btn">
+            Guardar configuración
+          </button>
         </div>
       </div>
 

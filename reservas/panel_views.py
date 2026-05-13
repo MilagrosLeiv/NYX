@@ -536,6 +536,10 @@ def panel_settings(request):
 
     payment_settings, _ = SalonPaymentSettings.objects.get_or_create(salon=salon)
 
+    accepts_transfer = salon.payment_method in ["transfer", "both"]
+    accepts_integrated = salon.payment_method in ["integrated", "both"]
+    mercadopago_ready = payment_settings.has_valid_mercadopago_connection()
+    mercadopago_visible_to_clients = accepts_integrated and mercadopago_ready
     if request.method == 'POST':
         form = PanelSalonSettingsForm(request.POST, instance=salon)
         if form.is_valid():
@@ -550,6 +554,10 @@ def panel_settings(request):
         'salon': salon,
         'form': form,
         'payment_settings': payment_settings,
+        'accepts_transfer': accepts_transfer,
+        'accepts_integrated': accepts_integrated,
+        'mercadopago_ready': mercadopago_ready,
+        'mercadopago_visible_to_clients': mercadopago_visible_to_clients,
     }
     return render(request, 'reservas/panel/settings.html', context)
 
