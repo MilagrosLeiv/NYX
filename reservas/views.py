@@ -1732,7 +1732,14 @@ def mercadopago_oauth_disconnect(request, salon_id):
 
     salon = get_object_or_404(Salon, id=salon_id)
 
-    if salon != get_user_salon(request.user) or not is_owner_user(request.user):
+    is_owner = SalonMembership.objects.filter(
+        user=request.user,
+        salon=salon,
+        role="owner",
+        is_active=True,
+    ).exists()
+
+    if not is_owner:
         raise PermissionDenied("Solo la dueña puede desconectar Mercado Pago.")
 
     if request.method != "POST":
