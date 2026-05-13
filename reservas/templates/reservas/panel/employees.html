@@ -30,6 +30,7 @@
             <th>Profesional</th>
             <th>Teléfono</th>
             <th>Servicios</th>
+            <th>Acceso</th>
             <th>Estado</th>
             <th class="text-end">Acciones</th>
           </tr>
@@ -37,7 +38,21 @@
         <tbody>
           {% for employee in employees %}
             <tr>
-              <td class="fw-semibold">{{ employee.name }}</td>
+              <td>
+                <div class="fw-semibold">{{ employee.name }}</div>
+
+                {% if employee.email %}
+                  <div class="text-secondary small">{{ employee.email }}</div>
+                {% else %}
+                  <div class="text-secondary small">Sin email</div>
+                {% endif %}
+
+                {% if employee.notify_by_email %}
+                  <span class="nyx-badge mt-1">Recibe avisos</span>
+                {% else %}
+                  <span class="text-secondary small d-block mt-1">Sin avisos por email</span>
+                {% endif %}
+              </td>
               <td>{{ employee.phone|default:"-" }}</td>
               <td>
                 <div class="d-flex flex-wrap gap-2">
@@ -48,6 +63,20 @@
                   {% endfor %}
                 </div>
               </td>
+              
+              <td>
+                {% if employee.user %}
+                  <span class="nyx-badge">Staff activo</span>
+                  <div class="text-secondary small mt-1">
+                    {{ employee.user.username }}
+                  </div>
+                {% else %}
+                  <span class="nyx-badge" style="background:#fff8e6;color:#8a6400;border-color:#f3d27b;">
+                    Sin acceso
+                  </span>
+                {% endif %}
+              </td>
+
               <td>
                 {% if employee.is_active %}
                   <span class="nyx-badge">Activo</span>
@@ -58,6 +87,13 @@
               <td class="text-end">
                 <div class="d-flex justify-content-end gap-2 flex-wrap">
                   <a href="{% url 'panel_employee_edit' employee.id %}" class="nyx-filter-btn">Editar</a>
+
+                  {% if not employee.user %}
+                    <a href="{% url 'panel_employee_create_access' employee.id %}" class="nyx-filter-btn">
+                      Crear acceso
+                    </a>
+                  {% endif %}
+
                   <a href="{% url 'panel_employee_toggle_active' employee.id %}" class="nyx-filter-btn">
                     {% if employee.is_active %}Desactivar{% else %}Activar{% endif %}
                   </a>

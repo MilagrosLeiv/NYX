@@ -75,6 +75,18 @@
         {% endif %}
       </div>
 
+      <div class="col-md-6">
+        <label class="nyx-form-label" for="{{ form.email.id_for_label }}">Email</label>
+        {{ form.email }}
+        {% if form.email.errors %}
+          <div class="text-danger small mt-1">{{ form.email.errors|join:", " }}</div>
+        {% endif %}
+
+        <div class="text-secondary small mt-1">
+          Se usa para enviarle avisos de sus turnos si activás las notificaciones.
+        </div>
+      </div>
+
       <div class="col-12">
         <label class="nyx-form-label">Servicios que realiza</label>
         <div class="nyx-services-box">
@@ -86,6 +98,17 @@
       </div>
 
       <div class="col-12">
+        <div class="form-check mb-3">
+          {{ form.notify_by_email }}
+          <label class="form-check-label fw-semibold ms-1" for="{{ form.notify_by_email.id_for_label }}">
+            Enviar avisos de turnos a este profesional por email
+          </label>
+        </div>
+
+        <div class="text-secondary small mb-3">
+          Si está activo, este profesional recibirá un email cuando tenga un nuevo turno asignado.
+        </div>
+
         <div class="form-check">
           {{ form.is_active }}
           <label class="form-check-label fw-semibold ms-1" for="{{ form.is_active.id_for_label }}">

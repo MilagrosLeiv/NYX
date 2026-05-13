@@ -1,6 +1,7 @@
 from datetime import timedelta, datetime
 from urllib import request
 
+from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -9,13 +10,16 @@ from django.shortcuts import get_object_or_404, render, redirect
 from django.utils import timezone
 
 from .mail_utils import send_booking_confirmed_email, send_booking_cancelled_email, send_booking_payment_pending_email
-from .models import BookingItem, EmployeeTimeOff, Service, Employee,BusinessHours, Salon, Booking, SalonPaymentSettings
+from .models import (BookingItem, EmployeeTimeOff, 
+Service, Employee,BusinessHours, 
+Salon, SalonMembership,Booking, SalonPaymentSettings)
 from .panel_forms import (
     PanelBusinessHoursForm,
     PanelServiceForm,
     PanelEmployeeForm,
     EmployeeTimeOffForm,
     PanelSalonSettingsForm,
+    PanelEmployeeAccessForm
 )
 from .booking_utils import (
     mark_completed_bookings,
@@ -387,7 +391,81 @@ def panel_employee_create(request):
     }
     return render(request, 'reservas/panel/employee_form.html', context)
 
+@login_required
+def panel_employee_create_access(request, employee_id):
+    if request.user.is_superuser:
+        return redirect('/admin/')
 
+    salon = get_user_salon(request.user)
+
+    if not salon or not is_owner_user(request.user):
+        raise PermissionDenied("Solo la dueña puede crear accesos staff.")
+
+    employee = get_object_or_404(
+        Employee,
+        pk=employee_id,
+        salon=salon,
+    )
+
+    if employee.user:
+        messages.info(request, f"{employee.name} ya tiene acceso al panel.")
+        return redirect("panel_employees")
+
+    if request.method == "POST":
+        form = PanelEmployeeAccessForm(request.POST)
+
+        if form.is_valid():
+            user = User.objects.create_user(
+                username=form.cleaned_data["username"],
+                email=form.cleaned_data["email"],
+                password=form.cleaned_data["password"],
+                first_name=employee.name,
+            )
+
+            SalonMembership.objects.create(
+                user=user,
+                salon=salon,
+                role="staff",
+                is_active=True,
+            )
+
+            employee.user = user
+
+            if not employee.email:
+                employee.email = form.cleaned_data["email"]
+
+            employee.save(update_fields=["user", "email"])
+
+            messages.success(
+                request,
+                f"Acceso staff creado correctamente para {employee.name}."
+            )
+            return redirect("panel_employees")
+    else:
+        initial_username = (
+            employee.name
+            .strip()
+            .lower()
+            .replace(" ", "_")
+        )
+
+        form = PanelEmployeeAccessForm(initial={
+            "username": initial_username,
+            "email": employee.email or "",
+        })
+
+    context = {
+        "panel_role": "owner",
+        "salon": salon,
+        "employee": employee,
+        "form": form,
+    }
+
+    return render(
+        request,
+        "reservas/panel/employee_access_form.html",
+        context
+    )
 @login_required
 def panel_employee_edit(request, employee_id):
     if request.user.is_superuser:

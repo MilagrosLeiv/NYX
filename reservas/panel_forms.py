@@ -2,6 +2,7 @@ from decimal import Decimal, InvalidOperation
 
 from django import forms
 from django.utils import timezone
+from django.contrib.auth.models import User
 
 from .models import Service, Employee, BusinessHours, Salon,EmployeeTimeOff
 
@@ -73,7 +74,7 @@ class PanelEmployeeForm(forms.ModelForm):
 
     class Meta:
         model = Employee
-        fields = ['name', 'phone', 'services', 'is_active']
+        fields = ['name', 'phone','email','notify_by_email', 'services', 'is_active']
         widgets = {
             'name': forms.TextInput(attrs={
                 'class': 'form-control nyx-form-input',
@@ -82,6 +83,13 @@ class PanelEmployeeForm(forms.ModelForm):
             'phone': forms.TextInput(attrs={
                 'class': 'form-control nyx-form-input',
                 'placeholder': 'Ej. 3415555555',
+            }),
+            'email': forms.EmailInput(attrs={
+                'class': 'form-control nyx-form-input',
+                'placeholder': 'Ej. lara@nyx.com',
+            }),
+            'notify_by_email': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',
             }),
             'is_active': forms.CheckboxInput(attrs={
                 'class': 'form-check-input',
@@ -212,6 +220,48 @@ class EmployeeTimeOffForm(forms.ModelForm):
             instance.save()
 
         return instance
+    
+class PanelEmployeeAccessForm(forms.Form):
+    username = forms.CharField(
+        label="Usuario",
+        max_length=150,
+        widget=forms.TextInput(attrs={
+            "class": "form-control nyx-form-input",
+            "placeholder": "Ej. camila",
+        })
+    )
+
+    email = forms.EmailField(
+        label="Email",
+        widget=forms.EmailInput(attrs={
+            "class": "form-control nyx-form-input",
+            "placeholder": "Email del profesional",
+        })
+    )
+
+    password = forms.CharField(
+        label="Contraseña temporal",
+        widget=forms.PasswordInput(attrs={
+            "class": "form-control nyx-form-input",
+            "placeholder": "Contraseña temporal",
+        })
+    )
+
+    def clean_username(self):
+        username = self.cleaned_data["username"].strip()
+
+        if User.objects.filter(username=username).exists():
+            raise forms.ValidationError("Ya existe un usuario con ese nombre.")
+
+        return username
+
+    def clean_email(self):
+        email = self.cleaned_data["email"].strip().lower()
+
+        if User.objects.filter(email=email).exists():
+            raise forms.ValidationError("Ya existe un usuario con ese email.")
+
+        return email
     
 class PanelBusinessHoursForm(forms.ModelForm):
     class Meta:

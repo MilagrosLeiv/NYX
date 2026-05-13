@@ -55,6 +55,11 @@ urlpatterns = [
     path('panel/profesionales/nuevo/', panel_views.panel_employee_create, name='panel_employee_create'),
     path('panel/profesionales/<int:employee_id>/editar/', panel_views.panel_employee_edit, name='panel_employee_edit'),
     path('panel/profesionales/<int:employee_id>/toggle-activo/', panel_views.panel_employee_toggle_active, name='panel_employee_toggle_active'),
+    path(
+        "panel/profesionales/<int:employee_id>/crear-acceso/",
+        panel_views.panel_employee_create_access,
+        name="panel_employee_create_access"
+    ),
     path('panel/horarios/', panel_views.panel_business_hours, name='panel_business_hours'),
     path('panel/horarios/nuevo/', panel_views.panel_business_hours_create, name='panel_business_hours_create'),
     path('panel/horarios/<int:business_hours_id>/editar/', panel_views.panel_business_hours_edit, name='panel_business_hours_edit'),
