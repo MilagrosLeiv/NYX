@@ -18,7 +18,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.core.mail import send_mail
 from django.db.models import Count,Q
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, PermissionDenied
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
@@ -1723,4 +1723,41 @@ def mercadopago_oauth_callback(request):
     request.session.pop("mp_oauth_salon_id", None)
 
     messages.success(request, "Mercado Pago conectado correctamente.")
+    return redirect("panel_settings")
+
+@login_required
+def mercadopago_oauth_disconnect(request, salon_id):
+    if request.user.is_superuser:
+        return redirect('/admin/')
+
+    salon = get_object_or_404(Salon, id=salon_id)
+
+    if salon != get_user_salon(request.user) or not is_owner_user(request.user):
+        raise PermissionDenied("Solo la dueña puede desconectar Mercado Pago.")
+
+    if request.method != "POST":
+        return redirect("panel_settings")
+
+    payment_settings, _ = SalonPaymentSettings.objects.get_or_create(salon=salon)
+
+    payment_settings.mercadopago_enabled = False
+    payment_settings.mercadopago_connected = False
+    payment_settings.mp_user_id = ""
+    payment_settings.mp_access_token = ""
+    payment_settings.mp_refresh_token = ""
+    payment_settings.mp_public_key = ""
+    payment_settings.mp_token_expires_at = None
+
+    payment_settings.save(update_fields=[
+        "mercadopago_enabled",
+        "mercadopago_connected",
+        "mp_user_id",
+        "mp_access_token",
+        "mp_refresh_token",
+        "mp_public_key",
+        "mp_token_expires_at",
+        "updated_at",
+    ])
+
+    messages.success(request, "Mercado Pago fue desconectado correctamente.")
     return redirect("panel_settings")

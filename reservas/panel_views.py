@@ -534,6 +534,8 @@ def panel_settings(request):
     if not salon or not is_owner_user(request.user):
         raise PermissionDenied("Solo la dueña puede editar la configuración.")
 
+    payment_settings, _ = SalonPaymentSettings.objects.get_or_create(salon=salon)
+
     if request.method == 'POST':
         form = PanelSalonSettingsForm(request.POST, instance=salon)
         if form.is_valid():
@@ -547,6 +549,7 @@ def panel_settings(request):
         'panel_role': 'owner',
         'salon': salon,
         'form': form,
+        'payment_settings': payment_settings,
     }
     return render(request, 'reservas/panel/settings.html', context)
 

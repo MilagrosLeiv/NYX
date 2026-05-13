@@ -79,4 +79,9 @@ urlpatterns = [
         views.mercadopago_oauth_callback,
         name="mercadopago_oauth_callback"
     ),
+    path(
+        "pagos/mercadopago/oauth/disconnect/<int:salon_id>/",
+        views.mercadopago_oauth_disconnect,
+        name="mercadopago_oauth_disconnect"
+    ),
 ]

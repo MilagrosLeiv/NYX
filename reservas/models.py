@@ -63,6 +63,10 @@ class Salon(models.Model):
         null=True,
         verbose_name="Email para notificaciones"
     )
+    notify_new_bookings_by_email = models.BooleanField(
+        'Recibir notificaciones de nuevos turnos por email',
+        default=True
+    )
 
     class Meta:
         verbose_name = 'Peluquería'

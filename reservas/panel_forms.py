@@ -255,6 +255,7 @@ class PanelSalonSettingsForm(forms.ModelForm):
         fields = [
             'name',
             'email',
+            'notification_email',
             'phone',
             'address',
             'deposit_enabled',
@@ -276,6 +277,10 @@ class PanelSalonSettingsForm(forms.ModelForm):
             'email': forms.EmailInput(attrs={
                 'class': 'form-control nyx-form-input',
                 'placeholder': 'Email de contacto',
+            }),
+            'notification_email': forms.EmailInput(attrs={
+                'class': 'form-control nyx-form-input',
+                'placeholder': 'Email donde querés recibir los avisos de nuevos turnos',
             }),
             'phone': forms.TextInput(attrs={
                 'class': 'form-control nyx-form-input',

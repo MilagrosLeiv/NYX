@@ -56,37 +56,76 @@
 {% endblock %}
 
 {% block panel_content %}
-<p style="color:red;">
-  DEBUG SALON ID: {{ salon.id }}
-</p>
 <div class="nyx-card p-4 nyx-form-card">
   <form method="post">
     {% csrf_token %}
 
     <div class="row g-4">
-      <div class="col-md-6">
-        <label class="nyx-form-label" for="{{ form.name.id_for_label }}">Nombre</label>
-        {{ form.name }}
-      </div>
 
-      <div class="col-md-6">
-        <label class="nyx-form-label" for="{{ form.email.id_for_label }}">Email</label>
-        {{ form.email }}
-      </div>
-
-      <div class="col-md-6">
-        <label class="nyx-form-label" for="{{ form.phone.id_for_label }}">Teléfono</label>
-        {{ form.phone }}
-      </div>
-
-      <div class="col-md-6">
-        <label class="nyx-form-label" for="{{ form.address.id_for_label }}">Dirección</label>
-        {{ form.address }}
-      </div>
-
+      <!-- Datos del salón -->
       <div class="col-12">
         <div class="nyx-settings-box">
-          <h5 class="nyx-settings-box-title">Configuración de pago</h5>
+          <h5 class="nyx-settings-box-title">Datos del salón</h5>
+
+          <div class="row g-4">
+            <div class="col-md-6">
+              <label class="nyx-form-label" for="{{ form.name.id_for_label }}">Nombre</label>
+              {{ form.name }}
+            </div>
+
+            <div class="col-md-6">
+              <label class="nyx-form-label" for="{{ form.email.id_for_label }}">Email público / de contacto</label>
+              {{ form.email }}
+              <div class="nyx-settings-muted mt-1">
+                Este email puede mostrarse como contacto general del salón.
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <label class="nyx-form-label" for="{{ form.phone.id_for_label }}">Teléfono</label>
+              {{ form.phone }}
+            </div>
+
+            <div class="col-md-6">
+              <label class="nyx-form-label" for="{{ form.address.id_for_label }}">Dirección</label>
+              {{ form.address }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notificaciones -->
+      <div class="col-12">
+        <div class="nyx-settings-box">
+          <h5 class="nyx-settings-box-title">Notificaciones</h5>
+
+          <div class="row g-4">
+            {% if form.notify_new_bookings_by_email %}
+              <div class="col-12">
+                <div class="form-check nyx-check-row">
+                  {{ form.notify_new_bookings_by_email }}
+                  <label class="form-check-label fw-semibold ms-1" for="{{ form.notify_new_bookings_by_email.id_for_label }}">
+                    Recibir avisos de nuevos turnos por email
+                  </label>
+                </div>
+              </div>
+            {% endif %}
+
+            <div class="col-md-6">
+              <label class="nyx-form-label" for="{{ form.notification_email.id_for_label }}">Email para notificaciones</label>
+              {{ form.notification_email }}
+              <div class="nyx-settings-muted mt-1">
+                Acá llegan los avisos de nuevos turnos, cancelaciones y cambios.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Política de pago -->
+      <div class="col-12">
+        <div class="nyx-settings-box">
+          <h5 class="nyx-settings-box-title">Política de pago</h5>
 
           <div class="row g-4">
             <div class="col-md-6">
@@ -112,11 +151,6 @@
               </div>
             </div>
 
-            <div class="col-md-6">
-              <label class="nyx-form-label" for="{{ form.payment_method.id_for_label }}">Método</label>
-              {{ form.payment_method }}
-            </div>
-
             <div class="col-md-4">
               <label class="nyx-form-label" for="{{ form.deposit_percentage.id_for_label }}">Porcentaje de seña</label>
               {{ form.deposit_percentage }}
@@ -124,18 +158,70 @@
                 Solo aplica si marcás “Requerir seña”.
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Métodos de pago -->
+      <div class="col-12">
+        <div class="nyx-settings-box">
+          <h5 class="nyx-settings-box-title">Métodos de pago aceptados</h5>
+
+          <div class="row g-4">
+            <div class="col-md-6">
+              <label class="nyx-form-label" for="{{ form.payment_method.id_for_label }}">Método disponible para clientes</label>
+              {{ form.payment_method }}
+              <div class="nyx-settings-muted mt-1">
+                Elegí si el cliente podrá pagar por transferencia, Mercado Pago o ambas opciones.
+              </div>
+            </div>
 
             <div class="col-12">
-              <label class="nyx-form-label" for="{{ form.payment_instructions.id_for_label }}">Instrucciones de pago</label>
+              <label class="nyx-form-label" for="{{ form.payment_instructions.id_for_label }}">Instrucciones para transferencia</label>
               {{ form.payment_instructions }}
               <div class="nyx-settings-muted mt-1">
-                Este texto se mostrará al cliente cuando corresponda.
+                Se mostrarán al cliente cuando elija transferencia. Ejemplo: alias, titular, CBU/CVU y dónde enviar comprobante.
               </div>
             </div>
           </div>
         </div>
       </div>
 
+      <!-- Mercado Pago -->
+      <div class="col-12">
+        <div class="nyx-settings-box">
+          <h5 class="nyx-settings-box-title">Mercado Pago</h5>
+
+          <p class="nyx-settings-muted mb-3">
+            Conectá la cuenta donde querés recibir los pagos online. Antes de continuar, asegurate de haber iniciado sesión en Mercado Pago con la cuenta correcta.
+            La disponibilidad del dinero depende de los plazos y comisiones de Mercado Pago.
+          </p>
+
+          {% if payment_settings and payment_settings.mercadopago_connected %}
+            <div class="alert alert-success rounded-4 mb-3">
+              <strong>Mercado Pago conectado.</strong>
+              <div class="small mt-1">
+                Los pagos online ingresarán en la cuenta autorizada.
+              </div>
+            </div>
+
+            <button type="submit"
+                    formaction="{% url 'mercadopago_oauth_disconnect' salon.id %}"
+                    formmethod="post"
+                    class="btn btn-outline-danger rounded-pill px-4">
+              Desconectar Mercado Pago
+            </button>
+          {% else %}
+            <a href="{% url 'mercadopago_oauth_connect' salon.id %}"
+               class="btn rounded-pill px-4"
+               style="background:#7ad0d4; color:#123; font-weight:700;">
+              Conectar Mercado Pago
+            </a>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Cancelación y modificación -->
       <div class="col-12">
         <div class="nyx-settings-box">
           <h5 class="nyx-settings-box-title">Política de cancelación y modificación</h5>
@@ -150,7 +236,7 @@
               </div>
 
               <label class="nyx-form-label" for="{{ form.cancellation_limit_hours.id_for_label }}">
-                Horas antes del turno para cancelar sin recargo
+                Horas antes del turno para cancelar
               </label>
               {{ form.cancellation_limit_hours }}
 
@@ -174,7 +260,7 @@
               </div>
 
               <label class="nyx-form-label" for="{{ form.reschedule_limit_hours.id_for_label }}">
-                Horas antes del turno para modificar sin recargo
+                Horas antes del turno para modificar
               </label>
               {{ form.reschedule_limit_hours }}
 
@@ -199,28 +285,13 @@
           </div>
         </div>
       {% endif %}
-        
-      <div class="col-12">
-        <div class="nyx-settings-box mb-3">
-          <h5 class="mb-2">Mercado Pago</h5>
-
-          <p class="nyx-settings-muted mb-3">
-            Conectá tu cuenta de Mercado Pago para recibir pagos online de las reservas.
-          </p>
-
-          <a href="{% url 'mercadopago_oauth_connect' salon.id %}"
-            class="btn rounded-pill px-4"
-            style="background:#7ad0d4; color:#123; font-weight:700;">
-            Conectar Mercado Pago
-          </a>
-        </div>
-      </div>
 
       <div class="col-12">
         <div class="d-flex gap-2 flex-wrap">
           <button type="submit" class="nyx-primary-btn">Guardar configuración</button>
         </div>
       </div>
+
     </div>
   </form>
 </div>
