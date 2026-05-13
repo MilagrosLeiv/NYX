@@ -1,11 +1,48 @@
 from decimal import Decimal, InvalidOperation
+from datetime import time
 
 from django import forms
 from django.utils import timezone
 from django.contrib.auth.models import User
 
+
+
 from .models import Service, Employee, BusinessHours, Salon,EmployeeTimeOff
 
+def build_time_choices(start_hour=6, end_hour=23, step_minutes=30):
+    choices = [("", "Seleccionar hora")]
+
+    current_minutes = start_hour * 60
+    end_minutes = end_hour * 60
+
+    while current_minutes <= end_minutes:
+        hour = current_minutes // 60
+        minute = current_minutes % 60
+
+        value = f"{hour:02d}:{minute:02d}"
+        choices.append((value, value))
+
+        current_minutes += step_minutes
+
+    return choices
+
+
+TIME_CHOICES_30 = build_time_choices()
+
+
+def parse_time_choice(value):
+    if value in (None, ""):
+        return None
+
+    hour, minute = value.split(":")
+    return time(int(hour), int(minute))
+
+
+def format_time_for_select(value):
+    if not value:
+        return ""
+
+    return value.strftime("%H:%M")
 
 class PanelServiceForm(forms.ModelForm):
     price = forms.CharField(
@@ -126,22 +163,25 @@ class EmployeeTimeOffForm(forms.ModelForm):
         })
     )
 
-    start_time = forms.TimeField(
+    start_time = forms.TypedChoiceField(
         label="Hora inicio",
-        widget=forms.TimeInput(attrs={
-            "type": "time",
-            "class": "form-control nyx-input",
+        choices=TIME_CHOICES_30,
+        coerce=parse_time_choice,
+        empty_value=None,
+        widget=forms.Select(attrs={
+            "class": "form-select nyx-input",
         })
     )
 
-    end_time = forms.TimeField(
+    end_time = forms.TypedChoiceField(
         label="Hora fin",
-        widget=forms.TimeInput(attrs={
-            "type": "time",
-            "class": "form-control nyx-input",
+        choices=TIME_CHOICES_30,
+        coerce=parse_time_choice,
+        empty_value=None,
+        widget=forms.Select(attrs={
+            "class": "form-select nyx-input",
         })
     )
-
     class Meta:
         model = EmployeeTimeOff
         fields = ["employee", "reason"]
@@ -264,6 +304,26 @@ class PanelEmployeeAccessForm(forms.Form):
         return email
     
 class PanelBusinessHoursForm(forms.ModelForm):
+    start_time = forms.TypedChoiceField(
+        label="Hora de inicio",
+        choices=TIME_CHOICES_30,
+        coerce=parse_time_choice,
+        empty_value=None,
+        widget=forms.Select(attrs={
+            "class": "form-select nyx-form-input",
+        })
+    )
+
+    end_time = forms.TypedChoiceField(
+        label="Hora de fin",
+        choices=TIME_CHOICES_30,
+        coerce=parse_time_choice,
+        empty_value=None,
+        widget=forms.Select(attrs={
+            "class": "form-select nyx-form-input",
+        })
+    )
+
     class Meta:
         model = BusinessHours
         fields = ['weekday', 'start_time', 'end_time', 'is_closed']
@@ -271,31 +331,35 @@ class PanelBusinessHoursForm(forms.ModelForm):
             'weekday': forms.Select(attrs={
                 'class': 'form-select nyx-form-input',
             }),
-            'start_time': forms.TimeInput(attrs={
-                'class': 'form-control nyx-form-input',
-                'type': 'time',
-            }),
-            'end_time': forms.TimeInput(attrs={
-                'class': 'form-control nyx-form-input',
-                'type': 'time',
-            }),
             'is_closed': forms.CheckboxInput(attrs={
                 'class': 'form-check-input',
             }),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if self.instance and self.instance.pk:
+            self.initial["start_time"] = format_time_for_select(self.instance.start_time)
+            self.initial["end_time"] = format_time_for_select(self.instance.end_time)
+
     def clean(self):
         cleaned_data = super().clean()
+
         is_closed = cleaned_data.get('is_closed')
         start_time = cleaned_data.get('start_time')
         end_time = cleaned_data.get('end_time')
 
         if not is_closed:
             if not start_time or not end_time:
-                raise forms.ValidationError('Debés indicar horario de inicio y fin, o marcar el día como cerrado.')
+                raise forms.ValidationError(
+                    'Debés indicar horario de inicio y fin, o marcar el día como cerrado.'
+                )
 
             if start_time >= end_time:
-                raise forms.ValidationError('La hora de inicio debe ser menor que la de fin.')
+                raise forms.ValidationError(
+                    'La hora de inicio debe ser menor que la de fin.'
+                )
 
         return cleaned_data
     

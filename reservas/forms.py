@@ -6,6 +6,7 @@ from django.core.exceptions import ValidationError
 
 from .models import Appointment, Employee, Service, Salon
 
+
 class AppointmentForm(forms.ModelForm):
     services = forms.ModelMultipleChoiceField(
         queryset=Service.objects.filter(is_active=True).order_by('name'),
