@@ -87,9 +87,16 @@
                 Email público / de contacto
               </label>
               {{ form.email }}
+
               <div class="nyx-settings-muted mt-1">
                 Este email puede mostrarse como contacto general del salón.
               </div>
+
+              {% if form.email.errors %}
+                <div class="text-danger small mt-1">
+                  {{ form.email.errors.0 }}
+                </div>
+              {% endif %}
             </div>
 
             <div class="col-md-6">
@@ -97,6 +104,12 @@
                 Teléfono
               </label>
               {{ form.phone }}
+
+              {% if form.phone.errors %}
+                <div class="text-danger small mt-1">
+                  {{ form.phone.errors.0 }}
+                </div>
+              {% endif %}
             </div>
 
             <div class="col-md-6">
@@ -104,6 +117,12 @@
                 Dirección
               </label>
               {{ form.address }}
+
+              {% if form.address.errors %}
+                <div class="text-danger small mt-1">
+                  {{ form.address.errors.0 }}
+                </div>
+              {% endif %}
             </div>
           </div>
         </div>
@@ -136,6 +155,7 @@
                 Email para notificaciones
               </label>
               {{ form.notification_email }}
+
               <div class="nyx-settings-muted mt-1">
                 Acá llegan los avisos de nuevos turnos, cancelaciones y cambios.
               </div>
@@ -171,15 +191,25 @@
               <div class="form-check nyx-check-row mb-3">
                 {{ form.allow_full_payment }}
                 <label class="form-check-label fw-semibold ms-1" for="{{ form.allow_full_payment.id_for_label }}">
-                  Permitir pago total
+                  Permitir pago total opcional
                 </label>
+              </div>
+
+              <div class="nyx-settings-muted ps-4 mb-3">
+                Si esta opción está activa, el cliente podrá elegir pagar el total del turno.
+                Por ejemplo: si también requerís seña, el cliente podrá elegir entre pagar la seña o pagar todo.
               </div>
 
               <div class="form-check nyx-check-row mb-3">
                 {{ form.full_payment_required }}
                 <label class="form-check-label fw-semibold ms-1" for="{{ form.full_payment_required.id_for_label }}">
-                  Requerir pago total
+                  Requerir pago total obligatorio
                 </label>
+              </div>
+
+              <div class="nyx-settings-muted ps-4">
+                Si activás esta opción, el cliente deberá pagar el total para confirmar el turno.
+                Esta opción tiene prioridad sobre la seña.
               </div>
             </div>
 
@@ -209,8 +239,8 @@
           <h5 class="nyx-settings-box-title">Métodos de pago aceptados</h5>
 
           <p class="nyx-settings-section-description">
-            Elegí qué opciones de pago verá el cliente al reservar. Podés tener Mercado Pago conectado
-            aunque no esté visible para clientes.
+            Elegí qué opciones de pago verá el cliente al reservar. Los métodos pueden quedar configurados,
+            aunque no estén activos si no solicitás ningún pago.
           </p>
 
           <div class="row g-4">
@@ -244,16 +274,26 @@
               {% endif %}
 
               <div class="nyx-settings-muted mt-1">
-                Se mostrarán al cliente cuando elija transferencia. Ejemplo: alias, titular, CBU/CVU y dónde enviar comprobante.
+                Ejemplo: alias, titular, CBU/CVU y dónde enviar comprobante.
               </div>
 
-              {% if accepts_transfer %}
+              {% if not payment_policy_active %}
+                <div class="alert alert-light border rounded-4 mt-3 mb-0">
+                  <strong>Transferencia configurada, pero no activa.</strong>
+                  <div class="small mt-1">
+                    Actualmente no se solicita ningún pago al reservar. Estas instrucciones quedan guardadas,
+                    pero no se mostrarán al cliente hasta que actives seña, pago total opcional o pago total obligatorio.
+                  </div>
+                </div>
+
+              {% elif accepts_transfer %}
                 <div class="alert alert-info rounded-4 mt-3 mb-0">
                   <strong>Transferencia activa.</strong>
                   <div class="small mt-1">
                     Estas instrucciones se mostrarán a los clientes que elijan transferencia.
                   </div>
                 </div>
+
               {% else %}
                 <div class="alert alert-light border rounded-4 mt-3 mb-0">
                   <strong>Transferencia no visible para clientes.</strong>
@@ -277,7 +317,38 @@
             en Mercado Pago con la cuenta correcta. La disponibilidad del dinero depende de los plazos y comisiones de Mercado Pago.
           </p>
 
-          {% if payment_settings and payment_settings.mercadopago_connected %}
+          {% if not payment_policy_active %}
+            {% if payment_settings and payment_settings.mercadopago_connected %}
+              <div class="alert alert-light border rounded-4 mb-3">
+                <strong>Mercado Pago conectado, pero no activo.</strong>
+                <div class="small mt-1">
+                  Actualmente no se solicita ningún pago al reservar. Mercado Pago queda conectado, pero no se mostrará al cliente
+                  hasta que actives seña, pago total opcional o pago total obligatorio.
+                </div>
+              </div>
+
+              <button type="submit"
+                      formaction="{% url 'mercadopago_oauth_disconnect' salon.id %}"
+                      formmethod="post"
+                      class="btn btn-outline-danger rounded-pill px-4">
+                Desconectar Mercado Pago
+              </button>
+            {% else %}
+              <div class="alert alert-light border rounded-4 mb-3">
+                <strong>Mercado Pago no conectado.</strong>
+                <div class="small mt-1">
+                  Podés conectarlo ahora, pero no se mostrará al cliente mientras no solicites ningún pago al reservar.
+                </div>
+              </div>
+
+              <a href="{% url 'mercadopago_oauth_connect' salon.id %}"
+                 class="btn rounded-pill px-4"
+                 style="background:#7ad0d4; color:#123; font-weight:700;">
+                Conectar Mercado Pago
+              </a>
+            {% endif %}
+
+          {% elif payment_settings and payment_settings.mercadopago_connected %}
             {% if mercadopago_visible_to_clients %}
               <div class="alert alert-success rounded-4 mb-3">
                 <strong>Mercado Pago activo para clientes.</strong>
@@ -296,7 +367,8 @@
               <div class="alert alert-info rounded-4 mb-3">
                 <strong>Mercado Pago conectado, pero no visible para clientes.</strong>
                 <div class="small mt-1">
-                  Actualmente elegiste otro método de pago. Para mostrar Mercado Pago, cambiá el método a “Pago integrado” o “Transferencia y pago integrado”.
+                  Actualmente elegiste otro método de pago. Para mostrar Mercado Pago, cambiá el método a “Pago integrado”
+                  o “Transferencia y pago integrado”.
                 </div>
               </div>
             {% endif %}
@@ -307,6 +379,7 @@
                     class="btn btn-outline-danger rounded-pill px-4">
               Desconectar Mercado Pago
             </button>
+
           {% else %}
             {% if accepts_integrated %}
               <div class="alert alert-warning rounded-4 mb-3">

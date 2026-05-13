@@ -535,7 +535,11 @@ def panel_settings(request):
         raise PermissionDenied("Solo la dueña puede editar la configuración.")
 
     payment_settings, _ = SalonPaymentSettings.objects.get_or_create(salon=salon)
-
+    payment_policy_active = (
+        salon.deposit_enabled
+        or salon.allow_full_payment
+        or salon.full_payment_required
+    )
     accepts_transfer = salon.payment_method in ["transfer", "both"]
     accepts_integrated = salon.payment_method in ["integrated", "both"]
     mercadopago_ready = payment_settings.has_valid_mercadopago_connection()
@@ -550,6 +554,7 @@ def panel_settings(request):
         form = PanelSalonSettingsForm(instance=salon)
 
     context = {
+        'payment_policy_active': payment_policy_active,
         'panel_role': 'owner',
         'salon': salon,
         'form': form,
