@@ -9,7 +9,7 @@ from django.shortcuts import get_object_or_404, render, redirect
 from django.utils import timezone
 
 from .mail_utils import send_booking_confirmed_email, send_booking_cancelled_email, send_booking_payment_pending_email
-from .models import BookingItem, EmployeeTimeOff, Service, Employee,BusinessHours, Salon, Booking
+from .models import BookingItem, EmployeeTimeOff, Service, Employee,BusinessHours, Salon, Booking, SalonPaymentSettings
 from .panel_forms import (
     PanelBusinessHoursForm,
     PanelServiceForm,
