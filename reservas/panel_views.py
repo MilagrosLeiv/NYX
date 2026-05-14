@@ -11,10 +11,11 @@ from django.utils import timezone
 
 from .mail_utils import send_booking_confirmed_email, send_booking_cancelled_email, send_booking_payment_pending_email
 from .models import (BookingItem, EmployeeTimeOff, 
-Service, Employee,BusinessHours, 
+Service, Employee,BusinessHours, BusinessHourBlock,
 Salon, SalonMembership,Booking, SalonPaymentSettings)
 from .panel_forms import (
     PanelBusinessHoursForm,
+    PanelBusinessHourBlockForm,
     PanelServiceForm,
     PanelEmployeeForm,
     EmployeeTimeOffForm,
@@ -529,13 +530,37 @@ def panel_business_hours(request):
     if not salon or not is_owner_user(request.user):
         raise PermissionDenied("Solo la dueña puede gestionar horarios.")
 
-    hours = BusinessHours.objects.filter(salon=salon).order_by('weekday')
+    blocks = (
+        BusinessHourBlock.objects
+        .filter(salon=salon)
+        .order_by('weekday', 'start_time')
+    )
+
+    weekdays = BusinessHourBlock.WEEKDAY_CHOICES
+
+    blocks_by_weekday = []
+
+    for weekday_value, weekday_name in weekdays:
+        day_blocks = [block for block in blocks if block.weekday == weekday_value]
+
+        active_blocks = [
+            block for block in day_blocks
+            if block.is_active
+        ]
+
+        blocks_by_weekday.append({
+            'weekday': weekday_value,
+            'weekday_name': weekday_name,
+            'blocks': day_blocks,
+            'active_blocks_count': len(active_blocks),
+        })
 
     context = {
         'panel_role': 'owner',
         'salon': salon,
-        'hours': hours,
+        'blocks_by_weekday': blocks_by_weekday,
     }
+
     return render(request, 'reservas/panel/business_hours.html', context)
 
 
@@ -601,6 +626,108 @@ def panel_business_hours_edit(request, business_hours_id):
     }
     return render(request, 'reservas/panel/business_hours_form.html', context)
 
+@login_required
+def panel_business_hour_block_create(request):
+    if request.user.is_superuser:
+        return redirect('/admin/')
+
+    salon = get_user_salon(request.user)
+
+    if not salon or not is_owner_user(request.user):
+        raise PermissionDenied("Solo la dueña puede crear horarios.")
+
+    if request.method == 'POST':
+        form = PanelBusinessHourBlockForm(request.POST, salon=salon)
+
+        if form.is_valid():
+            block = form.save(commit=False)
+            block.salon = salon
+            block.full_clean()
+            block.save()
+
+            messages.success(request, 'Franja horaria creada correctamente.')
+            return redirect('panel_business_hours')
+    else:
+        form = PanelBusinessHourBlockForm(salon=salon)
+
+    context = {
+        'panel_role': 'owner',
+        'salon': salon,
+        'form': form,
+        'form_title': 'Agregar franja horarria',
+        'submit_label': 'Guardar franja',
+    }
+
+    return render(request, 'reservas/panel/business_hour_block_form.html', context)
+
+
+@login_required
+def panel_business_hour_block_edit(request, block_id):
+    if request.user.is_superuser:
+        return redirect('/admin/')
+
+    salon = get_user_salon(request.user)
+
+    if not salon or not is_owner_user(request.user):
+        raise PermissionDenied("Solo la dueña puede editar horarios.")
+
+    block = get_object_or_404(
+        BusinessHourBlock,
+        pk=block_id,
+        salon=salon,
+    )
+
+    if request.method == 'POST':
+        form = PanelBusinessHourBlockForm(request.POST, instance=block, salon=salon)
+
+        if form.is_valid():
+            block = form.save(commit=False)
+            block.salon = salon
+            block.full_clean()
+            block.save()
+
+            messages.success(request, 'Bloque horario actualizado correctamente.')
+            return redirect('panel_business_hours')
+    else:
+        form = PanelBusinessHourBlockForm(instance=block, salon=salon)
+
+    context = {
+        'panel_role': 'owner',
+        'salon': salon,
+        'form': form,
+        'form_title': 'Editar franja horarria',
+        'submit_label': 'Guardar cambios',
+        'block': block,
+    }
+
+    return render(request, 'reservas/panel/business_hour_block_form.html', context)
+
+
+@login_required
+def panel_business_hour_block_toggle_active(request, block_id):
+    if request.user.is_superuser:
+        return redirect('/admin/')
+
+    salon = get_user_salon(request.user)
+
+    if not salon or not is_owner_user(request.user):
+        raise PermissionDenied("Solo la dueña puede modificar horarios.")
+
+    block = get_object_or_404(
+        BusinessHourBlock,
+        pk=block_id,
+        salon=salon,
+    )
+
+    block.is_active = not block.is_active
+    block.save(update_fields=['is_active'])
+
+    if block.is_active:
+        messages.success(request, 'Franja horaria activada correctamente.')
+    else:
+        messages.success(request, 'Franja horaria desactivada correctamente.')
+
+    return redirect('panel_business_hours')
 
 @login_required
 def panel_settings(request):

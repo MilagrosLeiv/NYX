@@ -2,7 +2,8 @@ from datetime import datetime, timedelta
 
 from django.utils import timezone
 
-from .models import Appointment, BusinessHours, BookingItem, EmployeeTimeOff
+from .models import (Appointment, BusinessHours, BookingItem,
+EmployeeTimeOff,BusinessHourBlock)
 
 
 SLOT_MINUTES = 30
@@ -18,26 +19,31 @@ def overlaps(start_a, end_a, start_b, end_b):
 
 def get_available_slots(employee, services, selected_date):
     weekday = selected_date.weekday()
-    business_hours = BusinessHours.objects.filter(
-        salon=employee.salon,
-        weekday=weekday
-    ).first()
 
-    if not business_hours or business_hours.is_closed:
-        return []
+    business_hour_blocks = BusinessHourBlock.objects.filter(
+        salon=employee.salon,
+        weekday=weekday,
+        is_active=True
+    ).order_by('start_time')
+
+    # Fallback temporal al modelo viejo, por si todavía hay salones sin franjas nuevas cargadas.
+    if not business_hour_blocks.exists():
+        business_hours = BusinessHours.objects.filter(
+            salon=employee.salon,
+            weekday=weekday
+        ).first()
+
+        if not business_hours or business_hours.is_closed:
+            return []
+
+        business_hour_blocks = [{
+            "start_time": business_hours.start_time,
+            "end_time": business_hours.end_time,
+        }]
 
     total_duration = get_total_duration_minutes(services)
     if total_duration <= 0:
         return []
-
-    day_start = timezone.make_aware(
-        datetime.combine(selected_date, business_hours.start_time),
-        timezone.get_current_timezone()
-    )
-    day_end = timezone.make_aware(
-        datetime.combine(selected_date, business_hours.end_time),
-        timezone.get_current_timezone()
-    )
 
     existing_appointments = Appointment.objects.filter(
         employee=employee,
@@ -71,24 +77,42 @@ def get_available_slots(employee, services, selected_date):
         occupied_ranges.append((block.start_datetime, block.end_datetime))
 
     slots = []
-    current_start = day_start
 
-    while current_start < day_end:
-        current_end = current_start + timedelta(minutes=total_duration)
+    for business_block in business_hour_blocks:
+        block_start_time = business_block["start_time"] if isinstance(business_block, dict) else business_block.start_time
+        block_end_time = business_block["end_time"] if isinstance(business_block, dict) else business_block.end_time
 
-        if current_end > day_end:
-            break
+        block_start = timezone.make_aware(
+            datetime.combine(selected_date, block_start_time),
+            timezone.get_current_timezone()
+        )
 
-        is_available = True
+        block_end = timezone.make_aware(
+            datetime.combine(selected_date, block_end_time),
+            timezone.get_current_timezone()
+        )
 
-        for occupied_start, occupied_end in occupied_ranges:
-            if overlaps(current_start, current_end, occupied_start, occupied_end):
-                is_available = False
+        current_start = block_start
+
+        while current_start < block_end:
+            current_end = current_start + timedelta(minutes=total_duration)
+
+            if current_end > block_end:
                 break
 
-        if is_available:
-            slots.append(current_start.strftime('%H:%M'))
+            is_available = True
 
-        current_start += timedelta(minutes=SLOT_MINUTES)
+            for occupied_start, occupied_end in occupied_ranges:
+                if overlaps(current_start, current_end, occupied_start, occupied_end):
+                    is_available = False
+                    break
+
+            if is_available:
+                slot_text = current_start.strftime('%H:%M')
+
+                if slot_text not in slots:
+                    slots.append(slot_text)
+
+            current_start += timedelta(minutes=SLOT_MINUTES)
 
     return slots

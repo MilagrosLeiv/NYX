@@ -2,67 +2,108 @@
 
 {% block title %}Horarios | NYX{% endblock %}
 {% block panel_title %}Horarios{% endblock %}
-{% block panel_subtitle %}Gestioná los días y horarios de atención de {{ salon.name }}{% endblock %}
+{% block panel_subtitle %}Gestioná las franjas de atención de {{ salon.name }}{% endblock %}
 
 {% block panel_content %}
 <div class="nyx-card p-4 mb-4">
   <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
     <div>
       <h5 class="fw-bold mb-1">Horarios de atención</h5>
-      <div class="text-secondary">Configurá días abiertos, cerrados y franjas horarias.</div>
+      <div class="text-secondary">
+        Cargá una o más franjas por día. Una sola franja representa horario corrido; varias franjas representan horario cortado.
+      </div>
     </div>
 
     <div class="ms-auto">
-      <a href="{% url 'panel_business_hours_create' %}" class="nyx-primary-btn">
+      <a href="{% url 'panel_business_hour_block_create' %}" class="nyx-primary-btn">
         <span>+</span>
-        <span>Nuevo horario</span>
+        <span>Agregar franja horaria</span>
       </a>
     </div>
   </div>
 </div>
 
 <div class="nyx-card p-4">
-  {% if hours %}
-    <div class="table-responsive">
-      <table class="table nyx-table align-middle">
-        <thead>
-          <tr>
-            <th>Día</th>
-            <th>Inicio</th>
-            <th>Fin</th>
-            <th>Estado</th>
-            <th class="text-end">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for item in hours %}
-            <tr>
-              <td class="fw-semibold">{{ item.get_weekday_display }}</td>
-              <td>
-                {% if item.is_closed %}-{% else %}{{ item.start_time|time:"H:i" }}{% endif %}
-              </td>
-              <td>
-                {% if item.is_closed %}-{% else %}{{ item.end_time|time:"H:i" }}{% endif %}
-              </td>
-              <td>
-                {% if item.is_closed %}
-                  <span class="nyx-badge" style="background:#fff3f3;color:#b54747;border-color:#f1caca;">Cerrado</span>
-                {% else %}
-                  <span class="nyx-badge">Abierto</span>
-                {% endif %}
-              </td>
-              <td class="text-end">
-                <a href="{% url 'panel_business_hours_edit' item.id %}" class="nyx-filter-btn">Editar</a>
-              </td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  {% else %}
-    <div class="nyx-empty">
-      Todavía no hay horarios configurados.
-    </div>
-  {% endif %}
+  <div class="d-grid gap-3">
+
+    {% for day in blocks_by_weekday %}
+      <div class="border rounded-4 p-3" style="border-color: var(--nyx-border) !important; background:#fbfefe;">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+          <div>
+            <h5 class="fw-bold mb-1">{{ day.weekday_name }}</h5>
+
+            {% if day.active_blocks_count > 0 %}
+              <div class="text-secondary small">
+                {{ day.active_blocks_count }} franja{% if day.active_blocks_count != 1 %}s{% endif %} activa{% if day.active_blocks_count != 1 %}s{% endif %}
+              </div>
+            {% else %}
+              <div class="text-secondary small">
+                Sin franjas activas. Este día se considera cerrado.
+              </div>
+            {% endif %}
+          </div>
+
+          {% if day.active_blocks_count == 0 %}
+            <span class="nyx-badge" style="background:#fff3f3;color:#b54747;border-color:#f1caca;">
+              Cerrado
+            </span>
+          {% else %}
+            <span class="nyx-badge">
+              Abierto
+            </span>
+          {% endif %}
+        </div>
+
+        {% if day.blocks %}
+          <div class="table-responsive">
+            <table class="table nyx-table align-middle mb-0">
+              <thead>
+                <tr>
+                  <th>Inicio</th>
+                  <th>Fin</th>
+                  <th>Estado</th>
+                  <th class="text-end">Acciones</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {% for block in day.blocks %}
+                  <tr>
+                    <td class="fw-semibold">{{ block.start_time|time:"H:i" }}</td>
+                    <td class="fw-semibold">{{ block.end_time|time:"H:i" }}</td>
+                    <td>
+                      {% if block.is_active %}
+                        <span class="nyx-badge">Activa</span>
+                      {% else %}
+                        <span class="nyx-badge" style="background:#fff3f3;color:#b54747;border-color:#f1caca;">
+                          Inactiva
+                        </span>
+                      {% endif %}
+                    </td>
+                    <td class="text-end">
+                      <div class="d-flex justify-content-end gap-2 flex-wrap">
+                        <a href="{% url 'panel_business_hour_block_edit' block.id %}" class="nyx-filter-btn">
+                          Editar
+                        </a>
+
+                        <a href="{% url 'panel_business_hour_block_toggle_active' block.id %}" class="nyx-filter-btn">
+                          {% if block.is_active %}Desactivar{% else %}Activar{% endif %}
+                        </a>
+                      </div>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="nyx-empty py-3">
+            No hay franjas cargadas para este día.
+          </div>
+        {% endif %}
+      </div>
+    {% endfor %}
+
+  </div>
 </div>
 {% endblock %}

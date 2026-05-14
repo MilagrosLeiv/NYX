@@ -7,7 +7,7 @@ from django.contrib.auth.models import User
 
 
 
-from .models import Service, Employee, BusinessHours, Salon,EmployeeTimeOff
+from .models import Service, Employee, BusinessHours,BusinessHourBlock, Salon,EmployeeTimeOff
 
 def build_time_choices(start_hour=6, end_hour=23, step_minutes=30):
     choices = [("", "Seleccionar hora")]
@@ -359,6 +359,80 @@ class PanelBusinessHoursForm(forms.ModelForm):
             if start_time >= end_time:
                 raise forms.ValidationError(
                     'La hora de inicio debe ser menor que la de fin.'
+                )
+
+        return cleaned_data
+    
+class PanelBusinessHourBlockForm(forms.ModelForm):
+    start_time = forms.TypedChoiceField(
+        label="Hora de inicio",
+        choices=TIME_CHOICES_30,
+        coerce=parse_time_choice,
+        empty_value=None,
+        widget=forms.Select(attrs={
+            "class": "form-select nyx-form-input",
+        })
+    )
+
+    end_time = forms.TypedChoiceField(
+        label="Hora de fin",
+        choices=TIME_CHOICES_30,
+        coerce=parse_time_choice,
+        empty_value=None,
+        widget=forms.Select(attrs={
+            "class": "form-select nyx-form-input",
+        })
+    )
+
+    class Meta:
+        model = BusinessHourBlock
+        fields = ['weekday', 'start_time', 'end_time', 'is_active']
+        widgets = {
+            'weekday': forms.Select(attrs={
+                'class': 'form-select nyx-form-input',
+            }),
+            'is_active': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',
+            }),
+        }
+
+    def __init__(self, *args, salon=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.salon = salon
+
+        if self.instance and self.instance.pk:
+            self.initial["start_time"] = format_time_for_select(self.instance.start_time)
+            self.initial["end_time"] = format_time_for_select(self.instance.end_time)
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        weekday = cleaned_data.get('weekday')
+        start_time = cleaned_data.get('start_time')
+        end_time = cleaned_data.get('end_time')
+        is_active = cleaned_data.get('is_active')
+
+        if not start_time or not end_time:
+            raise forms.ValidationError("Debés indicar hora de inicio y hora de fin.")
+
+        if start_time >= end_time:
+            raise forms.ValidationError("La hora de inicio debe ser menor que la hora de fin.")
+
+        if self.salon and weekday is not None and start_time and end_time and is_active:
+            overlaps = BusinessHourBlock.objects.filter(
+                salon=self.salon,
+                weekday=weekday,
+                is_active=True,
+                start_time__lt=end_time,
+                end_time__gt=start_time,
+            )
+
+            if self.instance and self.instance.pk:
+                overlaps = overlaps.exclude(pk=self.instance.pk)
+
+            if overlaps.exists():
+                raise forms.ValidationError(
+                    "Este bloque horario se superpone con otro bloque activo del mismo día."
                 )
 
         return cleaned_data

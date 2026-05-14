@@ -62,6 +62,21 @@ urlpatterns = [
     ),
     path('panel/horarios/', panel_views.panel_business_hours, name='panel_business_hours'),
     path('panel/horarios/nuevo/', panel_views.panel_business_hours_create, name='panel_business_hours_create'),
+    path(
+        'panel/horarios/bloques/nuevo/',
+        panel_views.panel_business_hour_block_create,
+        name='panel_business_hour_block_create'
+    ),
+    path(
+        'panel/horarios/bloques/<int:block_id>/editar/',
+        panel_views.panel_business_hour_block_edit,
+        name='panel_business_hour_block_edit'
+    ),
+    path(
+        'panel/horarios/bloques/<int:block_id>/toggle-activo/',
+        panel_views.panel_business_hour_block_toggle_active,
+        name='panel_business_hour_block_toggle_active'
+    ),
     path('panel/horarios/<int:business_hours_id>/editar/', panel_views.panel_business_hours_edit, name='panel_business_hours_edit'),
     path('panel/configuracion/', panel_views.panel_settings, name='panel_settings'),
     path('panel/reservas/', panel_views.panel_bookings, name='panel_bookings'),

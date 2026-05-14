@@ -242,6 +242,56 @@ class BusinessHours(models.Model):
             return f"{self.salon.name} - {day_name}: Cerrado"
         return f"{self.salon.name} - {day_name}: {self.start_time} - {self.end_time}"
 
+class BusinessHourBlock(models.Model):
+    WEEKDAY_CHOICES = BusinessHours.WEEKDAY_CHOICES
+
+    salon = models.ForeignKey(
+        Salon,
+        on_delete=models.CASCADE,
+        related_name='business_hour_blocks',
+        verbose_name='Peluquería'
+    )
+
+    weekday = models.IntegerField(
+        choices=WEEKDAY_CHOICES,
+        verbose_name='Día'
+    )
+
+    start_time = models.TimeField('Hora de inicio')
+    end_time = models.TimeField('Hora de fin')
+
+    is_active = models.BooleanField('Activo', default=True)
+
+    class Meta:
+        verbose_name = 'Bloque horario de atención'
+        verbose_name_plural = 'Bloques horarios de atención'
+        ordering = ['salon', 'weekday', 'start_time']
+
+    def clean(self):
+        if self.start_time and self.end_time and self.start_time >= self.end_time:
+            raise ValidationError("La hora de inicio debe ser menor que la hora de fin.")
+
+        if self.salon_id and self.weekday is not None and self.start_time and self.end_time:
+            overlaps = BusinessHourBlock.objects.filter(
+                salon=self.salon,
+                weekday=self.weekday,
+                is_active=True,
+                start_time__lt=self.end_time,
+                end_time__gt=self.start_time,
+            ).exclude(pk=self.pk)
+
+            if overlaps.exists():
+                raise ValidationError(
+                    "Este bloque horario se superpone con otro bloque del mismo día."
+                )
+
+    def __str__(self):
+        day_name = dict(self.WEEKDAY_CHOICES).get(self.weekday, self.weekday)
+
+        if not self.is_active:
+            return f"{self.salon.name} - {day_name}: {self.start_time} - {self.end_time} (Inactivo)"
+
+        return f"{self.salon.name} - {day_name}: {self.start_time} - {self.end_time}"
 
 class Appointment(models.Model):
     STATUS_CHOICES = [
