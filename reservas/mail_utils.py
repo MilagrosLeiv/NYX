@@ -229,6 +229,8 @@ def send_booking_payment_pending_email(booking, request=None):
     if not customer_email or not from_email:
         return False
 
+    salon = booking.salon
+
     booking_items = booking.items.select_related('service', 'employee').all()
     if not booking_items:
         return False
@@ -294,6 +296,106 @@ def send_booking_payment_pending_email(booking, request=None):
 
     amount_formatted = f"{int(booking.payment_required_amount):,}".replace(",", ".")
 
+    # =========================
+    # Datos de transferencia
+    # =========================
+    transfer_lines_plain = []
+
+    if getattr(salon, "transfer_account_holder", ""):
+        transfer_lines_plain.append(f"Titular: {salon.transfer_account_holder}")
+
+    if getattr(salon, "transfer_bank_name", ""):
+        transfer_lines_plain.append(f"Banco/Billetera: {salon.transfer_bank_name}")
+
+    if getattr(salon, "transfer_alias", ""):
+        transfer_lines_plain.append(f"Alias: {salon.transfer_alias}")
+
+    if getattr(salon, "transfer_cbu", ""):
+        transfer_lines_plain.append(f"CBU/CVU: {salon.transfer_cbu}")
+
+    if getattr(salon, "transfer_tax_id", ""):
+        transfer_lines_plain.append(f"CUIT/CUIL: {salon.transfer_tax_id}")
+
+    if getattr(salon, "transfer_extra_instructions", ""):
+        transfer_lines_plain.append("")
+        transfer_lines_plain.append(salon.transfer_extra_instructions)
+    elif getattr(salon, "payment_instructions", ""):
+        transfer_lines_plain.append("")
+        transfer_lines_plain.append(salon.payment_instructions)
+
+    transfer_instructions_plain = "\n".join(transfer_lines_plain).strip()
+
+    if not transfer_instructions_plain:
+        transfer_instructions_plain = (
+            "El salón todavía no cargó instrucciones detalladas de transferencia. "
+            "Comunicate con el salón para solicitar los datos de pago."
+        )
+
+    transfer_rows_html = ""
+
+    if getattr(salon, "transfer_account_holder", ""):
+        transfer_rows_html += f"""
+            <tr>
+                <td style="padding:9px 0; font-size:14px; color:#6b7280;">Titular</td>
+                <td style="padding:9px 0; font-size:14px; color:#111827; font-weight:700; text-align:right;">
+                    {salon.transfer_account_holder}
+                </td>
+            </tr>
+        """
+
+    if getattr(salon, "transfer_bank_name", ""):
+        transfer_rows_html += f"""
+            <tr>
+                <td style="padding:9px 0; font-size:14px; color:#6b7280;">Banco/Billetera</td>
+                <td style="padding:9px 0; font-size:14px; color:#111827; font-weight:700; text-align:right;">
+                    {salon.transfer_bank_name}
+                </td>
+            </tr>
+        """
+
+    if getattr(salon, "transfer_alias", ""):
+        transfer_rows_html += f"""
+            <tr>
+                <td style="padding:9px 0; font-size:14px; color:#6b7280;">Alias</td>
+                <td style="padding:9px 0; font-size:14px; color:#111827; font-weight:700; text-align:right;">
+                    {salon.transfer_alias}
+                </td>
+            </tr>
+        """
+
+    if getattr(salon, "transfer_cbu", ""):
+        transfer_rows_html += f"""
+            <tr>
+                <td style="padding:9px 0; font-size:14px; color:#6b7280;">CBU/CVU</td>
+                <td style="padding:9px 0; font-size:14px; color:#111827; font-weight:700; text-align:right;">
+                    {salon.transfer_cbu}
+                </td>
+            </tr>
+        """
+
+    if getattr(salon, "transfer_tax_id", ""):
+        transfer_rows_html += f"""
+            <tr>
+                <td style="padding:9px 0; font-size:14px; color:#6b7280;">CUIT/CUIL</td>
+                <td style="padding:9px 0; font-size:14px; color:#111827; font-weight:700; text-align:right;">
+                    {salon.transfer_tax_id}
+                </td>
+            </tr>
+        """
+
+    extra_transfer_html = ""
+
+    if getattr(salon, "transfer_extra_instructions", ""):
+        extra_transfer_html = salon.transfer_extra_instructions.replace(chr(10), "<br>")
+    elif getattr(salon, "payment_instructions", ""):
+        extra_transfer_html = salon.payment_instructions.replace(chr(10), "<br>")
+
+    if not transfer_rows_html and not extra_transfer_html:
+        extra_transfer_html = (
+            "El salón todavía no cargó instrucciones detalladas de transferencia. "
+            "Comunicate con el salón para solicitar los datos de pago."
+        )
+
     expiration_text = ""
     expiration_html = ""
 
@@ -331,7 +433,7 @@ def send_booking_payment_pending_email(booking, request=None):
         plain_title = 'Reserva creada - pago pendiente'
 
     plain_message = (
-        f'{booking.salon.name}\n'
+        f'{salon.name}\n'
         f'{plain_title}\n\n'
         f'{plain_intro}'
         f'Resumen de tu reserva:\n'
@@ -343,10 +445,11 @@ def send_booking_payment_pending_email(booking, request=None):
         f'- {payment_label}: ${amount_formatted}\n'
         f'{expiration_text}\n'
         f'{manage_text_plain}'
-        f'Instrucciones de pago:\n'
-        f'{booking.salon.payment_instructions }\n'
+        f'Datos para transferencia:\n'
+        f'{transfer_instructions_plain}\n\n'
         f'{plain_footer}'
     )
+
     html_message = f"""
     <!DOCTYPE html>
     <html lang="es">
@@ -360,7 +463,7 @@ def send_booking_payment_pending_email(booking, request=None):
 
                 <div style="background:linear-gradient(135deg, #0f2d3a 0%, #18495c 100%); padding:32px 32px 26px;">
                     <div style="font-size:28px; font-weight:700; color:#ffffff; line-height:1.2;">
-                        {booking.salon.name}
+                        {salon.name}
                     </div>
                     <div style="margin-top:8px; font-size:14px; color:#c7d9df; letter-spacing:0.2px;">
                         {plain_title}
@@ -368,8 +471,8 @@ def send_booking_payment_pending_email(booking, request=None):
                 </div>
 
                 <div style="padding:32px;">
-    
-                        {f'''
+
+                    {f'''
                     <p style="margin:0 0 18px; font-size:17px; line-height:1.6; color:#1f2937;">
                         Hola <strong>{booking.customer_name}</strong>, tu turno fue reservado correctamente.
                     </p>
@@ -378,19 +481,27 @@ def send_booking_payment_pending_email(booking, request=None):
                         Hola <strong>{booking.customer_name}</strong>, tu reserva fue creada pero todavía no está confirmada.
                     </p>
                     '''}
-            
 
                     <div style="margin:0 0 24px; padding:22px; background-color:#f6ffff; border:1px solid #d7f3f3; border-radius:18px;">
                         <div style="font-size:16px; font-weight:700; color:#0f2d3a; margin-bottom:12px;">
-                            Instrucciones de pago
+                            Datos para transferencia
                         </div>
 
-                        <div style="font-size:14px; line-height:1.7; color:#315f5f;">
-                            {(booking.salon.payment_instructions ).replace(chr(10), "<br>")}
+                        {f'''
+                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+                            {transfer_rows_html}
+                        </table>
+                        ''' if transfer_rows_html else ''}
+
+                        {f'''
+                        <div style="font-size:14px; line-height:1.7; color:#315f5f; margin-top:14px;">
+                            {extra_transfer_html}
                         </div>
+                        ''' if extra_transfer_html else ''}
 
                         <div style="font-size:13px; line-height:1.6; color:#6b8484; margin-top:14px;">
-                            Tu turno ya quedó reservado en la agenda. Para mantener la reserva, realizá la seña indicada. Si el pago no se acredita, el salón puede cancelar el turno.
+                            Tu turno ya quedó reservado en la agenda. Para mantener la reserva, realizá el pago indicado.
+                            Si el pago no se acredita, el salón puede cancelar el turno.
                         </div>
                     </div>
 
@@ -442,7 +553,6 @@ def send_booking_payment_pending_email(booking, request=None):
 
                     {manage_button_html}
 
-                    
                 </div>
 
                 <div style="border-top:1px solid #e5e7eb; background-color:#fafafa; padding:20px 32px; text-align:center;">
@@ -455,11 +565,13 @@ def send_booking_payment_pending_email(booking, request=None):
     </body>
     </html>
     """
+
     subject = (
-        f'Turno reservado en {booking.salon.name} - {payment_label.lower()}'
+        f'Turno reservado en {salon.name} - {payment_label.lower()}'
         if booking.selected_payment_method == 'transfer'
-        else f'Reserva creada en {booking.salon.name} - falta completar el pago'
+        else f'Reserva creada en {salon.name} - falta completar el pago'
     )
+
     send_mail(
         subject=subject,
         message=plain_message,

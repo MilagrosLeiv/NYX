@@ -12,9 +12,10 @@ User = get_user_model()
 
 class Salon(models.Model):
     PAYMENT_METHOD_CHOICES = [
+        ('none', 'Ninguno'),
         ('transfer', 'Transferencia'),
-        ('integrated', 'Pago integrado'),
-        ('both', 'Transferencia y pago integrado'),
+        ('integrated', 'Mercado Pago'),
+        ('both', 'Transferencia y Mercado Pago'),
     ]
 
     name = models.CharField('Nombre', max_length=120)
@@ -34,10 +35,51 @@ class Salon(models.Model):
         'Método de pago',
         max_length=20,
         choices=PAYMENT_METHOD_CHOICES,
-        default='transfer'
+        default='none'
     )
 
     payment_instructions = models.TextField('Instrucciones de pago', blank=True)
+
+    transfer_account_holder = models.CharField(
+        'Titular de la cuenta',
+        max_length=120,
+        blank=True,
+        default=''
+    )
+
+    transfer_alias = models.CharField(
+        'Alias',
+        max_length=120,
+        blank=True,
+        default=''
+    )
+
+    transfer_cbu = models.CharField(
+        'CBU/CVU',
+        max_length=40,
+        blank=True,
+        default=''
+    )
+
+    transfer_bank_name = models.CharField(
+        'Banco o billetera',
+        max_length=120,
+        blank=True,
+        default=''
+    )
+
+    transfer_tax_id = models.CharField(
+        'CUIT/CUIL',
+        max_length=30,
+        blank=True,
+        default=''
+    )
+
+    transfer_extra_instructions = models.TextField(
+        'Instrucciones adicionales para transferencia',
+        blank=True,
+        default=''
+    )
 
     allow_client_cancellation = models.BooleanField(
         'Permitir cancelación online por cliente',

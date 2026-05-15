@@ -70,7 +70,48 @@
                 Para confirmar tu turno necesitás realizar la transferencia y esperar la validación del salón.
               </div>
 
-              {% if booking.salon.payment_instructions %}
+              <div class="rounded-4 p-3 mb-3" style="background:#f8fbfb; border:1px solid #d7ecec;">
+                {% if booking.salon.transfer_account_holder %}
+                  <div class="d-flex justify-content-between gap-3 mb-2">
+                    <span class="text-muted">Titular</span>
+                    <strong class="text-end">{{ booking.salon.transfer_account_holder }}</strong>
+                  </div>
+                {% endif %}
+
+                {% if booking.salon.transfer_bank_name %}
+                  <div class="d-flex justify-content-between gap-3 mb-2">
+                    <span class="text-muted">Banco/Billetera</span>
+                    <strong class="text-end">{{ booking.salon.transfer_bank_name }}</strong>
+                  </div>
+                {% endif %}
+
+                {% if booking.salon.transfer_alias %}
+                  <div class="d-flex justify-content-between gap-3 mb-2">
+                    <span class="text-muted">Alias</span>
+                    <strong class="text-end">{{ booking.salon.transfer_alias }}</strong>
+                  </div>
+                {% endif %}
+
+                {% if booking.salon.transfer_cbu %}
+                  <div class="d-flex justify-content-between gap-3 mb-2">
+                    <span class="text-muted">CBU/CVU</span>
+                    <strong class="text-end">{{ booking.salon.transfer_cbu }}</strong>
+                  </div>
+                {% endif %}
+
+                {% if booking.salon.transfer_tax_id %}
+                  <div class="d-flex justify-content-between gap-3">
+                    <span class="text-muted">CUIT/CUIL</span>
+                    <strong class="text-end">{{ booking.salon.transfer_tax_id }}</strong>
+                  </div>
+                {% endif %}
+              </div>
+
+              {% if booking.salon.transfer_extra_instructions %}
+                <div class="text-muted mb-3">
+                  {{ booking.salon.transfer_extra_instructions|linebreaksbr }}
+                </div>
+              {% elif booking.salon.payment_instructions %}
                 <div class="text-muted mb-3">
                   {{ booking.salon.payment_instructions|linebreaksbr }}
                 </div>

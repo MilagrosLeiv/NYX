@@ -452,6 +452,12 @@ class PanelSalonSettingsForm(forms.ModelForm):
             'allow_full_payment',
             'full_payment_required',
             'payment_method',
+            'transfer_account_holder',
+            'transfer_alias',
+            'transfer_cbu',
+            'transfer_bank_name',
+            'transfer_tax_id',
+            'transfer_extra_instructions',
             'payment_instructions',
             'allow_client_cancellation',
             'cancellation_limit_hours',
@@ -522,6 +528,32 @@ class PanelSalonSettingsForm(forms.ModelForm):
                 'min': '0',
                 'placeholder': 'Ej. 24',
             }),
+            
+            'transfer_account_holder': forms.TextInput(attrs={
+                'class': 'form-control nyx-form-input',
+                'placeholder': 'Ej. Lux Salon',
+            }),
+            'transfer_alias': forms.TextInput(attrs={
+                'class': 'form-control nyx-form-input',
+                'placeholder': 'Ej. lux.salon.mp',
+            }),
+            'transfer_cbu': forms.TextInput(attrs={
+                'class': 'form-control nyx-form-input',
+                'placeholder': 'CBU o CVU',
+            }),
+            'transfer_bank_name': forms.TextInput(attrs={
+                'class': 'form-control nyx-form-input',
+                'placeholder': 'Ej. Mercado Pago, Banco Galicia, etc.',
+            }),
+            'transfer_tax_id': forms.TextInput(attrs={
+                'class': 'form-control nyx-form-input',
+                'placeholder': 'CUIT/CUIL opcional',
+            }),
+            'transfer_extra_instructions': forms.Textarea(attrs={
+                'class': 'form-control nyx-form-input',
+                'rows': 3,
+                'placeholder': 'Ej. Enviar comprobante por WhatsApp luego de transferir.',
+            }),
         }
 
     def clean_deposit_percentage(self):
@@ -534,14 +566,34 @@ class PanelSalonSettingsForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
+
         deposit_enabled = cleaned_data.get('deposit_enabled')
         percentage = cleaned_data.get('deposit_percentage')
+        allow_full_payment = cleaned_data.get('allow_full_payment')
         full_payment_required = cleaned_data.get('full_payment_required')
+        payment_method = cleaned_data.get('payment_method')
+
+        payment_policy_active = (
+            deposit_enabled
+            or allow_full_payment
+            or full_payment_required
+        )
 
         if deposit_enabled and (percentage is None or percentage <= 0):
-            raise forms.ValidationError('Si marcás "Requerir seña", el porcentaje debe ser mayor que 0.')
+            raise forms.ValidationError(
+                'Si marcás "Requerir seña", el porcentaje debe ser mayor que 0.'
+            )
 
         if full_payment_required:
             cleaned_data['allow_full_payment'] = True
+            payment_policy_active = True
+
+        if not payment_policy_active:
+            cleaned_data['payment_method'] = 'none'
+
+        if payment_policy_active and payment_method == 'none':
+            raise forms.ValidationError(
+                'Si activás una política de pago, tenés que elegir Transferencia, Mercado Pago o ambas opciones.'
+            )
 
         return cleaned_data

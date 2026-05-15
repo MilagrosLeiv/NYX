@@ -59,6 +59,10 @@
     line-height: 1.55;
     margin-bottom: 1rem;
   }
+
+  .nyx-hidden-by-payment-js{
+    display: none;
+  }
 </style>
 {% endblock %}
 
@@ -233,178 +237,175 @@
         </div>
       </div>
 
-      <!-- Métodos de pago -->
-      <div class="col-12">
-        <div class="nyx-settings-box">
-          <h5 class="nyx-settings-box-title">Métodos de pago aceptados</h5>
-
-          <p class="nyx-settings-section-description">
-            Elegí qué opciones de pago verá el cliente al reservar. Los métodos pueden quedar configurados,
-            aunque no estén activos si no solicitás ningún pago.
-          </p>
-
-          <div class="row g-4">
-            <div class="col-md-6">
-              <label class="nyx-form-label" for="{{ form.payment_method.id_for_label }}">
-                Método disponible para clientes
-              </label>
-              {{ form.payment_method }}
-
-              {% if form.payment_method.errors %}
-                <div class="text-danger small mt-1">
-                  {{ form.payment_method.errors.0 }}
+            <!-- Aviso sin pago previo -->
+            <div class="col-12" id="no-payment-active-box">
+              <div class="alert alert-light border rounded-4 mb-0">
+                <strong>Sin pago previo activo.</strong>
+                <div class="small mt-1">
+                  Los clientes podrán reservar sin pagar. Si querés cobrar seña o pago total, activá una opción en “Política de pago”.
                 </div>
-              {% endif %}
-
-              <div class="nyx-settings-muted mt-1">
-                Elegí si el cliente podrá pagar por transferencia, Mercado Pago o ambas opciones.
               </div>
             </div>
 
-            <div class="col-12">
-              <label class="nyx-form-label" for="{{ form.payment_instructions.id_for_label }}">
-                Instrucciones para transferencia
-              </label>
-              {{ form.payment_instructions }}
+            <!-- Métodos de pago -->
+            <div class="col-12" id="payment-methods-section">
+              <div class="nyx-settings-box">
+                <h5 class="nyx-settings-box-title">Métodos de pago aceptados</h5>
 
-              {% if form.payment_instructions.errors %}
-                <div class="text-danger small mt-1">
-                  {{ form.payment_instructions.errors.0 }}
+                <p class="nyx-settings-section-description">
+                  Elegí cómo podrán pagar tus clientes. Según la opción seleccionada, se mostrarán solo los campos necesarios.
+                </p>
+
+                <div class="row g-4">
+                  <div class="col-md-6">
+                    <label class="nyx-form-label" for="{{ form.payment_method.id_for_label }}">
+                      Método disponible para clientes
+                    </label>
+                    {{ form.payment_method }}
+
+                    {% if form.payment_method.errors %}
+                      <div class="text-danger small mt-1">
+                        {{ form.payment_method.errors.0 }}
+                      </div>
+                    {% endif %}
+
+                    <div class="nyx-settings-muted mt-1">
+                      Si elegís “Ninguno”, no se mostrará ninguna opción de pago al cliente.
+                    </div>
+                  </div>
+
+                  <!-- Datos de transferencia -->
+                  <div class="col-12" id="transfer-settings-block">
+                    <div class="row g-4">
+                      <div class="col-12">
+                        <hr class="my-2">
+                        <h6 class="fw-bold mb-2">Datos para transferencia</h6>
+                        <div class="nyx-settings-muted mb-3">
+                          Estos datos se mostrarán al cliente cuando elija pagar por transferencia.
+                        </div>
+                      </div>
+
+                      <div class="col-md-6">
+                        <label class="nyx-form-label" for="{{ form.transfer_account_holder.id_for_label }}">
+                          Titular de la cuenta
+                        </label>
+                        {{ form.transfer_account_holder }}
+                      </div>
+
+                      <div class="col-md-6">
+                        <label class="nyx-form-label" for="{{ form.transfer_bank_name.id_for_label }}">
+                          Banco o billetera
+                        </label>
+                        {{ form.transfer_bank_name }}
+                      </div>
+
+                      <div class="col-md-6">
+                        <label class="nyx-form-label" for="{{ form.transfer_alias.id_for_label }}">
+                          Alias
+                        </label>
+                        {{ form.transfer_alias }}
+                      </div>
+
+                      <div class="col-md-6">
+                        <label class="nyx-form-label" for="{{ form.transfer_cbu.id_for_label }}">
+                          CBU/CVU
+                        </label>
+                        {{ form.transfer_cbu }}
+                      </div>
+
+                      <div class="col-md-6">
+                        <label class="nyx-form-label" for="{{ form.transfer_tax_id.id_for_label }}">
+                          CUIT/CUIL
+                        </label>
+                        {{ form.transfer_tax_id }}
+                      </div>
+
+                      <div class="col-12">
+                        <label class="nyx-form-label" for="{{ form.transfer_extra_instructions.id_for_label }}">
+                          Instrucciones adicionales
+                        </label>
+                        {{ form.transfer_extra_instructions }}
+
+                        <div class="nyx-settings-muted mt-1">
+                          Ejemplo: “Enviar comprobante por WhatsApp luego de transferir”.
+                        </div>
+                      </div>
+
+                      <div class="col-12">
+                        <div class="alert alert-info rounded-4 mb-0">
+                          <strong>Transferencia activa.</strong>
+                          <div class="small mt-1">
+                            Estos datos se mostrarán a los clientes que elijan transferencia.
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Mercado Pago dentro de métodos de pago -->
+                  <div class="col-12" id="mercadopago-settings-block">
+                    <div class="row g-4">
+                      <div class="col-12">
+                        <hr class="my-2">
+                        <h6 class="fw-bold mb-2">Mercado Pago</h6>
+
+                        <p class="nyx-settings-muted mb-3">
+                          Conectá la cuenta donde querés recibir los pagos online. Antes de continuar, asegurate de haber iniciado sesión
+                          en Mercado Pago con la cuenta correcta. La disponibilidad del dinero depende de los plazos y comisiones de Mercado Pago.
+                        </p>
+
+                        {% if payment_settings and payment_settings.mercadopago_connected %}
+                          {% if mercadopago_visible_to_clients %}
+                            <div class="alert alert-success rounded-4 mb-3">
+                              <strong>Mercado Pago activo para clientes.</strong>
+                              <div class="small mt-1">
+                                Tus clientes podrán pagar online con Mercado Pago.
+                              </div>
+                            </div>
+                          {% elif accepts_integrated %}
+                            <div class="alert alert-warning rounded-4 mb-3">
+                              <strong>Mercado Pago conectado, pero revisá la configuración.</strong>
+                              <div class="small mt-1">
+                                El método integrado está seleccionado, pero falta validar la conexión.
+                              </div>
+                            </div>
+                          {% else %}
+                            <div class="alert alert-info rounded-4 mb-3">
+                              <strong>Mercado Pago conectado, pero no visible para clientes.</strong>
+                              <div class="small mt-1">
+                                Para mostrarlo, elegí “Mercado Pago” o “Transferencia y Mercado Pago”.
+                              </div>
+                            </div>
+                          {% endif %}
+
+                          <button type="submit"
+                                  formaction="{% url 'mercadopago_oauth_disconnect' salon.id %}"
+                                  formmethod="post"
+                                  class="btn btn-outline-danger rounded-pill px-4">
+                            Desconectar Mercado Pago
+                          </button>
+
+                        {% else %}
+                          <div class="alert alert-warning rounded-4 mb-3">
+                            <strong>Mercado Pago no conectado.</strong>
+                            <div class="small mt-1">
+                              Elegiste ofrecer Mercado Pago, pero todavía falta conectar una cuenta.
+                            </div>
+                          </div>
+
+                          <a href="{% url 'mercadopago_oauth_connect' salon.id %}"
+                            class="btn rounded-pill px-4"
+                            style="background:#7ad0d4; color:#123; font-weight:700;">
+                            Conectar Mercado Pago
+                          </a>
+                        {% endif %}
+                      </div>
+                    </div>
+                  </div>
+
                 </div>
-              {% endif %}
-
-              <div class="nyx-settings-muted mt-1">
-                Ejemplo: alias, titular, CBU/CVU y dónde enviar comprobante.
               </div>
-
-              {% if not payment_policy_active %}
-                <div class="alert alert-light border rounded-4 mt-3 mb-0">
-                  <strong>Transferencia configurada, pero no activa.</strong>
-                  <div class="small mt-1">
-                    Actualmente no se solicita ningún pago al reservar. Estas instrucciones quedan guardadas,
-                    pero no se mostrarán al cliente hasta que actives seña, pago total opcional o pago total obligatorio.
-                  </div>
-                </div>
-
-              {% elif accepts_transfer %}
-                <div class="alert alert-info rounded-4 mt-3 mb-0">
-                  <strong>Transferencia activa.</strong>
-                  <div class="small mt-1">
-                    Estas instrucciones se mostrarán a los clientes que elijan transferencia.
-                  </div>
-                </div>
-
-              {% else %}
-                <div class="alert alert-light border rounded-4 mt-3 mb-0">
-                  <strong>Transferencia no visible para clientes.</strong>
-                  <div class="small mt-1">
-                    Las instrucciones quedan guardadas, pero no se mostrarán mientras el método seleccionado sea solo Mercado Pago.
-                  </div>
-                </div>
-              {% endif %}
             </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Mercado Pago -->
-      <div class="col-12">
-        <div class="nyx-settings-box">
-          <h5 class="nyx-settings-box-title">Mercado Pago</h5>
-
-          <p class="nyx-settings-section-description">
-            Conectá la cuenta donde querés recibir los pagos online. Antes de continuar, asegurate de haber iniciado sesión
-            en Mercado Pago con la cuenta correcta. La disponibilidad del dinero depende de los plazos y comisiones de Mercado Pago.
-          </p>
-
-          {% if not payment_policy_active %}
-            {% if payment_settings and payment_settings.mercadopago_connected %}
-              <div class="alert alert-light border rounded-4 mb-3">
-                <strong>Mercado Pago conectado, pero no activo.</strong>
-                <div class="small mt-1">
-                  Actualmente no se solicita ningún pago al reservar. Mercado Pago queda conectado, pero no se mostrará al cliente
-                  hasta que actives seña, pago total opcional o pago total obligatorio.
-                </div>
-              </div>
-
-              <button type="submit"
-                      formaction="{% url 'mercadopago_oauth_disconnect' salon.id %}"
-                      formmethod="post"
-                      class="btn btn-outline-danger rounded-pill px-4">
-                Desconectar Mercado Pago
-              </button>
-            {% else %}
-              <div class="alert alert-light border rounded-4 mb-3">
-                <strong>Mercado Pago no conectado.</strong>
-                <div class="small mt-1">
-                  Podés conectarlo ahora, pero no se mostrará al cliente mientras no solicites ningún pago al reservar.
-                </div>
-              </div>
-
-              <a href="{% url 'mercadopago_oauth_connect' salon.id %}"
-                 class="btn rounded-pill px-4"
-                 style="background:#7ad0d4; color:#123; font-weight:700;">
-                Conectar Mercado Pago
-              </a>
-            {% endif %}
-
-          {% elif payment_settings and payment_settings.mercadopago_connected %}
-            {% if mercadopago_visible_to_clients %}
-              <div class="alert alert-success rounded-4 mb-3">
-                <strong>Mercado Pago activo para clientes.</strong>
-                <div class="small mt-1">
-                  Tus clientes podrán pagar online con Mercado Pago.
-                </div>
-              </div>
-            {% elif accepts_integrated %}
-              <div class="alert alert-warning rounded-4 mb-3">
-                <strong>Mercado Pago conectado, pero revisá la configuración.</strong>
-                <div class="small mt-1">
-                  El método integrado está seleccionado, pero falta validar la conexión.
-                </div>
-              </div>
-            {% else %}
-              <div class="alert alert-info rounded-4 mb-3">
-                <strong>Mercado Pago conectado, pero no visible para clientes.</strong>
-                <div class="small mt-1">
-                  Actualmente elegiste otro método de pago. Para mostrar Mercado Pago, cambiá el método a “Pago integrado”
-                  o “Transferencia y pago integrado”.
-                </div>
-              </div>
-            {% endif %}
-
-            <button type="submit"
-                    formaction="{% url 'mercadopago_oauth_disconnect' salon.id %}"
-                    formmethod="post"
-                    class="btn btn-outline-danger rounded-pill px-4">
-              Desconectar Mercado Pago
-            </button>
-
-          {% else %}
-            {% if accepts_integrated %}
-              <div class="alert alert-warning rounded-4 mb-3">
-                <strong>Mercado Pago no conectado.</strong>
-                <div class="small mt-1">
-                  Elegiste ofrecer pago integrado, pero todavía falta conectar una cuenta de Mercado Pago.
-                </div>
-              </div>
-            {% else %}
-              <div class="alert alert-light border rounded-4 mb-3">
-                <strong>Mercado Pago no conectado.</strong>
-                <div class="small mt-1">
-                  Podés conectarlo ahora y activarlo para clientes cuando lo necesites.
-                </div>
-              </div>
-            {% endif %}
-
-            <a href="{% url 'mercadopago_oauth_connect' salon.id %}"
-               class="btn rounded-pill px-4"
-               style="background:#7ad0d4; color:#123; font-weight:700;">
-              Conectar Mercado Pago
-            </a>
-          {% endif %}
-        </div>
-      </div>
 
       <!-- Cancelación y modificación -->
       <div class="col-12">
@@ -412,7 +413,7 @@
           <h5 class="nyx-settings-box-title">Política de cancelación y modificación</h5>
 
           <p class="nyx-settings-section-description">
-            Definí hasta cuándo el cliente puede cancelar o solicitar cambios de su turno desde el enlace de gestión.
+            Definí si el cliente puede cancelar o modificar su turno desde el enlace de gestión que recibe por email.
           </p>
 
           <div class="row g-4">
@@ -444,7 +445,7 @@
               <div class="form-check nyx-check-row mb-3">
                 {{ form.allow_client_reschedule }}
                 <label class="form-check-label fw-semibold ms-1" for="{{ form.allow_client_reschedule.id_for_label }}">
-                  Permitir solicitud de modificación
+                  Permitir modificación online
                 </label>
               </div>
 
@@ -460,12 +461,12 @@
               {% endif %}
 
               <div class="nyx-settings-muted mt-1">
-                Por ahora, esta opción puede usarse para contacto por WhatsApp.
+                Ejemplo: si ponés 24, el cliente podrá modificar su turno online hasta 24 horas antes del horario reservado.
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </div>      
 
       {% if form.non_field_errors %}
         <div class="col-12">
@@ -486,4 +487,65 @@
     </div>
   </form>
 </div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const depositEnabled = document.getElementById("id_deposit_enabled");
+    const allowFullPayment = document.getElementById("id_allow_full_payment");
+    const fullPaymentRequired = document.getElementById("id_full_payment_required");
+    const paymentMethod = document.getElementById("id_payment_method");
+
+    const noPaymentBox = document.getElementById("no-payment-active-box");
+    const paymentMethodsSection = document.getElementById("payment-methods-section");
+    const transferBlock = document.getElementById("transfer-settings-block");
+    const mercadoPagoBlock = document.getElementById("mercadopago-settings-block");
+
+    function isPaymentPolicyActive() {
+      return Boolean(
+        (depositEnabled && depositEnabled.checked) ||
+        (allowFullPayment && allowFullPayment.checked) ||
+        (fullPaymentRequired && fullPaymentRequired.checked)
+      );
+    }
+
+    function updatePaymentSettingsVisibility() {
+      const paymentActive = isPaymentPolicyActive();
+      const method = paymentMethod ? paymentMethod.value : "none";
+
+      if (fullPaymentRequired && allowFullPayment && fullPaymentRequired.checked) {
+        allowFullPayment.checked = true;
+      }
+
+      if (!paymentActive && paymentMethod) {
+        paymentMethod.value = "none";
+      }
+
+      if (noPaymentBox) {
+        noPaymentBox.style.display = paymentActive ? "none" : "block";
+      }
+
+      if (paymentMethodsSection) {
+        paymentMethodsSection.style.display = paymentActive ? "block" : "none";
+      }
+
+      if (transferBlock) {
+        const showTransfer = paymentActive && (method === "transfer" || method === "both");
+        transferBlock.style.display = showTransfer ? "block" : "none";
+      }
+
+      if (mercadoPagoBlock) {
+        const showMercadoPago = paymentActive && (method === "integrated" || method === "both");
+        mercadoPagoBlock.style.display = showMercadoPago ? "block" : "none";
+      }
+    }
+
+    [depositEnabled, allowFullPayment, fullPaymentRequired, paymentMethod].forEach(function (field) {
+      if (field) {
+        field.addEventListener("change", updatePaymentSettingsVisibility);
+      }
+    });
+
+    updatePaymentSettingsVisibility();
+  });
+</script>
 {% endblock %}
