@@ -94,9 +94,16 @@
                     </a>
                   {% endif %}
 
-                  <a href="{% url 'panel_employee_toggle_active' employee.id %}" class="nyx-filter-btn">
-                    {% if employee.is_active %}Desactivar{% else %}Activar{% endif %}
-                  </a>
+                  <form method="post" action="{% url 'panel_employee_toggle_active' employee.id %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="nyx-filter-btn border-0">
+                      {% if employee.is_active %}
+                        Desactivar
+                      {% else %}
+                        Activar
+                      {% endif %}
+                    </button>
+                  </form>
                 </div>
               </td>
             </tr>

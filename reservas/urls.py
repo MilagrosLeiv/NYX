@@ -1,4 +1,6 @@
 from django.urls import path
+from django.contrib.auth import views as auth_views
+from .panel_forms import NyxPasswordResetForm
 from . import views, panel_views
 from .views import mercadopago_oauth_connect, mercadopago_oauth_callback
 urlpatterns = [
@@ -47,6 +49,39 @@ urlpatterns = [
     path('panel/bloqueos/', panel_views.panel_bloqueos, name='panel_bloqueos'),
     path('login/', panel_views.panel_login, name='panel_login'),
     path('logout/', panel_views.panel_logout, name='panel_logout'),
+    path(
+        'password-reset/',
+        auth_views.PasswordResetView.as_view(
+            form_class=NyxPasswordResetForm,
+            template_name='reservas/panel/password_reset_form.html',
+            email_template_name='reservas/panel/password_reset_email.txt',
+            subject_template_name='reservas/panel/password_reset_subject.txt',
+            success_url='/password-reset/done/',
+        ),
+        name='password_reset'
+    ),
+    path(
+        'password-reset/done/',
+        auth_views.PasswordResetDoneView.as_view(
+            template_name='reservas/panel/password_reset_done.html'
+        ),
+        name='password_reset_done'
+    ),
+    path(
+        'reset/<uidb64>/<token>/',
+        auth_views.PasswordResetConfirmView.as_view(
+            template_name='reservas/panel/password_reset_confirm.html',
+            success_url='/reset/done/',
+        ),
+        name='password_reset_confirm'
+    ),
+    path(
+        'reset/done/',
+        auth_views.PasswordResetCompleteView.as_view(
+            template_name='reservas/panel/password_reset_complete.html'
+        ),
+        name='password_reset_complete'
+    ),
     path('panel/servicios/', panel_views.panel_services, name='panel_services'),
     path('panel/servicios/nuevo/', panel_views.panel_service_create, name='panel_service_create'),
     path('panel/servicios/<int:service_id>/editar/', panel_views.panel_service_edit, name='panel_service_edit'),
@@ -86,6 +121,11 @@ urlpatterns = [
         'panel/reservas/<int:booking_id>/marcar-pago-verificado/',
         panel_views.panel_booking_mark_payment_verified,
         name='panel_booking_mark_payment_verified'
+    ),
+    path(
+        "panel/invitacion/<uuid:token>/",
+        panel_views.accept_staff_invitation,
+        name="accept_staff_invitation"
     ),
 
     #PAGOS INTEGRADOS - MERCADOPAGO

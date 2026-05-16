@@ -2,7 +2,7 @@
 
 {% block title %}Crear acceso staff | NYX{% endblock %}
 {% block panel_title %}Crear acceso staff{% endblock %}
-{% block panel_subtitle %}Creá un usuario para que {{ employee.name }} pueda ingresar al panel{% endblock %}
+{% block panel_subtitle %}Enviá una invitación para que {{ employee.name }} cree su contraseña y acceda al panel{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -61,6 +61,14 @@
     </div>
   </div>
 
+  <div class="alert alert-info rounded-4 mb-4">
+    <strong>Invitación segura</strong>
+    <div class="small mt-1">
+      NYX enviará un email al profesional con un enlace para crear su propia contraseña.
+      No se enviarán contraseñas por correo.
+    </div>
+  </div>
+
   <form method="post">
     {% csrf_token %}
 
@@ -80,7 +88,7 @@
 
       <div class="col-md-6">
         <label class="nyx-form-label" for="{{ form.email.id_for_label }}">
-          Email
+          Email de invitación
         </label>
         {{ form.email }}
 
@@ -89,22 +97,9 @@
             {{ form.email.errors.0 }}
           </div>
         {% endif %}
-      </div>
-
-      <div class="col-md-6">
-        <label class="nyx-form-label" for="{{ form.password.id_for_label }}">
-          Contraseña temporal
-        </label>
-        {{ form.password }}
-
-        {% if form.password.errors %}
-          <div class="text-danger small mt-1">
-            {{ form.password.errors.0 }}
-          </div>
-        {% endif %}
 
         <div class="nyx-muted mt-1">
-          Compartile esta contraseña al profesional. Más adelante podemos agregar cambio obligatorio de contraseña.
+          El profesional recibirá acá el enlace para activar su acceso.
         </div>
       </div>
     </div>
@@ -117,7 +112,7 @@
 
     <div class="d-flex gap-2 flex-wrap mt-4">
       <button type="submit" class="nyx-primary-btn">
-        Crear acceso staff
+        Enviar invitación
       </button>
 
       <a href="{% url 'panel_employees' %}" class="nyx-filter-btn">

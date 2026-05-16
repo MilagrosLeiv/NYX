@@ -4,7 +4,8 @@ from datetime import time
 from django import forms
 from django.utils import timezone
 from django.contrib.auth.models import User
-
+from django.contrib.auth.forms import PasswordResetForm
+from django.contrib.auth import get_user_model
 
 
 from .models import Service, Employee, BusinessHours,BusinessHourBlock, Salon,EmployeeTimeOff
@@ -279,18 +280,10 @@ class PanelEmployeeAccessForm(forms.Form):
         })
     )
 
-    password = forms.CharField(
-        label="Contraseña temporal",
-        widget=forms.PasswordInput(attrs={
-            "class": "form-control nyx-form-input",
-            "placeholder": "Contraseña temporal",
-        })
-    )
-
     def clean_username(self):
         username = self.cleaned_data["username"].strip()
 
-        if User.objects.filter(username=username).exists():
+        if User.objects.filter(username__iexact=username).exists():
             raise forms.ValidationError("Ya existe un usuario con ese nombre.")
 
         return username
@@ -298,10 +291,56 @@ class PanelEmployeeAccessForm(forms.Form):
     def clean_email(self):
         email = self.cleaned_data["email"].strip().lower()
 
-        if User.objects.filter(email=email).exists():
+        if User.objects.filter(email__iexact=email).exists():
             raise forms.ValidationError("Ya existe un usuario con ese email.")
 
         return email
+    
+
+class AcceptStaffInvitationForm(forms.Form):
+    password = forms.CharField(
+        label="Contraseña",
+        min_length=8,
+        widget=forms.PasswordInput(attrs={
+            "class": "form-control nyx-form-input",
+            "placeholder": "Creá una contraseña",
+        })
+    )
+
+    password_confirm = forms.CharField(
+        label="Confirmar contraseña",
+        min_length=8,
+        widget=forms.PasswordInput(attrs={
+            "class": "form-control nyx-form-input",
+            "placeholder": "Repetí la contraseña",
+        })
+    )
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        password = cleaned_data.get("password")
+        password_confirm = cleaned_data.get("password_confirm")
+
+        if password and password_confirm and password != password_confirm:
+            raise forms.ValidationError("Las contraseñas no coinciden.")
+
+        return cleaned_data
+    
+
+class NyxPasswordResetForm(PasswordResetForm):
+    def get_users(self, email):
+        UserModel = get_user_model()
+
+        users = UserModel._default_manager.filter(
+            email__iexact=email,
+            is_active=True,
+            salon_memberships__is_active=True,
+        ).distinct()
+
+        for user in users:
+            if user.has_usable_password():
+                yield user
     
 class PanelBusinessHoursForm(forms.ModelForm):
     start_time = forms.TypedChoiceField(

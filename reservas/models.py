@@ -243,6 +243,78 @@ class Employee(models.Model):
     def __str__(self):
         return self.name
     
+class StaffInvitation(models.Model):
+    salon = models.ForeignKey(
+        Salon,
+        on_delete=models.CASCADE,
+        related_name="staff_invitations",
+        verbose_name="Peluquería"
+    )
+
+    employee = models.ForeignKey(
+        Employee,
+        on_delete=models.CASCADE,
+        related_name="access_invitations",
+        verbose_name="Profesional"
+    )
+
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="staff_invitation",
+        verbose_name="Usuario"
+    )
+
+    token = models.UUIDField(
+        unique=True,
+        default=uuid.uuid4,
+        editable=False
+    )
+
+    email = models.EmailField("Email")
+
+    invited_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="sent_staff_invitations",
+        verbose_name="Invitado por"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    expires_at = models.DateTimeField("Expira el")
+
+    accepted_at = models.DateTimeField(
+        "Aceptada el",
+        null=True,
+        blank=True
+    )
+
+    is_cancelled = models.BooleanField(
+        "Cancelada",
+        default=False
+    )
+
+    class Meta:
+        verbose_name = "Invitación staff"
+        verbose_name_plural = "Invitaciones staff"
+        ordering = ["-created_at"]
+
+    def is_valid(self):
+        return (
+            not self.is_cancelled
+            and self.accepted_at is None
+            and timezone.now() <= self.expires_at
+        )
+
+    def mark_accepted(self):
+        self.accepted_at = timezone.now()
+        self.save(update_fields=["accepted_at"])
+
+    def __str__(self):
+        return f"Invitación staff - {self.employee.name} - {self.salon.name}"
 
 
 class BusinessHours(models.Model):

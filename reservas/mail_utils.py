@@ -1125,6 +1125,101 @@ def send_salon_booking_rescheduled_email(booking):
     except Exception as exc:
         print(f"ERROR enviando mail de turno modificado al salón. Booking ID: {booking.id}. Error: {exc}")
 
+def send_staff_invitation_email(invitation, request=None):
+    from_email = (settings.DEFAULT_FROM_EMAIL or "").strip()
+    recipient_email = (invitation.email or "").strip()
+
+    if not from_email or not recipient_email:
+        return False
+
+    accept_path = reverse("accept_staff_invitation", args=[invitation.token])
+
+    if request:
+        accept_url = request.build_absolute_uri(accept_path)
+    else:
+        site_url = getattr(settings, "SITE_URL", "").rstrip("/")
+        accept_url = f"{site_url}{accept_path}" if site_url else accept_path
+
+    subject = f"Te invitaron a NYX - {invitation.salon.name}"
+
+    text_body = (
+        f"Hola {invitation.employee.name},\n\n"
+        f"Te invitaron a acceder al panel de NYX para {invitation.salon.name}.\n\n"
+        f"Para activar tu cuenta y crear tu contraseña, entrá al siguiente link:\n"
+        f"{accept_url}\n\n"
+        f"Este enlace vence el {invitation.expires_at.strftime('%d/%m/%Y %H:%M')}.\n\n"
+        f"Si no esperabas esta invitación, podés ignorar este correo.\n\n"
+        f"NYX"
+    )
+
+    html_body = f"""
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <title>Invitación a NYX</title>
+    </head>
+    <body style="margin:0; padding:0; background-color:#eef4f4; font-family:Arial, Helvetica, sans-serif; color:#1f2937;">
+        <div style="width:100%; background-color:#eef4f4; padding:32px 16px;">
+            <div style="max-width:620px; margin:0 auto; background-color:#ffffff; border-radius:22px; overflow:hidden; box-shadow:0 10px 30px rgba(15, 23, 42, 0.08); border:1px solid #dbe7e7;">
+
+                <div style="background:linear-gradient(135deg, #0f2d3a 0%, #18495c 100%); padding:32px 32px 26px;">
+                    <div style="font-size:28px; font-weight:700; color:#ffffff; line-height:1.2;">
+                        NYX
+                    </div>
+                    <div style="margin-top:8px; font-size:14px; color:#c7d9df; letter-spacing:0.2px;">
+                        Invitación al panel staff
+                    </div>
+                </div>
+
+                <div style="padding:32px;">
+                    <p style="margin:0 0 18px; font-size:17px; line-height:1.6; color:#1f2937;">
+                        Hola <strong>{invitation.employee.name}</strong>, te invitaron a acceder al panel de NYX para <strong>{invitation.salon.name}</strong>.
+                    </p>
+
+                    <div style="margin:0 0 24px; padding:16px 18px; background-color:#ecfeff; border:1px solid #b6ecef; border-radius:14px;">
+                        <div style="font-size:14px; font-weight:700; color:#0f766e; margin-bottom:6px;">
+                            Activá tu cuenta
+                        </div>
+                        <div style="font-size:14px; line-height:1.6; color:#155e63;">
+                            Desde este enlace vas a crear tu contraseña y activar tu acceso al panel.
+                        </div>
+                    </div>
+
+                    <div style="text-align:center; margin:28px 0 8px;">
+                        <a href="{accept_url}"
+                           style="display:inline-block; background:#0f2d3a; color:#ffffff; text-decoration:none; padding:14px 22px; border-radius:999px; font-size:14px; font-weight:700;">
+                            Crear mi contraseña
+                        </a>
+                    </div>
+
+                    <p style="margin:22px 0 0; font-size:13px; line-height:1.6; color:#6b7280; text-align:center;">
+                        Este enlace vence el {invitation.expires_at.strftime('%d/%m/%Y %H:%M')}.
+                    </p>
+                </div>
+
+                <div style="border-top:1px solid #e5e7eb; background-color:#fafafa; padding:20px 32px; text-align:center;">
+                    <div style="font-size:12px; color:#9ca3af;">
+                        Si no esperabas esta invitación, podés ignorar este correo.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
+    email = EmailMultiAlternatives(
+        subject=subject,
+        body=text_body,
+        from_email=from_email,
+        to=[recipient_email],
+    )
+
+    email.attach_alternative(html_body, "text/html")
+    email.send(fail_silently=False)
+
+    return True
 
 def send_staff_new_booking_emails(booking):
     items = booking.items.select_related(

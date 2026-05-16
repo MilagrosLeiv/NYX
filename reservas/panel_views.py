@@ -9,10 +9,10 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.shortcuts import get_object_or_404, render, redirect
 from django.utils import timezone
 
-from .mail_utils import send_booking_confirmed_email, send_booking_cancelled_email, send_booking_payment_pending_email
+from .mail_utils import send_booking_confirmed_email, send_staff_invitation_email, send_booking_cancelled_email, send_booking_payment_pending_email
 from .models import (BookingItem, EmployeeTimeOff, 
 Service, Employee,BusinessHours, BusinessHourBlock,
-Salon, SalonMembership,Booking, SalonPaymentSettings)
+Salon, SalonMembership,Booking,StaffInvitation, SalonPaymentSettings)
 from .panel_forms import (
     PanelBusinessHoursForm,
     PanelBusinessHourBlockForm,
@@ -20,7 +20,8 @@ from .panel_forms import (
     PanelEmployeeForm,
     EmployeeTimeOffForm,
     PanelSalonSettingsForm,
-    PanelEmployeeAccessForm
+    PanelEmployeeAccessForm,
+    AcceptStaffInvitationForm,
 )
 from .booking_utils import (
     mark_completed_bookings,
@@ -392,6 +393,7 @@ def panel_employee_create(request):
     }
     return render(request, 'reservas/panel/employee_form.html', context)
 
+
 @login_required
 def panel_employee_create_access(request, employee_id):
     if request.user.is_superuser:
@@ -416,12 +418,16 @@ def panel_employee_create_access(request, employee_id):
         form = PanelEmployeeAccessForm(request.POST)
 
         if form.is_valid():
-            user = User.objects.create_user(
+            access_email = form.cleaned_data["email"]
+
+            user = User.objects.create(
                 username=form.cleaned_data["username"],
-                email=form.cleaned_data["email"],
-                password=form.cleaned_data["password"],
+                email=access_email,
                 first_name=employee.name,
+                is_active=False,
             )
+            user.set_unusable_password()
+            user.save(update_fields=["password", "is_active"])
 
             SalonMembership.objects.create(
                 user=user,
@@ -433,14 +439,43 @@ def panel_employee_create_access(request, employee_id):
             employee.user = user
 
             if not employee.email:
-                employee.email = form.cleaned_data["email"]
+                employee.email = access_email
 
             employee.save(update_fields=["user", "email"])
 
-            messages.success(
-                request,
-                f"Acceso staff creado correctamente para {employee.name}."
+            invitation = StaffInvitation.objects.create(
+                salon=salon,
+                employee=employee,
+                user=user,
+                email=access_email,
+                invited_by=request.user,
+                expires_at=timezone.now() + timedelta(days=3),
             )
+
+            email_sent = False
+
+            try:
+                email_sent = send_staff_invitation_email(
+                    invitation=invitation,
+                    request=request,
+                )
+            except Exception as exc:
+                print(
+                    f"ERROR enviando invitación staff. "
+                    f"Invitation ID: {invitation.id}. User ID: {user.id}. Error: {exc}"
+                )
+
+            if email_sent:
+                messages.success(
+                    request,
+                    f"Invitación enviada correctamente a {access_email}."
+                )
+            else:
+                messages.warning(
+                    request,
+                    f"El acceso fue creado, pero no se pudo enviar la invitación. Revisá el email o reenviá la invitación."
+                )
+
             return redirect("panel_employees")
     else:
         initial_username = (
@@ -467,6 +502,61 @@ def panel_employee_create_access(request, employee_id):
         "reservas/panel/employee_access_form.html",
         context
     )
+
+
+def accept_staff_invitation(request, token):
+    invitation = get_object_or_404(
+        StaffInvitation.objects.select_related("salon", "employee", "user"),
+        token=token,
+    )
+
+    if not invitation.is_valid():
+        return render(request, "reservas/panel/staff_invitation_invalid.html", {
+            "invitation": invitation,
+        })
+
+    # Si alguien abre la invitación estando logueado con otra cuenta,
+    # cerramos esa sesión para evitar que termine en el panel equivocado.
+    if request.user.is_authenticated and request.user != invitation.user:
+        logout(request)
+
+    if request.method == "POST":
+        form = AcceptStaffInvitationForm(request.POST)
+
+        if form.is_valid():
+            user = invitation.user
+
+            user.set_password(form.cleaned_data["password"])
+            user.is_active = True
+            user.save(update_fields=["password", "is_active"])
+
+            invitation.accepted_at = timezone.now()
+            invitation.save(update_fields=["accepted_at"])
+
+            # Cerramos cualquier sesión residual y logueamos al staff correcto.
+            if request.user.is_authenticated:
+                logout(request)
+
+            login(request, user)
+
+            messages.success(
+                request,
+                "Tu acceso fue activado correctamente. Ya podés usar el panel."
+            )
+
+            return redirect("panel_dashboard")
+    else:
+        form = AcceptStaffInvitationForm()
+
+    context = {
+        "invitation": invitation,
+        "salon": invitation.salon,
+        "employee": invitation.employee,
+        "form": form,
+    }
+
+    return render(request, "reservas/panel/accept_staff_invitation.html", context)
+
 @login_required
 def panel_employee_edit(request, employee_id):
     if request.user.is_superuser:
@@ -509,14 +599,39 @@ def panel_employee_toggle_active(request, employee_id):
     if not salon or not is_owner_user(request.user):
         raise PermissionDenied("Solo la dueña puede modificar profesionales.")
 
-    employee = get_object_or_404(Employee, pk=employee_id, salon=salon)
-    employee.is_active = not employee.is_active
-    employee.save(update_fields=['is_active'])
+    employee = get_object_or_404(
+        Employee.objects.select_related("user"),
+        pk=employee_id,
+        salon=salon
+    )
 
-    if employee.is_active:
-        messages.success(request, f'“{employee.name}” fue activado.')
+    if request.method != "POST":
+        return redirect("panel_employees")
+
+    should_activate = not employee.is_active
+
+    employee.is_active = should_activate
+    employee.save(update_fields=["is_active"])
+
+    if employee.user:
+        employee.user.is_active = should_activate
+        employee.user.save(update_fields=["is_active"])
+
+        SalonMembership.objects.filter(
+            user=employee.user,
+            salon=salon
+        ).update(is_active=should_activate)
+
+    if should_activate:
+        messages.success(
+            request,
+            f'“{employee.name}” fue activado. Su acceso al panel también fue habilitado.'
+        )
     else:
-        messages.success(request, f'“{employee.name}” fue desactivado.')
+        messages.success(
+            request,
+            f'“{employee.name}” fue desactivado. Su acceso al panel también fue bloqueado.'
+        )
 
     return redirect('panel_employees')
 
