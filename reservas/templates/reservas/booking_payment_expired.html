@@ -15,7 +15,7 @@
         Si todavía querés ese turno, vas a tener que iniciar una nueva reserva.
       </div>
 
-      <a href="{% url 'service_list' %}?salon={{ booking.salon.id }}" class="btn btn-dark">
+      <a href="{% url 'service_list' booking.salon.slug %}" class="btn btn-dark">
         Volver a reservar
       </a>
     </div>

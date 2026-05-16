@@ -240,7 +240,7 @@
           {% endif %}
         {% endif %}
 
-        <a class="btn nyx-btn-outline px-4" href="{% url 'service_list' %}">
+        <a class="btn nyx-btn-outline px-4" href="{% url 'service_list' booking.salon.slug %}">
           Reservar otro turno
         </a>
       </div>

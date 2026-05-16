@@ -1,0 +1,79 @@
+{% extends 'reservas/base.html' %}
+
+{% block title %}NYX | Sistema de turnos inteligentes{% endblock %}
+
+{% block content %}
+<section class="py-5">
+  <div class="row justify-content-center">
+    <div class="col-12 col-lg-9 text-center">
+      <h1 class="nyx-page-title mb-3">
+        NYX: sistema de turnos inteligentes
+      </h1>
+
+      <p class="nyx-page-subtitle nyx-text-muted mx-auto mb-4">
+        Organizá reservas, profesionales, horarios, pagos, señas y notificaciones desde un panel simple y profesional.
+      </p>
+
+      <div class="d-flex justify-content-center gap-2 flex-wrap">
+        <a href="{% url 'panel_login' %}" class="btn nyx-btn-primary px-4">
+          Ingresar al panel
+        </a>
+
+        <a href="#planes" class="btn nyx-btn-outline px-4">
+          Ver planes
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="py-4">
+  <div class="row g-4">
+    <div class="col-md-4">
+      <div class="nyx-panel p-4 h-100">
+        <h2 class="h5 fw-bold">Reservas online</h2>
+        <p class="nyx-text-muted mb-0">
+          Tus clientes reservan servicios, profesional, fecha y horario sin escribirte a cada rato.
+        </p>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="nyx-panel p-4 h-100">
+        <h2 class="h5 fw-bold">Pagos y señas</h2>
+        <p class="nyx-text-muted mb-0">
+          Configurá transferencia, Mercado Pago, seña o pago total según la política del salón.
+        </p>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="nyx-panel p-4 h-100">
+        <h2 class="h5 fw-bold">Panel para equipo</h2>
+        <p class="nyx-text-muted mb-0">
+          Dueña y profesionales pueden gestionar agenda, bloqueos, turnos y notificaciones.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="planes" class="py-5">
+  <div class="nyx-panel p-4 p-md-5">
+    <div class="row align-items-center g-4">
+      <div class="col-md-8">
+        <h2 class="fw-bold mb-2">Planes para peluquerías</h2>
+        <p class="nyx-text-muted mb-0">
+          Empezá con una demo personalizada y configuramos el sistema según tu salón.
+        </p>
+      </div>
+
+      <div class="col-md-4 text-md-end">
+        <a href="https://wa.me/" class="btn nyx-btn-primary px-4">
+          Solicitar demo
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

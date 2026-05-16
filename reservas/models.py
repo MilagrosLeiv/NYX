@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 from django.contrib.auth import get_user_model
+from django.utils.text import slugify
 import uuid
 
 
@@ -19,6 +20,13 @@ class Salon(models.Model):
     ]
 
     name = models.CharField('Nombre', max_length=120)
+    slug = models.SlugField(
+        'Slug público',
+        max_length=140,
+        unique=True,
+        blank=True,
+        help_text='URL pública del salón. Ejemplo: lux-salon'
+    )
     email = models.EmailField('Email', blank=True)
     phone = models.CharField('Teléfono', max_length=30, blank=True)
     address = models.CharField('Dirección', max_length=200, blank=True)
@@ -114,6 +122,20 @@ class Salon(models.Model):
         verbose_name = 'Peluquería'
         verbose_name_plural = 'Peluquerías'
         ordering = ['name']
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            base_slug = slugify(self.name) or "salon"
+            slug = base_slug
+            counter = 2
+
+            while Salon.objects.filter(slug=slug).exclude(pk=self.pk).exists():
+                slug = f"{base_slug}-{counter}"
+                counter += 1
+
+            self.slug = slug
+
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name

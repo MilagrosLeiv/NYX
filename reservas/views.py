@@ -81,34 +81,40 @@ def filter_past_slots_for_today(slots, selected_date):
         if datetime.strptime(slot, "%H:%M").time() >= current_time
     ]
 
-def service_list(request):
-    salon_id = request.GET.get('salon')
+def service_list(request, salon_slug):
     expire_unpaid_bookings()
-    services = Service.objects.filter(is_active=True).select_related('salon')
 
-    salon = None
-    if salon_id:
-        services = services.filter(salon_id=salon_id)
-        salon = Salon.objects.filter(id=salon_id, is_active=True).first()
-    else:
-        first_service = services.first()
-        salon = first_service.salon if first_service else None
+    salon = get_object_or_404(
+        Salon,
+        slug=salon_slug,
+        is_active=True
+    )
 
-    services = services.order_by('name')
+    services = (
+        Service.objects
+        .filter(
+            salon=salon,
+            is_active=True
+        )
+        .select_related('salon')
+        .order_by('name')
+    )
 
     context = {
         'services': services,
-        'selected_salon_id': salon_id,
         'salon': salon,
-        'deposit_enabled': salon.deposit_enabled if salon else False,
-        'deposit_percentage': salon.deposit_percentage if salon else 0,
-        'allow_full_payment': salon.allow_full_payment if salon else False,
-        'full_payment_required': salon.full_payment_required if salon else False,
-        'payment_method': salon.payment_method if salon else 'transfer',
-        'payment_instructions': salon.payment_instructions if salon else '',
+        'deposit_enabled': salon.deposit_enabled,
+        'deposit_percentage': salon.deposit_percentage,
+        'allow_full_payment': salon.allow_full_payment,
+        'full_payment_required': salon.full_payment_required,
+        'payment_method': salon.payment_method,
+        'payment_instructions': salon.payment_instructions,
     }
 
     return render(request, 'reservas/service_list.html', context)
+
+def landing_nyx(request):
+    return render(request, 'reservas/landing_nyx.html')
 
 
 def create_appointment(request):
@@ -262,16 +268,38 @@ def create_appointment(request):
     return render(request, 'reservas/create_appointment.html', {'form': form})
 
 
-
 def create_split_appointments(request):
-    selected_service_ids = request.GET.getlist('services') if request.method == 'GET' else request.POST.getlist('services')
+    selected_service_ids = (
+        request.GET.getlist('services')
+        if request.method == 'GET'
+        else request.POST.getlist('services')
+    )
 
-    services_queryset = Service.objects.filter(id__in=selected_service_ids, is_active=True)
-    services_map = {str(service.id): service for service in services_queryset}
-    selected_services = [services_map[service_id] for service_id in selected_service_ids if service_id in services_map]
+    services_queryset = (
+        Service.objects
+        .filter(id__in=selected_service_ids, is_active=True)
+        .select_related('salon')
+    )
+
+    services_map = {
+        str(service.id): service
+        for service in services_queryset
+    }
+
+    selected_services = [
+        services_map[service_id]
+        for service_id in selected_service_ids
+        if service_id in services_map
+    ]
 
     if not selected_services:
-        return redirect('service_list')
+        return redirect('landing_nyx')
+
+    salon = selected_services[0].salon
+
+    # Seguridad: todos los servicios elegidos deben pertenecer al mismo salón.
+    if any(service.salon_id != salon.id for service in selected_services):
+        return redirect('landing_nyx')
 
     errors = {}
     values = {}
@@ -287,6 +315,7 @@ def create_split_appointments(request):
 
         if not customer_name:
             errors['customer_name'] = 'Ingresá el nombre.'
+
         if not customer_phone:
             errors['customer_phone'] = 'Ingresá el teléfono.'
 
@@ -314,7 +343,11 @@ def create_split_appointments(request):
                 continue
 
             try:
-                employee = Employee.objects.get(pk=employee_id, is_active=True)
+                employee = Employee.objects.get(
+                    pk=employee_id,
+                    is_active=True,
+                    salon=salon,
+                )
             except Employee.DoesNotExist:
                 errors[f'employee_{service.id}'] = 'El profesional seleccionado no es válido.'
                 continue
@@ -325,12 +358,12 @@ def create_split_appointments(request):
 
             try:
                 appointment_datetime = timezone.make_aware(
-                datetime.strptime(
-                    f'{selected_date} {start_time}',
-                    '%Y-%m-%d %H:%M'
-                ),
-    timezone.get_current_timezone()
-)
+                    datetime.strptime(
+                        f'{selected_date} {start_time}',
+                        '%Y-%m-%d %H:%M'
+                    ),
+                    timezone.get_current_timezone()
+                )
             except ValueError:
                 errors[f'start_time_{service.id}'] = 'La fecha u hora no es válida.'
                 continue
@@ -339,18 +372,23 @@ def create_split_appointments(request):
                 customer_name=customer_name,
                 customer_phone=customer_phone,
                 employee=employee,
-                salon=service.salon,
+                salon=salon,
                 appointment_datetime=appointment_datetime,
                 status='pending',
                 notes=notes,
                 service=service,
             )
+
             appointment._selected_services = [service]
 
             try:
                 appointment.clean()
             except Exception as e:
-                errors[f'general_{service.id}'] = e.messages[0] if hasattr(e, 'messages') else str(e)
+                errors[f'general_{service.id}'] = (
+                    e.messages[0]
+                    if hasattr(e, 'messages')
+                    else str(e)
+                )
                 continue
 
             appointments_to_create.append((appointment, service))
@@ -366,6 +404,7 @@ def create_split_appointments(request):
 
             for service in selected_services:
                 appointment = appointments_by_service_id.get(service.id)
+
                 if not appointment:
                     continue
 
@@ -388,21 +427,25 @@ def create_split_appointments(request):
                     appointment.save()
                     appointment.services.set([service])
 
-            return redirect('service_list')
+            return redirect('service_list', salon_slug=salon.slug)
 
     employees_by_service = {
-        service.id: service.employees.filter(is_active=True).order_by('name')
+        service.id: service.employees.filter(
+            salon=salon,
+            is_active=True
+        ).order_by('name')
         for service in selected_services
     }
 
     context = {
+        'salon': salon,
         'selected_services': selected_services,
         'employees_by_service': employees_by_service,
         'errors': errors,
         'values': values,
     }
-    return render(request, 'reservas/create_split_appointments.html', context)
 
+    return render(request, 'reservas/create_split_appointments.html', context)
 
 
 def employees_by_services(request):
@@ -546,6 +589,7 @@ def employees_by_salon_and_services(request):
 def select_professional(request):
     selected_service_ids = request.GET.getlist('services')
     expire_unpaid_bookings()
+
     services = list(
         Service.objects.filter(
             id__in=selected_service_ids,
@@ -554,10 +598,12 @@ def select_professional(request):
     )
 
     if not services:
-        return redirect('service_list')
+        return redirect('landing_nyx')
 
     # Asumimos que todos los servicios elegidos son del mismo salón
     salon = services[0].salon
+    if any(service.salon_id != salon.id for service in services):
+        return redirect('landing_nyx')
 
     # Profesionales que hacen al menos uno de los servicios elegidos
     employees = (
@@ -632,7 +678,7 @@ def select_time(request):
     )
 
     if not services:
-        return redirect('service_list')
+        return redirect('landing_nyx')
 
     salon = services[0].salon
 
@@ -761,7 +807,7 @@ def confirm_appointment(request):
     )
 
     if not services or not employee_id or not selected_date_raw or not start_time:
-        return redirect('service_list')
+        return redirect('landing_nyx')
 
     salon = services[0].salon
 
@@ -778,10 +824,10 @@ def confirm_appointment(request):
         )
 
         if employee_service_ids != requested_service_ids:
-            return redirect('service_list')
+            return redirect('landing_nyx')
 
     except (Employee.DoesNotExist, ValueError):
-        return redirect('service_list')
+        return redirect('landing_nyx')
 
     try:
         appointment_datetime = timezone.make_aware(
@@ -792,7 +838,7 @@ def confirm_appointment(request):
             timezone.get_current_timezone()
         )
     except ValueError:
-        return redirect('service_list')
+        return redirect('landing_nyx')
 
     total_price = sum(service.price for service in services)
     total_duration = sum(service.duration_minutes for service in services)
@@ -945,7 +991,7 @@ def confirm_booking(request):
     )
 
     if not services or not selected_date_raw or not start_time:
-        return redirect('service_list')
+        return redirect('landing_nyx')
 
     salon = services[0].salon
     employee = None
@@ -962,7 +1008,7 @@ def confirm_booking(request):
                 )
 
                 if not employee_value:
-                    return redirect('service_list')
+                    return redirect('landing_nyx')
 
                 selected_employee = Employee.objects.get(
                     pk=employee_value,
@@ -971,20 +1017,20 @@ def confirm_booking(request):
                 )
 
                 if not selected_employee.services.filter(pk=service.id).exists():
-                    return redirect('service_list')
+                    return redirect('landing_nyx')
 
                 selected_employees[service.id] = selected_employee
                 service_employee_pairs.append((service, selected_employee))
 
         except (Employee.DoesNotExist, ValueError):
-            return redirect('service_list')
+            return redirect('landing_nyx')
 
     elif mode == 'auto':
         employee = None
 
     else:
         if not employee_id:
-            return redirect('service_list')
+            return redirect('landing_nyx')
 
         try:
             employee = Employee.objects.get(
@@ -999,10 +1045,10 @@ def confirm_booking(request):
             )
 
             if employee_service_ids != requested_service_ids:
-                return redirect('service_list')
+                return redirect('landing_nyx')
 
         except (Employee.DoesNotExist, ValueError):
-            return redirect('service_list')
+            return redirect('landing_nyx')
 
     total_price = sum(service.price for service in services)
     total_duration = sum(service.duration_minutes for service in services)
@@ -1219,7 +1265,7 @@ def select_professionals_per_service(request):
     selected_services = [services_map[service_id] for service_id in selected_service_ids if service_id in services_map]
 
     if not selected_services:
-        return redirect('service_list')
+        return redirect('landing_nyx')
 
     salon = selected_services[0].salon
 

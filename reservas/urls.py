@@ -4,7 +4,8 @@ from .panel_forms import NyxPasswordResetForm
 from . import views, panel_views
 from .views import mercadopago_oauth_connect, mercadopago_oauth_callback
 urlpatterns = [
-    path('', views.service_list, name='service_list'),
+    path('', views.landing_nyx, name='landing_nyx'),
+    path('s/<slug:salon_slug>/', views.service_list, name='service_list'),
 
     path('reservar/profesional/', views.select_professional, name='select_professional'),
     path('reservar/horario/', views.select_time, name='select_time'),

@@ -239,9 +239,96 @@
     .nyx-sidebar{
       width: 100%;
       min-height: auto;
-      position: relative;
+      position: sticky;
+      top: 0;
+      z-index: 1030;
+      padding: .75rem !important;
+      border-right: 0;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+
+    .nyx-sidebar .mb-4{
+      margin-bottom: .65rem !important;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: .75rem;
+    }
+
+    .nyx-brand{
+      font-size: 1.35rem;
+    }
+
+    .nyx-sidebar .small.nyx-session-label{
+      margin-top: 0 !important;
+      max-width: 55%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      text-align: right;
+    }
+
+    .nyx-sidebar nav{
+      flex-direction: row !important;
+      overflow-x: auto;
+      gap: .5rem !important;
+      padding-bottom: .15rem;
+      scrollbar-width: thin;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .nyx-nav-link{
+      flex: 0 0 auto;
+      padding: .65rem .85rem;
+      border-radius: 999px;
+      white-space: nowrap;
+      font-size: .9rem;
+    }
+
+    .nyx-nav-link i{
+      font-size: 1rem;
+    }
+
+    .nyx-sidebar .mt-4.pt-4{
+      display: none;
+    }
+
+    .nyx-main{
+      padding: 1rem;
+    }
+
+    .nyx-topbar{
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .nyx-panel-title{
+      font-size: 1.45rem;
+    }
+
+    .nyx-panel-subtitle{
+      font-size: .92rem;
     }
   }
+
+  @media (max-width: 575.98px){
+  .nyx-main{
+    padding: .75rem;
+  }
+
+  .nyx-topbar{
+    border-radius: 1rem;
+  }
+
+  .nyx-card{
+    border-radius: 1rem;
+  }
+
+  .nyx-outline-light{
+    padding: .5rem .8rem;
+    font-size: .88rem;
+  }
+}
 </style>
   {% block extra_css %}{% endblock %}
 </head>
