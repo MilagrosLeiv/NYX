@@ -41,6 +41,14 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.RunPython(generate_unique_slugs, migrations.RunPython.noop),
+        
+        migrations.RunSQL(
+            sql="""
+                DROP INDEX IF EXISTS reservas_salon_slug_c1634057_like;
+                DROP INDEX IF EXISTS reservas_salon_slug_key;
+            """,
+            reverse_sql=migrations.RunSQL.noop,
+        ),
         migrations.AlterField(
             model_name="salon",
             name="slug",
