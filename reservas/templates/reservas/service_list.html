@@ -3,60 +3,204 @@
 
 {% block title %}Servicios | NYX{% endblock %}
 
+{% block extra_css %}
+<style>
+  .salon-hero{
+    background: #ffffff;
+    border: 1px solid var(--nyx-border);
+    border-top: 4px solid var(--nyx-primary);
+    border-radius: 1.6rem;
+    box-shadow: var(--nyx-shadow);
+    overflow: hidden;
+    margin-bottom: 2rem;
+  }
+
+  .salon-hero-content{
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 2rem;
+    padding: 2.4rem 2.7rem;
+  }
+
+  .salon-pill{
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    padding: .5rem .85rem;
+    border-radius: 999px;
+    background: var(--nyx-surface-soft);
+    color: var(--nyx-primary);
+    font-size: .85rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+  }
+
+  .salon-title{
+    font-size: clamp(2rem, 4vw, 3rem);
+    line-height: 1.05;
+    letter-spacing: -0.04em;
+    font-weight: 800;
+    color: var(--nyx-text);
+    margin-bottom: .75rem;
+  }
+
+  .salon-description{
+    color: var(--nyx-text-muted);
+    font-size: 1.05rem;
+    line-height: 1.6;
+    max-width: 620px;
+    margin-bottom: 1.25rem;
+  }
+
+  .salon-meta{
+    display: flex;
+    flex-wrap: wrap;
+    gap: .8rem;
+  }
+
+  .salon-meta-item{
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    padding: .65rem .9rem;
+    border: 1px solid var(--nyx-border);
+    border-radius: 999px;
+    background: #fbfefe;
+    color: var(--nyx-text);
+    font-size: .92rem;
+  }
+
+  .salon-meta-label{
+    color: var(--nyx-text-muted);
+    font-weight: 700;
+  }
+
+  .salon-hero-right{
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: .65rem;
+  }
+
+  .salon-main-cta{
+    border: none;
+    border-radius: 999px;
+    padding: .9rem 1.6rem;
+    font-weight: 850;
+    color: #fff;
+    background: linear-gradient(135deg, var(--nyx-primary), var(--nyx-soft));
+    box-shadow: 0 14px 34px rgba(64,136,136,.22);
+    transition: .18s ease;
+    text-decoration: none;
+  }
+
+  .salon-main-cta:hover{
+    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 18px 42px rgba(64,136,136,.28);
+  }
+
+  .salon-cta-note{
+    color: var(--nyx-text-muted);
+    font-size: .85rem;
+    font-weight: 650;
+  }
+
+  .services-heading{
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  @media (max-width: 991.98px){
+    .salon-hero-content{
+      grid-template-columns: 1fr;
+      padding: 2rem;
+    }
+
+    .salon-hero-right{
+      align-items: flex-start;
+    }
+
+    .salon-main-cta{
+      width: 100%;
+      justify-content: center;
+    }
+  }
+
+  @media (max-width: 575.98px){
+    .salon-hero-content{
+      padding: 1.4rem;
+    }
+
+    .salon-meta{
+      flex-direction: column;
+    }
+
+    .salon-meta-item{
+      width: 100%;
+      border-radius: 1rem;
+    }
+  }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="card border-0 shadow-sm service-card mb-4">
-  <div class="card-body p-4 p-md-5">
-    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-4">
-      <div>
-        <div class="d-inline-flex align-items-center gap-2 px-3 py-2 rounded-pill mb-3"
-             style="background:#e8f7f7;color:#408888;font-weight:800;font-size:.9rem;">
-          <span>Reserva online</span>
-        </div>
-
-        <h1 class="nyx-page-title mb-2">
-          {{ salon.name }}
-        </h1>
-
-        <p class="nyx-text-muted nyx-page-subtitle mb-3">
-          Reservá tu turno online de forma rápida y simple.
-        </p>
-
-        <div class="d-flex flex-column flex-sm-row gap-2 text-muted">
-          {% if salon.address %}
-            <div>
-              <strong>Dirección:</strong> {{ salon.address }}
-            </div>
-          {% endif %}
-
-            <a href="#servicios" class="btn nyx-btn-primary px-4">
-                Reservar turno
-            </a>
-        </div>
+<section class="salon-hero">
+  <div class="salon-hero-content">
+    <div class="salon-hero-left">
+      <div class="salon-pill">
+        Reserva online
       </div>
 
-      <div class="d-flex flex-column gap-2">
-        <a href="#servicios" class="btn nyx-btn-primary px-4">
-          Reservar turno
-        </a>
+      <h1 class="salon-title">
+        {{ salon.name }}
+      </h1>
+
+      <p class="salon-description">
+        Elegí tus servicios, seleccioná profesional, fecha y horario en pocos pasos.
+      </p>
+
+      <div class="salon-meta">
+        {% if salon.address %}
+          <div class="salon-meta-item">
+            <span class="salon-meta-label">Dirección</span>
+            <span>{{ salon.address }}</span>
+          </div>
+        {% endif %}
 
         {% if salon.phone %}
-          <a href="https://wa.me/{{ salon.phone }}" class="btn nyx-btn-outline px-4">
-            Consultar
-          </a>
+          <div class="salon-meta-item">
+            <span class="salon-meta-label">Contacto</span>
+            <span>{{ salon.phone }}</span>
+          </div>
         {% endif %}
       </div>
     </div>
-  </div>
-</div>
 
-<div id="servicios" class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
-    <div>
-        <h2 class="nyx-page-title">Servicios</h2>
-        <p class="nyx-text-muted nyx-page-subtitle mb-0">
-            Elegí uno o más servicios y armá tu reserva en pocos pasos.
-        </p>
+    <div class="salon-hero-right">
+      <a href="#servicios" class="btn salon-main-cta">
+        Reservar turno
+      </a>
+
+      <span class="salon-cta-note">
+        Disponible online 24/7
+      </span>
     </div>
-</div>
+  </div>
+</section>
+
+<section id="servicios" class="services-heading">
+  <div>
+    <h2 class="nyx-page-title mb-2">Servicios</h2>
+    <p class="nyx-text-muted nyx-page-subtitle mb-0">
+      Elegí uno o más servicios y armá tu reserva.
+    </p>
+  </div>
+</section>
 
 <div class="row g-4 align-items-start">
     <div class="col-12 col-lg-8">
@@ -111,7 +255,7 @@
                 <div class="card-body py-5 text-center">
                     <h2 class="h4 mb-2">No hay servicios disponibles</h2>
                     <p class="nyx-text-muted mb-0">
-                        Cargá servicios desde el panel de administración para mostrarlos acá.
+                        Este salón todavía no tiene servicios disponibles para reservar online.
                     </p>
                 </div>
             </div>
@@ -277,7 +421,11 @@ document.addEventListener('DOMContentLoaded', function () {
             servicesCount.textContent = '0';
             totalDuration.textContent = '0 min';
             summaryTotal.textContent = '$0';
-            renderPaymentSummary(0);
+
+            if (paymentSummaryBlock) {
+                paymentSummaryBlock.innerHTML = '';
+            }
+
             if (continueBtn) continueBtn.disabled = true;
             return;
         }
@@ -354,6 +502,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const alreadySelected = selectedServices.some(
                 service => String(service.id) === String(serviceId)
             );
+
             if (alreadySelected) return;
 
             selectedServices.push({
