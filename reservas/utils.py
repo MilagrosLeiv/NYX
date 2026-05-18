@@ -17,38 +17,79 @@ def overlaps(start_a, end_a, start_b, end_b):
     return start_a < end_b and end_a > start_b
 
 
-def get_available_slots(employee, services, selected_date):
+def get_working_ranges_for_date(salon, selected_date):
+    """
+    Devuelve rangos reales de atención para un salón en una fecha.
+
+    Reglas finales:
+    - Si no existe BusinessHours para ese día: cerrado.
+    - Si BusinessHours.is_closed=True: cerrado.
+    - Si no hay bloques activos: cerrado.
+    - Si hay bloques activos: usar solo esos bloques.
+    """
     weekday = selected_date.weekday()
 
-    business_hour_blocks = BusinessHourBlock.objects.filter(
+    business_hours = BusinessHours.objects.filter(
+        salon=salon,
+        weekday=weekday
+    ).first()
+
+    if not business_hours or business_hours.is_closed:
+        return []
+
+    active_blocks = list(
+        BusinessHourBlock.objects.filter(
+            salon=salon,
+            weekday=weekday,
+            is_active=True
+        ).order_by("start_time")
+    )
+
+    if not active_blocks:
+        return []
+
+    current_tz = timezone.get_current_timezone()
+    working_ranges = []
+
+    for block in active_blocks:
+        if not block.start_time or not block.end_time or block.start_time >= block.end_time:
+            continue
+
+        start_datetime = timezone.make_aware(
+            datetime.combine(selected_date, block.start_time),
+            current_tz
+        )
+
+        end_datetime = timezone.make_aware(
+            datetime.combine(selected_date, block.end_time),
+            current_tz
+        )
+
+        working_ranges.append((start_datetime, end_datetime))
+
+    return working_ranges
+
+
+def get_available_slots(employee, services, selected_date):
+    working_ranges = get_working_ranges_for_date(
         salon=employee.salon,
-        weekday=weekday,
-        is_active=True
-    ).order_by('start_time')
+        selected_date=selected_date
+    )
 
-    # Fallback temporal al modelo viejo, por si todavía hay salones sin franjas nuevas cargadas.
-    if not business_hour_blocks.exists():
-        business_hours = BusinessHours.objects.filter(
-            salon=employee.salon,
-            weekday=weekday
-        ).first()
-
-        if not business_hours or business_hours.is_closed:
-            return []
-
-        business_hour_blocks = [{
-            "start_time": business_hours.start_time,
-            "end_time": business_hours.end_time,
-        }]
+    if not working_ranges:
+        return []
 
     total_duration = get_total_duration_minutes(services)
+
     if total_duration <= 0:
         return []
 
     existing_appointments = Appointment.objects.filter(
         employee=employee,
         appointment_datetime__date=selected_date,
-    ).exclude(status='cancelled').prefetch_related('services', 'service')
+    ).exclude(
+        status='cancelled'
+    ).prefetch_related('services', 'service')
 
     existing_booking_items = BookingItem.objects.select_related('booking').filter(
         employee=employee,
@@ -66,7 +107,9 @@ def get_available_slots(employee, services, selected_date):
 
     for existing in existing_appointments:
         existing_start = existing.appointment_datetime
-        existing_end = existing_start + timedelta(minutes=existing.get_total_duration_minutes())
+        existing_end = existing_start + timedelta(
+            minutes=existing.get_total_duration_minutes()
+        )
         occupied_ranges.append((existing_start, existing_end))
 
     for item in existing_booking_items:
@@ -78,26 +121,13 @@ def get_available_slots(employee, services, selected_date):
 
     slots = []
 
-    for business_block in business_hour_blocks:
-        block_start_time = business_block["start_time"] if isinstance(business_block, dict) else business_block.start_time
-        block_end_time = business_block["end_time"] if isinstance(business_block, dict) else business_block.end_time
+    for range_start, range_end in working_ranges:
+        current_start = range_start
 
-        block_start = timezone.make_aware(
-            datetime.combine(selected_date, block_start_time),
-            timezone.get_current_timezone()
-        )
-
-        block_end = timezone.make_aware(
-            datetime.combine(selected_date, block_end_time),
-            timezone.get_current_timezone()
-        )
-
-        current_start = block_start
-
-        while current_start < block_end:
+        while current_start < range_end:
             current_end = current_start + timedelta(minutes=total_duration)
 
-            if current_end > block_end:
+            if current_end > range_end:
                 break
 
             is_available = True

@@ -343,11 +343,20 @@ class NyxPasswordResetForm(PasswordResetForm):
                 yield user
     
 class PanelBusinessHoursForm(forms.ModelForm):
+    is_closed = forms.BooleanField(
+        label="Día cerrado",
+        required=False,
+        widget=forms.CheckboxInput(attrs={
+            "class": "form-check-input",
+        })
+    )
+
     start_time = forms.TypedChoiceField(
         label="Hora de inicio",
         choices=TIME_CHOICES_30,
         coerce=parse_time_choice,
         empty_value=None,
+        required=False,
         widget=forms.Select(attrs={
             "class": "form-select nyx-form-input",
         })
@@ -358,6 +367,7 @@ class PanelBusinessHoursForm(forms.ModelForm):
         choices=TIME_CHOICES_30,
         coerce=parse_time_choice,
         empty_value=None,
+        required=False,
         widget=forms.Select(attrs={
             "class": "form-select nyx-form-input",
         })
@@ -370,9 +380,6 @@ class PanelBusinessHoursForm(forms.ModelForm):
             'weekday': forms.Select(attrs={
                 'class': 'form-select nyx-form-input',
             }),
-            'is_closed': forms.CheckboxInput(attrs={
-                'class': 'form-check-input',
-            }),
         }
 
     def __init__(self, *args, **kwargs):
@@ -381,6 +388,7 @@ class PanelBusinessHoursForm(forms.ModelForm):
         if self.instance and self.instance.pk:
             self.initial["start_time"] = format_time_for_select(self.instance.start_time)
             self.initial["end_time"] = format_time_for_select(self.instance.end_time)
+            self.initial["is_closed"] = self.instance.is_closed
 
     def clean(self):
         cleaned_data = super().clean()
@@ -389,18 +397,45 @@ class PanelBusinessHoursForm(forms.ModelForm):
         start_time = cleaned_data.get('start_time')
         end_time = cleaned_data.get('end_time')
 
-        if not is_closed:
-            if not start_time or not end_time:
-                raise forms.ValidationError(
-                    'Debés indicar horario de inicio y fin, o marcar el día como cerrado.'
-                )
+        if is_closed:
+            # Aunque esté cerrado, mantenemos horarios válidos porque el modelo los requiere.
+            if not start_time and self.instance and self.instance.pk:
+                cleaned_data['start_time'] = self.instance.start_time
 
-            if start_time >= end_time:
-                raise forms.ValidationError(
-                    'La hora de inicio debe ser menor que la de fin.'
-                )
+            if not end_time and self.instance and self.instance.pk:
+                cleaned_data['end_time'] = self.instance.end_time
+
+            if not cleaned_data.get('start_time'):
+                cleaned_data['start_time'] = parse_time_choice("09:00")
+
+            if not cleaned_data.get('end_time'):
+                cleaned_data['end_time'] = parse_time_choice("20:00")
+
+            return cleaned_data
+
+        if not start_time or not end_time:
+            raise forms.ValidationError(
+                'Debés indicar horario de inicio y fin, o marcar el día como cerrado.'
+            )
+
+        if start_time >= end_time:
+            raise forms.ValidationError(
+                'La hora de inicio debe ser menor que la de fin.'
+            )
 
         return cleaned_data
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+
+        instance.is_closed = self.cleaned_data.get('is_closed', False)
+        instance.start_time = self.cleaned_data.get('start_time')
+        instance.end_time = self.cleaned_data.get('end_time')
+
+        if commit:
+            instance.save()
+
+        return instance
     
 class PanelBusinessHourBlockForm(forms.ModelForm):
     start_time = forms.TypedChoiceField(

@@ -720,14 +720,48 @@ def panel_business_hours_edit(request, business_hours_id):
     if not salon or not is_owner_user(request.user):
         raise PermissionDenied("Solo la dueña puede editar horarios.")
 
-    business_hours = get_object_or_404(BusinessHours, pk=business_hours_id, salon=salon)
+    business_hours = get_object_or_404(
+        BusinessHours,
+        pk=business_hours_id,
+        salon=salon
+    )
 
     if request.method == 'POST':
+        print("POST HORARIO:", request.POST)
+
         form = PanelBusinessHoursForm(request.POST, instance=business_hours)
+
         if form.is_valid():
-            form.save()
+            business_hours = form.save(commit=False)
+
+            # Forzamos el valor real del checkbox.
+            business_hours.is_closed = 'is_closed' in request.POST
+
+            # Si está cerrado, mantenemos horarios válidos para no romper campos obligatorios.
+            if business_hours.is_closed:
+                if not business_hours.start_time:
+                    business_hours.start_time = form.cleaned_data.get('start_time') or business_hours.start_time
+                if not business_hours.end_time:
+                    business_hours.end_time = form.cleaned_data.get('end_time') or business_hours.end_time
+
+            business_hours.save()
+
+            print(
+                "GUARDADO HORARIO:",
+                business_hours.get_weekday_display(),
+                "is_closed:",
+                business_hours.is_closed,
+                "start:",
+                business_hours.start_time,
+                "end:",
+                business_hours.end_time,
+            )
+
             messages.success(request, 'Horario actualizado correctamente.')
             return redirect('panel_business_hours')
+
+        print("ERRORES HORARIO:", form.errors, form.non_field_errors())
+
     else:
         form = PanelBusinessHoursForm(instance=business_hours)
 
@@ -739,6 +773,7 @@ def panel_business_hours_edit(request, business_hours_id):
         'submit_label': 'Guardar cambios',
         'business_hours': business_hours,
     }
+
     return render(request, 'reservas/panel/business_hours_form.html', context)
 
 @login_required

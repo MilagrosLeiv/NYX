@@ -3,6 +3,8 @@ from datetime import datetime, timedelta
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
+from reservas.utils import get_working_ranges_for_date
+
 from .models import BookingItem, Booking, BusinessHours, Appointment, Employee, EmployeeTimeOff
 
 
@@ -120,27 +122,13 @@ def get_consecutive_slots_for_service_assignments(
     if not service_employee_pairs:
         return []
 
-    weekday = selected_date.weekday()
-
-    business_hours = BusinessHours.objects.filter(
+    working_ranges = get_working_ranges_for_date(
         salon=salon,
-        weekday=weekday
-    ).first()
+        selected_date=selected_date
+    )
 
-    if not business_hours or business_hours.is_closed:
+    if not working_ranges:
         return []
-
-    current_tz = timezone.get_current_timezone()
-
-    day_start = timezone.make_aware(
-        datetime.combine(selected_date, business_hours.start_time),
-        current_tz
-    )
-
-    day_end = timezone.make_aware(
-        datetime.combine(selected_date, business_hours.end_time),
-        current_tz
-    )
 
     total_duration = sum(
         service.duration_minutes
@@ -196,74 +184,61 @@ def get_consecutive_slots_for_service_assignments(
         )
 
     slots = []
-    current_start = day_start
 
-    while current_start < day_end:
-        sequence_start = current_start
-        sequence_end = sequence_start + timedelta(minutes=total_duration)
+    for range_start, range_end in working_ranges:
+        current_start = range_start
 
-        if sequence_end > day_end:
-            break
+        while current_start < range_end:
+            sequence_start = current_start
+            sequence_end = sequence_start + timedelta(minutes=total_duration)
 
-        is_valid = True
-        block_start = sequence_start
-
-        for service, employee in service_employee_pairs:
-            block_end = block_start + timedelta(minutes=service.duration_minutes)
-
-            # Validar superposición con BookingItem nuevo
-            for item in existing_items_by_employee.get(employee.id, []):
-                overlaps = (
-                    block_start < item.end_datetime
-                    and block_end > item.start_datetime
-                )
-
-                if overlaps:
-                    is_valid = False
-                    break
-
-            if not is_valid:
+            if sequence_end > range_end:
                 break
 
-            # Validar superposición con Appointment viejo
-            for appointment in existing_appointments_by_employee.get(employee.id, []):
-                appointment_start = appointment.appointment_datetime
-                appointment_end = appointment_start + timedelta(
-                    minutes=appointment.get_total_duration_minutes()
-                )
+            is_valid = True
+            block_start = sequence_start
 
-                overlaps = (
-                    block_start < appointment_end
-                    and block_end > appointment_start
-                )
+            for service, employee in service_employee_pairs:
+                block_end = block_start + timedelta(minutes=service.duration_minutes)
 
-                if overlaps:
-                    is_valid = False
+                for item in existing_items_by_employee.get(employee.id, []):
+                    if block_start < item.end_datetime and block_end > item.start_datetime:
+                        is_valid = False
+                        break
+
+                if not is_valid:
                     break
 
-            if not is_valid:
-                break
+                for appointment in existing_appointments_by_employee.get(employee.id, []):
+                    appointment_start = appointment.appointment_datetime
+                    appointment_end = appointment_start + timedelta(
+                        minutes=appointment.get_total_duration_minutes()
+                    )
 
-            # Validar superposición con bloqueos del profesional
-            for block in existing_time_off_by_employee.get(employee.id, []):
-                overlaps = (
-                    block_start < block.end_datetime
-                    and block_end > block.start_datetime
-                )
+                    if block_start < appointment_end and block_end > appointment_start:
+                        is_valid = False
+                        break
 
-                if overlaps:
-                    is_valid = False
+                if not is_valid:
                     break
 
-            if not is_valid:
-                break
+                for block in existing_time_off_by_employee.get(employee.id, []):
+                    if block_start < block.end_datetime and block_end > block.start_datetime:
+                        is_valid = False
+                        break
 
-            block_start = block_end
+                if not is_valid:
+                    break
 
-        if is_valid:
-            slots.append(sequence_start.strftime("%H:%M"))
+                block_start = block_end
 
-        current_start += timedelta(minutes=slot_minutes)
+            if is_valid:
+                slot_text = sequence_start.strftime("%H:%M")
+
+                if slot_text not in slots:
+                    slots.append(slot_text)
+
+            current_start += timedelta(minutes=slot_minutes)
 
     return slots
 
@@ -405,48 +380,45 @@ def get_auto_consecutive_slots(*, salon, services, selected_date, slot_minutes=1
     if not services:
         return []
 
-    weekday = selected_date.weekday()
-    business_hours = BusinessHours.objects.filter(
+    working_ranges = get_working_ranges_for_date(
         salon=salon,
-        weekday=weekday
-    ).first()
+        selected_date=selected_date
+    )
 
-    if not business_hours or business_hours.is_closed:
+    if not working_ranges:
         return []
 
-    day_start = timezone.make_aware(
-        datetime.combine(selected_date, business_hours.start_time),
-        timezone.get_current_timezone()
-    )
-    day_end = timezone.make_aware(
-        datetime.combine(selected_date, business_hours.end_time),
-        timezone.get_current_timezone()
-    )
-
     total_duration = sum(service.duration_minutes for service in services)
+
     if total_duration <= 0:
         return []
 
     slots = []
-    current_start = day_start
 
-    while current_start < day_end:
-        sequence_end = current_start + timedelta(minutes=total_duration)
-        if sequence_end > day_end:
-            break
+    for range_start, range_end in working_ranges:
+        current_start = range_start
 
-        assignment = find_auto_assignment_for_start(
-            salon=salon,
-            services=services,
-            selected_date=selected_date,
-            start_time=current_start.time(),
-            slot_minutes=slot_minutes,
-        )
+        while current_start < range_end:
+            sequence_end = current_start + timedelta(minutes=total_duration)
 
-        if assignment:
-            slots.append(current_start.strftime('%H:%M'))
+            if sequence_end > range_end:
+                break
 
-        current_start += timedelta(minutes=slot_minutes)
+            assignment = find_auto_assignment_for_start(
+                salon=salon,
+                services=services,
+                selected_date=selected_date,
+                start_time=current_start.time(),
+                slot_minutes=slot_minutes,
+            )
+
+            if assignment:
+                slot_text = current_start.strftime('%H:%M')
+
+                if slot_text not in slots:
+                    slots.append(slot_text)
+
+            current_start += timedelta(minutes=slot_minutes)
 
     return slots
 
