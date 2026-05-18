@@ -332,6 +332,30 @@
 </style>
   {% block extra_css %}{% endblock %}
 </head>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const copyBtn = document.getElementById('copy-public-link-btn');
+
+  if (!copyBtn) return;
+
+  copyBtn.addEventListener('click', async function () {
+    const publicUrl = this.dataset.publicUrl;
+
+    try {
+      await navigator.clipboard.writeText(publicUrl);
+
+      const originalText = this.textContent;
+      this.textContent = 'Link copiado';
+
+      setTimeout(() => {
+        this.textContent = originalText;
+      }, 1800);
+    } catch (error) {
+      window.prompt('Copiá el link de reservas:', publicUrl);
+    }
+  });
+});
+</script>
 <body>
   <div class="container-fluid px-0">
     <div class="row g-0">
@@ -412,7 +436,26 @@
               {% if request.user.is_superuser %}
                 <a href="/admin/" class="nyx-outline-light">Admin</a>
               {% endif %}
-              <a href="/" class="nyx-outline-light">Sitio público</a>
+              {% if salon %}
+                <button
+                  type="button"
+                  class="nyx-outline-light"
+                  id="copy-public-link-btn"
+                  data-public-url="{{ request.scheme }}://{{ request.get_host }}{% url 'service_list' salon.slug %}"
+                >
+                  Compartir link
+                </button>
+              {% endif %}
+
+              {% if salon %}
+                <a href="{% url 'service_list' salon.slug %}" target="_blank" class="nyx-outline-light">
+                  Sitio público
+                </a>
+              {% else %}
+                <a href="{% url 'landing_nyx' %}" target="_blank" class="nyx-outline-light">
+                  Sitio público
+                </a>
+              {% endif %}
               <a href="{% url 'panel_logout' %}" class="nyx-outline-light">Salir</a>
             </div>
           </div>
