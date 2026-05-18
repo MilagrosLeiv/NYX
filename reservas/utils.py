@@ -83,6 +83,8 @@ def get_available_slots(employee, services, selected_date):
 
     if total_duration <= 0:
         return []
+    
+    step_minutes = total_duration
 
     existing_appointments = Appointment.objects.filter(
         employee=employee,
@@ -143,6 +145,6 @@ def get_available_slots(employee, services, selected_date):
                 if slot_text not in slots:
                     slots.append(slot_text)
 
-            current_start += timedelta(minutes=SLOT_MINUTES)
+            current_start += timedelta(minutes=step_minutes)
 
     return slots

@@ -137,6 +137,7 @@ def get_consecutive_slots_for_service_assignments(
 
     if total_duration <= 0:
         return []
+    step_minutes = total_duration
 
     employees = {
         employee.id: employee
@@ -238,7 +239,7 @@ def get_consecutive_slots_for_service_assignments(
                 if slot_text not in slots:
                     slots.append(slot_text)
 
-            current_start += timedelta(minutes=slot_minutes)
+            current_start += timedelta(minutes=step_minutes)
 
     return slots
 
@@ -392,6 +393,8 @@ def get_auto_consecutive_slots(*, salon, services, selected_date, slot_minutes=1
 
     if total_duration <= 0:
         return []
+        
+    step_minutes = total_duration
 
     slots = []
 
@@ -409,7 +412,7 @@ def get_auto_consecutive_slots(*, salon, services, selected_date, slot_minutes=1
                 services=services,
                 selected_date=selected_date,
                 start_time=current_start.time(),
-                slot_minutes=slot_minutes,
+                slot_minutes=step_minutes,
             )
 
             if assignment:
@@ -418,7 +421,7 @@ def get_auto_consecutive_slots(*, salon, services, selected_date, slot_minutes=1
                 if slot_text not in slots:
                     slots.append(slot_text)
 
-            current_start += timedelta(minutes=slot_minutes)
+            current_start += timedelta(minutes=step_minutes)
 
     return slots
 
