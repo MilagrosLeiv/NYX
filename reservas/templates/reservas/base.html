@@ -28,17 +28,13 @@
                 </a>
             {% endif %}
 
-            <div class="ms-auto d-flex gap-2">
-                {% if salon %}
-                    <a href="{% url 'service_list' salon.slug %}#servicios" class="btn btn-sm nyx-btn-outline">
-                        Servicios
-                    </a>
-                {% else %}
+            {% if not salon %}
+                <div class="ms-auto d-flex gap-2">
                     <a href="{% url 'landing_nyx' %}" class="btn btn-sm nyx-btn-outline">
                         Inicio
                     </a>
-                {% endif %}
-            </div>
+                </div>
+            {% endif %}
         </div>
     </nav>
 
