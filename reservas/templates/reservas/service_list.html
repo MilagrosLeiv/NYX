@@ -4,9 +4,54 @@
 {% block title %}Servicios | NYX{% endblock %}
 
 {% block content %}
-<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+<div class="card border-0 shadow-sm service-card mb-4">
+  <div class="card-body p-4 p-md-5">
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-4">
+      <div>
+        <div class="d-inline-flex align-items-center gap-2 px-3 py-2 rounded-pill mb-3"
+             style="background:#e8f7f7;color:#408888;font-weight:800;font-size:.9rem;">
+          <span>Reserva online</span>
+        </div>
+
+        <h1 class="nyx-page-title mb-2">
+          {{ salon.name }}
+        </h1>
+
+        <p class="nyx-text-muted nyx-page-subtitle mb-3">
+          Reservá tu turno online de forma rápida y simple.
+        </p>
+
+        <div class="d-flex flex-column flex-sm-row gap-2 text-muted">
+          {% if salon.address %}
+            <div>
+              <strong>Dirección:</strong> {{ salon.address }}
+            </div>
+          {% endif %}
+
+            <a href="#servicios" class="btn nyx-btn-primary px-4">
+                Reservar turno
+            </a>
+        </div>
+      </div>
+
+      <div class="d-flex flex-column gap-2">
+        <a href="#servicios" class="btn nyx-btn-primary px-4">
+          Reservar turno
+        </a>
+
+        {% if salon.phone %}
+          <a href="https://wa.me/{{ salon.phone }}" class="btn nyx-btn-outline px-4">
+            Consultar
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="servicios" class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
     <div>
-        <h1 class="nyx-page-title">Servicios</h1>
+        <h2 class="nyx-page-title">Servicios</h2>
         <p class="nyx-text-muted nyx-page-subtitle mb-0">
             Elegí uno o más servicios y armá tu reserva en pocos pasos.
         </p>
