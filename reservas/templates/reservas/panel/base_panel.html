@@ -391,6 +391,12 @@
             <div class="nyx-session-user">{{ request.user.username }}</div>
             <div class="nyx-session-role">{{ panel_role }}</div>
           </div>
+
+          <div class="mt-3">
+            <a href="{% url 'password_change' %}" style="color:#d7f4f4; font-size:.9rem; font-weight:700; text-decoration:none;">
+              Cambiar contraseña
+            </a>
+          </div>
         </aside>
       </div>
 

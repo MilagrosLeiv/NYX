@@ -83,6 +83,21 @@ urlpatterns = [
         ),
         name='password_reset_complete'
     ),
+    path(
+        'panel/cambiar-password/',
+        auth_views.PasswordChangeView.as_view(
+            template_name='reservas/panel/password_change_form.html',
+            success_url='/panel/cambiar-password/listo/',
+        ),
+        name='password_change'
+    ),
+    path(
+        'panel/cambiar-password/listo/',
+        auth_views.PasswordChangeDoneView.as_view(
+            template_name='reservas/panel/password_change_done.html',
+        ),
+        name='password_change_done'
+    ),
     path('panel/servicios/', panel_views.panel_services, name='panel_services'),
     path('panel/servicios/nuevo/', panel_views.panel_service_create, name='panel_service_create'),
     path('panel/servicios/<int:service_id>/editar/', panel_views.panel_service_edit, name='panel_service_edit'),
