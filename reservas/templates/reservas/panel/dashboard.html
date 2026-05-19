@@ -35,6 +35,41 @@
   </div>
 </div>
 
+{% if panel_role == 'owner' and not has_dashboard_activity %}
+  <section class="nyx-empty-dashboard nyx-card">
+    <div class="nyx-empty-dashboard-icon">
+      <i class="bi bi-calendar2-check"></i>
+    </div>
+
+    <div class="nyx-empty-dashboard-copy">
+      <div class="nyx-empty-dashboard-badge">
+        Primeros movimientos
+      </div>
+
+      <h2>Todavía no tenés reservas cargadas.</h2>
+
+      <p>
+        Terminá de configurar tus servicios, profesionales y horarios. Después compartí tu link
+        para que tus clientes puedan reservar turnos online.
+      </p>
+    </div>
+
+    <div class="nyx-empty-dashboard-actions">
+      <a href="{% url 'panel_onboarding' %}" class="nyx-empty-dashboard-primary">
+        <i class="bi bi-rocket-takeoff-fill"></i>
+        Ver primeros pasos
+      </a>
+
+      {% if salon %}
+        <a href="{% url 'service_list' salon.slug %}" target="_blank" class="nyx-empty-dashboard-secondary">
+          <i class="bi bi-box-arrow-up-right"></i>
+          Ver link público
+        </a>
+      {% endif %}
+    </div>
+  </section>
+{% endif %}
+
 <div class="row g-4 mt-1">
   <div class="col-xl-8">
     <div class="nyx-card p-4 h-100">
@@ -75,4 +110,134 @@
     </div>
   </div>
 </div>
+
+<style>
+  .nyx-empty-dashboard {
+    margin-top: 1.5rem;
+    padding: 1.35rem;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 1rem;
+    background:
+      radial-gradient(circle at top left, rgba(140, 220, 223, .18), transparent 34%),
+      linear-gradient(135deg, #ffffff 0%, #f8fbfb 100%);
+  }
+
+  .nyx-empty-dashboard-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, var(--nyx-primary), var(--nyx-primary-strong));
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.35rem;
+    box-shadow: 0 12px 24px rgba(118, 207, 210, .24);
+  }
+
+  .nyx-empty-dashboard-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: .28rem .65rem;
+    border-radius: 999px;
+    background: rgba(118, 207, 210, .13);
+    border: 1px solid rgba(118, 207, 210, .25);
+    color: #2f6d71;
+    font-size: .75rem;
+    font-weight: 850;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: .45rem;
+  }
+
+  .nyx-empty-dashboard-copy h2 {
+    margin: 0;
+    color: var(--nyx-text);
+    font-size: 1.15rem;
+    font-weight: 900;
+    letter-spacing: -.025em;
+  }
+
+  .nyx-empty-dashboard-copy p {
+    margin: .25rem 0 0;
+    color: var(--nyx-muted);
+    font-size: .94rem;
+    line-height: 1.45;
+    max-width: 720px;
+  }
+
+  .nyx-empty-dashboard-actions {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .nyx-empty-dashboard-primary,
+  .nyx-empty-dashboard-secondary {
+    min-height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .45rem;
+    border-radius: 999px;
+    padding: .65rem 1rem;
+    font-weight: 850;
+    font-size: .88rem;
+    text-decoration: none;
+    transition: .2s ease;
+    white-space: nowrap;
+  }
+
+  .nyx-empty-dashboard-primary {
+    background: linear-gradient(135deg, var(--nyx-primary), var(--nyx-primary-strong));
+    border: 1px solid transparent;
+    color: #ffffff !important;
+    box-shadow: 0 10px 22px rgba(118, 207, 210, .22);
+  }
+
+  .nyx-empty-dashboard-primary:hover {
+    color: #ffffff !important;
+    transform: translateY(-1px);
+    opacity: .97;
+  }
+
+  .nyx-empty-dashboard-secondary {
+    background: #ffffff;
+    border: 1px solid var(--nyx-border);
+    color: #315558;
+  }
+
+  .nyx-empty-dashboard-secondary:hover {
+    background: #f8fbfb;
+    color: var(--nyx-text);
+    transform: translateY(-1px);
+  }
+
+  @media (max-width: 991.98px) {
+    .nyx-empty-dashboard {
+      grid-template-columns: 1fr;
+      align-items: flex-start;
+    }
+
+    .nyx-empty-dashboard-actions {
+      width: 100%;
+      justify-content: flex-start;
+    }
+  }
+
+  @media (max-width: 575.98px) {
+    .nyx-empty-dashboard {
+      border-radius: 1rem;
+      padding: 1rem;
+    }
+
+    .nyx-empty-dashboard-actions > * {
+      width: 100%;
+    }
+  }
+</style>
 {% endblock %}

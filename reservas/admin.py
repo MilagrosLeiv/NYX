@@ -9,12 +9,19 @@ from datetime import timedelta
 User = get_user_model()
 
 from .forms import AppointmentForm
-from .models import (Appointment, Service, Employee,
-                     Appointment, BusinessHours,
-                     Salon, Booking, BookingItem, 
-                     SalonMembership, EmployeeTimeOff, SalonPaymentSettings
-                     )
-
+from .models import (
+    Appointment,
+    Service,
+    Employee,
+    BusinessHours,
+    Salon,
+    Booking,
+    BookingItem,
+    SalonMembership,
+    SalonSubscription,
+    EmployeeTimeOff,
+    SalonPaymentSettings,
+)
 
 def get_user_membership(user):
     if not user.is_authenticated:
@@ -67,6 +74,40 @@ class SalonAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         return request.user.is_superuser
 
+
+@admin.register(SalonSubscription)
+class SalonSubscriptionAdmin(admin.ModelAdmin):
+    list_display = (
+        "salon",
+        "status",
+        "plan",
+        "monthly_price_ars",
+        "trial_starts_at",
+        "trial_ends_at",
+        "current_period_ends_at",
+        "created_at",
+    )
+    list_filter = ("status", "plan")
+    search_fields = ("salon__name", "salon__email", "salon__phone")
+    readonly_fields = ("created_at", "updated_at")
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request).select_related("salon")
+
+        if request.user.is_superuser:
+            return qs
+
+        salon = get_user_salon(request.user)
+        if salon:
+            return qs.filter(salon=salon)
+
+        return qs.none()
+
+    def has_add_permission(self, request):
+        return request.user.is_superuser
+
+    def has_delete_permission(self, request, obj=None):
+        return request.user.is_superuser
 
 @admin.register(Service)
 class ServiceAdmin(admin.ModelAdmin):

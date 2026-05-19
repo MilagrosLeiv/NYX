@@ -1,0 +1,239 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Comenzar prueba gratis | NYX</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    :root{
+      --nyx-bg: #eef4f4;
+      --nyx-surface: #ffffff;
+      --nyx-border: #cfe4e5;
+      --nyx-primary: #76cfd2;
+      --nyx-primary-strong: #4aaeb4;
+      --nyx-primary-dark: #2f4b4d;
+      --nyx-text: #183234;
+      --nyx-muted: #6d8789;
+      --nyx-shadow: 0 18px 45px rgba(31, 55, 58, .10);
+    }
+
+    body{
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top right, rgba(118,207,210,.28), transparent 36%),
+        linear-gradient(180deg, #f4f8f8 0%, #eef4f4 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      color: var(--nyx-text);
+    }
+
+    .nyx-signup-card{
+      width: 100%;
+      max-width: 760px;
+      background: var(--nyx-surface);
+      border: 1px solid var(--nyx-border);
+      border-radius: 1.75rem;
+      box-shadow: var(--nyx-shadow);
+      overflow: hidden;
+    }
+
+    .nyx-signup-header{
+      background: #2f4b4d;
+      color: #fff;
+      padding: 1.8rem 2rem;
+    }
+
+    .nyx-brand{
+      font-size: 2rem;
+      font-weight: 900;
+      letter-spacing: .08em;
+      color: #e8f7f7;
+    }
+
+    .nyx-logo-dot{
+      display:inline-block;
+      width:10px;
+      height:10px;
+      border-radius:50%;
+      background: var(--nyx-primary);
+      margin-left: 8px;
+    }
+
+    .nyx-subtitle{
+      color: rgba(232,247,247,.78);
+      margin-top: .45rem;
+      margin-bottom: 0;
+    }
+
+    .nyx-signup-body{
+      padding: 2rem;
+    }
+
+    .nyx-label{
+      font-weight: 800;
+      margin-bottom: .45rem;
+      color: var(--nyx-text);
+    }
+
+    .nyx-input{
+      border-radius: 1rem;
+      border: 1px solid var(--nyx-border);
+      padding: .85rem 1rem;
+    }
+
+    .nyx-input:focus{
+      border-color: var(--nyx-primary);
+      box-shadow: 0 0 0 .2rem rgba(118,207,210,.18);
+    }
+
+    .nyx-btn{
+      width: 100%;
+      border: none;
+      border-radius: 999px;
+      padding: .95rem 1rem;
+      font-weight: 900;
+      color: #fff;
+      background: linear-gradient(135deg, var(--nyx-primary), var(--nyx-primary-strong));
+      box-shadow: 0 14px 28px rgba(74,174,180,.22);
+    }
+
+    .nyx-btn:hover{
+      filter: brightness(.97);
+    }
+
+    .nyx-footer-link{
+      color: #467b7f;
+      font-weight: 800;
+      text-decoration: none;
+    }
+
+    .nyx-help{
+      color: var(--nyx-muted);
+      font-size: .92rem;
+    }
+
+    .nyx-error{
+      color: #b42318;
+      font-size: .9rem;
+      margin-top: .35rem;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="nyx-signup-card">
+    <div class="nyx-signup-header">
+      <div class="nyx-brand">NYX<span class="nyx-logo-dot"></span></div>
+      <p class="nyx-subtitle">Comenzá tu prueba gratuita de 7 días</p>
+    </div>
+
+    <div class="nyx-signup-body">
+      {% if form.non_field_errors %}
+        <div class="alert alert-danger rounded-4">
+          {{ form.non_field_errors }}
+        </div>
+      {% endif %}
+
+      <form method="post" novalidate>
+        {% csrf_token %}
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="nyx-label" for="{{ form.salon_name.id_for_label }}">
+              {{ form.salon_name.label }}
+            </label>
+            {{ form.salon_name }}
+            {% for error in form.salon_name.errors %}
+              <div class="nyx-error">{{ error }}</div>
+            {% endfor %}
+          </div>
+
+          <div class="col-md-6">
+            <label class="nyx-label" for="{{ form.owner_name.id_for_label }}">
+              {{ form.owner_name.label }}
+            </label>
+            {{ form.owner_name }}
+            {% for error in form.owner_name.errors %}
+              <div class="nyx-error">{{ error }}</div>
+            {% endfor %}
+          </div>
+
+          <div class="col-md-6">
+            <label class="nyx-label" for="{{ form.phone.id_for_label }}">
+              {{ form.phone.label }}
+            </label>
+            {{ form.phone }}
+            {% for error in form.phone.errors %}
+              <div class="nyx-error">{{ error }}</div>
+            {% endfor %}
+          </div>
+
+          <div class="col-md-6">
+            <label class="nyx-label" for="{{ form.email.id_for_label }}">
+              {{ form.email.label }}
+            </label>
+            {{ form.email }}
+            {% for error in form.email.errors %}
+              <div class="nyx-error">{{ error }}</div>
+            {% endfor %}
+          </div>
+
+          <div class="col-12">
+            <label class="nyx-label" for="{{ form.username.id_for_label }}">
+              {{ form.username.label }}
+            </label>
+            {{ form.username }}
+            <div class="nyx-help mt-1">Este usuario lo vas a usar para entrar al panel.</div>
+            {% for error in form.username.errors %}
+              <div class="nyx-error">{{ error }}</div>
+            {% endfor %}
+          </div>
+
+          <div class="col-md-6">
+            <label class="nyx-label" for="{{ form.password.id_for_label }}">
+              {{ form.password.label }}
+            </label>
+            {{ form.password }}
+            {% for error in form.password.errors %}
+              <div class="nyx-error">{{ error }}</div>
+            {% endfor %}
+          </div>
+
+          <div class="col-md-6">
+            <label class="nyx-label" for="{{ form.password_confirm.id_for_label }}">
+              {{ form.password_confirm.label }}
+            </label>
+            {{ form.password_confirm }}
+            {% for error in form.password_confirm.errors %}
+              <div class="nyx-error">{{ error }}</div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="mt-4">
+          <button type="submit" class="nyx-btn">
+            Crear mi prueba gratuita
+          </button>
+        </div>
+
+        <div class="mt-4 text-center">
+          <a href="{% url 'panel_login' %}" class="nyx-footer-link">
+            Ya tengo cuenta
+          </a>
+        </div>
+
+        <div class="mt-3 text-center">
+          <a href="/" class="nyx-footer-link">
+            Volver al sitio público
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

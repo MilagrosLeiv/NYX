@@ -1,18 +1,31 @@
 from datetime import timedelta, datetime
-from urllib import request
 
+
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.shortcuts import get_object_or_404, render, redirect
+from django.urls import reverse
 from django.utils import timezone
 
 from .mail_utils import send_booking_confirmed_email, send_staff_invitation_email, send_booking_cancelled_email, send_booking_payment_pending_email
-from .models import (BookingItem, EmployeeTimeOff, 
-Service, Employee,BusinessHours, BusinessHourBlock,
-Salon, SalonMembership,Booking,StaffInvitation, SalonPaymentSettings)
+from .models import (
+    BookingItem,
+    EmployeeTimeOff,
+    Service,
+    Employee,
+    BusinessHours,
+    BusinessHourBlock,
+    Salon,
+    SalonMembership,
+    Booking,
+    StaffInvitation,
+    SalonPaymentSettings,
+    SalonSubscription,
+)
 from .panel_forms import (
     PanelBusinessHoursForm,
     PanelBusinessHourBlockForm,
@@ -22,6 +35,7 @@ from .panel_forms import (
     PanelSalonSettingsForm,
     PanelEmployeeAccessForm,
     AcceptStaffInvitationForm,
+    TrialSignupForm,
 )
 from .booking_utils import (
     mark_completed_bookings,
@@ -41,6 +55,52 @@ def get_user_salon(user):
     membership = get_user_membership(user)
     return membership.salon if membership else None
 
+def get_or_create_salon_subscription(salon):
+    now = timezone.now()
+    trial_days = getattr(settings, "NYX_TRIAL_DAYS", 15)
+    monthly_price = getattr(settings, "NYX_BASIC_MONTHLY_PRICE_ARS", 30000)
+
+    subscription, created = SalonSubscription.objects.get_or_create(
+        salon=salon,
+        defaults={
+            "status": SalonSubscription.Status.TRIAL,
+            "plan": SalonSubscription.Plan.BASIC,
+            "monthly_price_ars": monthly_price,
+            "trial_starts_at": now,
+            "trial_ends_at": now + timedelta(days=trial_days),
+        }
+    )
+
+    return subscription
+
+
+def salon_has_panel_access(salon):
+    if not salon or not salon.is_active:
+        return False
+
+    subscription = get_or_create_salon_subscription(salon)
+    return subscription.has_access()
+
+def subscription_required(view_func):
+    def wrapper(request, *args, **kwargs):
+        if request.user.is_superuser:
+            return view_func(request, *args, **kwargs)
+
+        salon = get_user_salon(request.user)
+
+        if not salon:
+            raise PermissionDenied("Tu usuario no está asociado a ninguna peluquería.")
+
+        subscription = get_or_create_salon_subscription(salon)
+
+        if not subscription.has_access():
+            return redirect("panel_billing_required")
+
+        request.salon_subscription = subscription
+
+        return view_func(request, *args, **kwargs)
+
+    return wrapper
 
 def is_owner_user(user):
     membership = get_user_membership(user)
@@ -56,7 +116,9 @@ def get_user_employee(user):
     return getattr(user, 'employee_profile', None)
 
 
+
 @login_required
+@subscription_required
 def panel_dashboard(request):
     if request.user.is_superuser:
         return redirect('/admin/')
@@ -74,6 +136,10 @@ def panel_dashboard(request):
     if not salon:
         raise PermissionDenied("Tu usuario no está asociado a ninguna peluquería.")
 
+    subscription = get_or_create_salon_subscription(salon)
+
+    if not subscription.has_access():
+        return redirect("panel_billing_required")
     booking_items = BookingItem.objects.select_related(
         'booking', 'booking__salon', 'employee', 'service'
     )
@@ -98,19 +164,80 @@ def panel_dashboard(request):
 
     next_item = future_items.order_by('start_datetime').first()
 
+    today_count = today_items.count()
+    tomorrow_count = tomorrow_items.count()
+    pending_count = future_items.filter(booking__status='pending').count()
+    confirmed_count = future_items.filter(booking__status='confirmed').count()
+    time_off_count = time_off_blocks.filter(end_datetime__gte=now).count()
+
+    has_dashboard_activity = any([
+        today_count,
+        tomorrow_count,
+        pending_count,
+        confirmed_count,
+        time_off_count,
+        next_item,
+    ])
+
     context = {
         'panel_role': 'owner' if is_owner_user(request.user) else 'staff',
         'salon': salon,
+        'subscription': subscription,
         'today_count': today_items.count(),
         'tomorrow_count': tomorrow_items.count(),
         'pending_count': future_items.filter(booking__status='pending').count(),
         'confirmed_count': future_items.filter(booking__status='confirmed').count(),
         'time_off_count': time_off_blocks.filter(end_datetime__gte=now).count(),
         'next_item': next_item,
+        'has_dashboard_activity': has_dashboard_activity,
     }
     return render(request, 'reservas/panel/dashboard.html', context)
 
 @login_required
+@subscription_required
+def panel_onboarding(request):
+    if request.user.is_superuser:
+        return redirect('/admin/')
+
+    salon = get_user_salon(request.user)
+
+    if not salon or not is_owner_user(request.user):
+        raise PermissionDenied("Solo la dueña puede ver la bienvenida del salón.")
+
+    services_count = Service.objects.filter(salon=salon).count()
+    active_services_count = Service.objects.filter(salon=salon, is_active=True).count()
+
+    business_hours_count = BusinessHourBlock.objects.filter(
+        salon=salon,
+        is_active=True,
+    ).count()
+
+    employees_count = Employee.objects.filter(
+        salon=salon,
+        is_active=True,
+    ).count()
+
+    public_url = request.build_absolute_uri(
+        reverse("service_list", kwargs={"salon_slug": salon.slug})
+    )
+
+    context = {
+        "panel_role": "owner",
+        "salon": salon,
+        "services_count": services_count,
+        "active_services_count": active_services_count,
+        "business_hours_count": business_hours_count,
+        "employees_count": employees_count,
+        "public_url": public_url,
+        "has_services": active_services_count > 0,
+        "has_business_hours": business_hours_count > 0,
+        "has_employees": employees_count > 0,
+    }
+
+    return render(request, "reservas/panel/onboarding.html", context)
+
+@login_required
+@subscription_required
 def panel_agenda(request):
     if request.user.is_superuser:
         raise PermissionDenied("El superuser seguí usándolo desde Django admin.")
@@ -166,7 +293,9 @@ def panel_agenda(request):
     }
     return render(request, 'reservas/panel/agenda.html', context)
 
+
 @login_required
+@subscription_required
 def panel_bloqueos(request):
     if request.user.is_superuser:
         raise PermissionDenied("El superuser seguí usándolo desde Django admin.")
@@ -238,7 +367,9 @@ def panel_bloqueos(request):
 
     return render(request, "reservas/panel/bloqueos.html", context)
 
+
 @login_required
+@subscription_required
 def panel_services(request):
     if request.user.is_superuser:
         return redirect('/admin/')
@@ -258,7 +389,9 @@ def panel_services(request):
     return render(request, 'reservas/panel/services.html', context)
 
 
+
 @login_required
+@subscription_required
 def panel_service_create(request):
     if request.user.is_superuser:
         return redirect('/admin/')
@@ -290,6 +423,7 @@ def panel_service_create(request):
 
 
 @login_required
+@subscription_required
 def panel_service_edit(request, service_id):
     if request.user.is_superuser:
         return redirect('/admin/')
@@ -322,6 +456,7 @@ def panel_service_edit(request, service_id):
 
 
 @login_required
+@subscription_required
 def panel_service_toggle_active(request, service_id):
     if request.user.is_superuser:
         return redirect('/admin/')
@@ -342,7 +477,9 @@ def panel_service_toggle_active(request, service_id):
 
     return redirect('panel_services')
 
+
 @login_required
+@subscription_required
 def panel_employees(request):
     if request.user.is_superuser:
         return redirect('/admin/')
@@ -362,7 +499,9 @@ def panel_employees(request):
     return render(request, 'reservas/panel/employees.html', context)
 
 
+
 @login_required
+@subscription_required
 def panel_employee_create(request):
     if request.user.is_superuser:
         return redirect('/admin/')
@@ -395,6 +534,7 @@ def panel_employee_create(request):
 
 
 @login_required
+@subscription_required
 def panel_employee_create_access(request, employee_id):
     if request.user.is_superuser:
         return redirect('/admin/')
@@ -557,7 +697,9 @@ def accept_staff_invitation(request, token):
 
     return render(request, "reservas/panel/accept_staff_invitation.html", context)
 
+
 @login_required
+@subscription_required
 def panel_employee_edit(request, employee_id):
     if request.user.is_superuser:
         return redirect('/admin/')
@@ -590,6 +732,7 @@ def panel_employee_edit(request, employee_id):
 
 
 @login_required
+@subscription_required
 def panel_employee_toggle_active(request, employee_id):
     if request.user.is_superuser:
         return redirect('/admin/')
@@ -635,7 +778,9 @@ def panel_employee_toggle_active(request, employee_id):
 
     return redirect('panel_employees')
 
+
 @login_required
+@subscription_required
 def panel_business_hours(request):
     if request.user.is_superuser:
         return redirect('/admin/')
@@ -680,6 +825,7 @@ def panel_business_hours(request):
 
 
 @login_required
+@subscription_required
 def panel_business_hours_create(request):
     if request.user.is_superuser:
         return redirect('/admin/')
@@ -711,6 +857,7 @@ def panel_business_hours_create(request):
 
 
 @login_required
+@subscription_required
 def panel_business_hours_edit(request, business_hours_id):
     if request.user.is_superuser:
         return redirect('/admin/')
@@ -776,7 +923,9 @@ def panel_business_hours_edit(request, business_hours_id):
 
     return render(request, 'reservas/panel/business_hours_form.html', context)
 
+
 @login_required
+@subscription_required
 def panel_business_hour_block_create(request):
     if request.user.is_superuser:
         return redirect('/admin/')
@@ -812,6 +961,7 @@ def panel_business_hour_block_create(request):
 
 
 @login_required
+@subscription_required
 def panel_business_hour_block_edit(request, block_id):
     if request.user.is_superuser:
         return redirect('/admin/')
@@ -854,6 +1004,7 @@ def panel_business_hour_block_edit(request, block_id):
 
 
 @login_required
+@subscription_required
 def panel_business_hour_block_toggle_active(request, block_id):
     if request.user.is_superuser:
         return redirect('/admin/')
@@ -879,7 +1030,9 @@ def panel_business_hour_block_toggle_active(request, block_id):
 
     return redirect('panel_business_hours')
 
+
 @login_required
+@subscription_required
 def panel_settings(request):
     if request.user.is_superuser:
         return redirect('/admin/')
@@ -921,7 +1074,9 @@ def panel_settings(request):
     }
     return render(request, 'reservas/panel/settings.html', context)
 
+
 @login_required
+@subscription_required
 def panel_bookings(request):
     if request.user.is_superuser:
         return redirect('/admin/')
@@ -981,7 +1136,9 @@ def panel_bookings(request):
     return render(request, 'reservas/panel/bookings.html', context)
 
 
+
 @login_required
+@subscription_required
 def panel_booking_detail(request, booking_id):
     if request.user.is_superuser:
         return redirect('/admin/')
@@ -1009,6 +1166,7 @@ def panel_booking_detail(request, booking_id):
 
 
 @login_required
+@subscription_required
 def panel_booking_cancel(request, booking_id):
     if request.user.is_superuser:
         return redirect('/admin/')
@@ -1061,12 +1219,103 @@ def panel_login(request):
     return render(request, 'reservas/panel/login.html')
 
 
+def trial_signup(request):
+    if request.user.is_authenticated:
+        if request.user.is_superuser:
+            return redirect("/admin/")
+        return redirect("panel_dashboard")
+
+    if request.method == "POST":
+        form = TrialSignupForm(request.POST)
+
+        if form.is_valid():
+            salon_name = form.cleaned_data["salon_name"]
+            owner_name = form.cleaned_data["owner_name"]
+            phone = form.cleaned_data["phone"]
+            email = form.cleaned_data["email"]
+            username = form.cleaned_data["username"]
+            password = form.cleaned_data["password"]
+
+            user = User.objects.create_user(
+                username=username,
+                email=email,
+                password=password,
+                first_name=owner_name,
+            )
+
+            salon = Salon.objects.create(
+                name=salon_name,
+                email=email,
+                phone=phone,
+                notification_email=email,
+                notify_new_bookings_by_email=True,
+                is_active=True,
+            )
+
+            SalonMembership.objects.create(
+                user=user,
+                salon=salon,
+                role="owner",
+                is_active=True,
+            )
+
+            now = timezone.now()
+            trial_days = getattr(settings, "NYX_TRIAL_DAYS", 15)
+            monthly_price = getattr(settings, "NYX_BASIC_MONTHLY_PRICE_ARS", 30000)
+
+            SalonSubscription.objects.create(
+                salon=salon,
+                status=SalonSubscription.Status.TRIAL,
+                plan=SalonSubscription.Plan.BASIC,
+                monthly_price_ars=monthly_price,
+                trial_starts_at=now,
+                trial_ends_at=now + timedelta(days=trial_days),
+            )
+
+            login(request, user)
+
+            messages.success(
+                request,
+                f"Tu prueba gratuita de {trial_days} días fue creada correctamente."
+            )
+
+            return redirect("panel_onboarding")
+    else:
+        form = TrialSignupForm()
+
+    return render(request, "reservas/panel/trial_signup.html", {
+        "form": form,
+    })
+
 @login_required
 def panel_logout(request):
     logout(request)
     return redirect('panel_login')
 
 @login_required
+def panel_billing_required(request):
+    if request.user.is_superuser:
+        return redirect('/admin/')
+
+    salon = get_user_salon(request.user)
+
+    if not salon:
+        raise PermissionDenied("Tu usuario no está asociado a ninguna peluquería.")
+
+    subscription = get_or_create_salon_subscription(salon)
+
+    context = {
+        "salon": salon,
+        "subscription": subscription,
+        "panel_role": "owner" if is_owner_user(request.user) else "staff",
+        "hide_panel_nav": True,
+    }
+
+    return render(request, "reservas/panel/billing_required.html", context)
+
+
+@login_required
+@subscription_required
 def panel_booking_mark_payment_verified(request, booking_id):
     if request.user.is_superuser:
         return redirect('/admin/')

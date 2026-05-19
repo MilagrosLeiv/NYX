@@ -45,10 +45,17 @@ urlpatterns = [
     path('api/available-slots/', views.available_slots_api, name='available_slots_api'),
 
     # Panel de gestión
+    path('panel/bienvenida/', panel_views.panel_onboarding, name='panel_onboarding'),
+    path(
+        'panel/suscripcion-requerida/',
+        panel_views.panel_billing_required,
+        name='panel_billing_required'
+    ),
     path('panel/', panel_views.panel_dashboard, name='panel_dashboard'),
     path('panel/agenda/', panel_views.panel_agenda, name='panel_agenda'),
     path('panel/bloqueos/', panel_views.panel_bloqueos, name='panel_bloqueos'),
     path('login/', panel_views.panel_login, name='panel_login'),
+    path('registro/', panel_views.trial_signup, name='trial_signup'),
     path('logout/', panel_views.panel_logout, name='panel_logout'),
     path(
         'password-reset/',

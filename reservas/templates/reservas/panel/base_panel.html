@@ -101,7 +101,7 @@
   .nyx-nav-link.active{
     color: #ffffff;
     background: rgba(118, 207, 210, .16);
-    border: 1px solid rgba(255,255,255,.08);
+    
   }
 
   .nyx-main{
@@ -109,12 +109,184 @@
   }
 
   .nyx-topbar{
-    background: var(--nyx-surface);
+     background: var(--nyx-surface);
+      border: 1px solid var(--nyx-border);
+      border-radius: 1.35rem;
+      padding: 1rem 1.15rem;
+      box-shadow: var(--nyx-shadow);
+      margin-bottom: 1.2rem;
+    }
+  .nyx-trial-banner{
+    position: relative;
+    overflow: hidden;
+    background:
+      radial-gradient(circle at top left, rgba(140, 220, 223, .26), transparent 34%),
+      linear-gradient(135deg, #ffffff 0%, #f2fbfb 100%);
     border: 1px solid var(--nyx-border);
-    border-radius: var(--nyx-radius);
-    padding: 1.25rem 1.4rem;
+    border-radius: 1.35rem;
     box-shadow: var(--nyx-shadow);
-    margin-bottom: 1.5rem;
+    padding: 1rem 1.1rem;
+    margin-bottom: 1.35rem;
+  }
+
+  .nyx-trial-banner::before{
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 6px;
+    background: linear-gradient(180deg, var(--nyx-primary), var(--nyx-primary-strong));
+  }
+
+  .nyx-trial-content{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .nyx-trial-left{
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    min-width: 0;
+  }
+
+  .nyx-trial-icon{
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    border-radius: 15px;
+    background: linear-gradient(135deg, var(--nyx-primary), var(--nyx-primary-strong));
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 20px rgba(118, 207, 210, .22);
+    font-size: 1.1rem;
+  }
+
+  .nyx-trial-kicker{
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    padding: .26rem .58rem;
+    border-radius: 999px;
+    background: rgba(118, 207, 210, .13);
+    color: #2f6d71;
+    border: 1px solid rgba(118, 207, 210, .25);
+    font-size: .72rem;
+    font-weight: 850;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: .35rem;
+  }
+
+  .nyx-trial-title{
+    margin: 0;
+    color: var(--nyx-text);
+    font-size: 1rem;
+    font-weight: 900;
+    letter-spacing: -.02em;
+  }
+
+  .nyx-trial-text{
+    margin: .2rem 0 0;
+    color: var(--nyx-muted);
+    font-size: .94rem;
+    line-height: 1.45;
+  }
+
+  .nyx-trial-days{
+    color: var(--nyx-primary-dark);
+    font-weight: 900;
+  }
+
+  .nyx-trial-actions{
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+    flex: 0 0 auto;
+  }
+
+  .nyx-trial-link{
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .42rem;
+    border-radius: 999px;
+    padding: .58rem .95rem;
+    font-weight: 850;
+    font-size: .86rem;
+    text-decoration: none;
+    border: 1px solid var(--nyx-border);
+    background: #ffffff;
+    color: #315558;
+    transition: .2s ease;
+    white-space: nowrap;
+  }
+
+  .nyx-trial-link:hover{
+    background: #f8fbfb;
+    color: var(--nyx-text);
+    transform: translateY(-1px);
+  }
+
+  .nyx-trial-link-primary{
+    background: linear-gradient(135deg, var(--nyx-primary), var(--nyx-primary-strong));
+    border-color: transparent;
+    color: #ffffff !important;
+    box-shadow: 0 10px 22px rgba(118, 207, 210, .20);
+    padding-inline: 1.15rem;
+  }
+
+  .nyx-trial-link-primary:hover{
+    color: #ffffff !important;
+    opacity: .96;
+  }
+
+  @media (max-width: 991.98px){
+    .nyx-trial-content{
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .nyx-trial-actions{
+      width: 100%;
+      flex-wrap: wrap;
+    }
+
+    .nyx-trial-link{
+      flex: 1 1 180px;
+    }
+  }
+
+  @media (max-width: 575.98px){
+    .nyx-trial-banner{
+      border-radius: 1rem;
+      padding: 1rem;
+    }
+
+    .nyx-trial-left{
+      align-items: flex-start;
+    }
+
+    .nyx-trial-icon{
+      width: 42px;
+      height: 42px;
+      flex-basis: 42px;
+      border-radius: 15px;
+    }
+
+    .nyx-trial-actions{
+      flex-direction: column;
+    }
+
+    .nyx-trial-link{
+      width: 100%;
+    }
   }
 
   .nyx-card{
@@ -143,9 +315,9 @@
   }
 
   .nyx-panel-title{
-    font-size: 2.1rem;
+    font-size: 1.85rem;
     font-weight: 800;
-    margin-bottom: .2rem;
+    margin-bottom: .15rem;
     color: #0f2f31;
   }
 
@@ -297,10 +469,7 @@
       padding: 1rem;
     }
 
-    .nyx-topbar{
-      padding: 1rem;
-      margin-bottom: 1rem;
-    }
+
 
     .nyx-panel-title{
       font-size: 1.45rem;
@@ -316,9 +485,7 @@
     padding: .75rem;
   }
 
-  .nyx-topbar{
-    border-radius: 1rem;
-  }
+  
 
   .nyx-card{
     border-radius: 1rem;
@@ -365,50 +532,52 @@ document.addEventListener('DOMContentLoaded', function () {
             <div class="nyx-brand">NYX<span class="nyx-logo-dot"></span></div>
             <div class="small nyx-session-label mt-2">{{ salon.name }}</div>
           </div>
-
-          <nav class="d-flex flex-column gap-2">
-            <a href="{% url 'panel_dashboard' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_dashboard' %}active{% endif %}">
-              <i class="bi bi-grid-1x2-fill"></i>
-              <span>Dashboard</span>
-            </a>
-
-            <a href="{% url 'panel_agenda' %}?quick=today" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_agenda' %}active{% endif %}">
-              <i class="bi bi-calendar-week-fill"></i>
-              <span>Agenda</span>
-            </a>
-
-            <a href="{% url 'panel_bloqueos' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_bloqueos' %}active{% endif %}">
-              <i class="bi bi-slash-circle-fill"></i>
-              <span>Bloqueos</span>
-            </a>
-
-            {% if panel_role == 'owner' %}
-              <a href="{% url 'panel_services' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_services' or request.resolver_match.url_name == 'panel_service_create' or request.resolver_match.url_name == 'panel_service_edit' %}active{% endif %}">
-                <i class="bi bi-scissors"></i>
-                <span>Servicios</span>
+          {% if not hide_panel_nav %}
+            <nav class="d-flex flex-column gap-2">
+              <a href="{% url 'panel_dashboard' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_dashboard' %}active{% endif %}">
+                <i class="bi bi-grid-1x2-fill"></i>
+                <span>Dashboard</span>
               </a>
 
-              <a href="{% url 'panel_employees' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_employees' or request.resolver_match.url_name == 'panel_employee_create' or request.resolver_match.url_name == 'panel_employee_edit' %}active{% endif %}">
-                <i class="bi bi-people-fill"></i>
-                <span>Profesionales</span>
+              <a href="{% url 'panel_onboarding' %}" class="nyx-filter-btn">Primeros pasos</a>
+              <a href="{% url 'panel_agenda' %}?quick=today" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_agenda' %}active{% endif %}">
+                <i class="bi bi-calendar-week-fill"></i>
+                <span>Agenda</span>
               </a>
 
-              <a href="{% url 'panel_business_hours' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_business_hours' or request.resolver_match.url_name == 'panel_business_hours_create' or request.resolver_match.url_name == 'panel_business_hours_edit' %}active{% endif %}">
-                <i class="bi bi-clock-history"></i>
-                <span>Horarios</span>
+              <a href="{% url 'panel_bloqueos' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_bloqueos' %}active{% endif %}">
+                <i class="bi bi-slash-circle-fill"></i>
+                <span>Bloqueos</span>
               </a>
 
-              <a href="{% url 'panel_bookings' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_bookings' or request.resolver_match.url_name == 'panel_booking_detail' %}active{% endif %}">
-                <i class="bi bi-journal-check"></i>
-                <span>Reservas</span>
-              </a>
+              {% if panel_role == 'owner' %}
+                <a href="{% url 'panel_services' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_services' or request.resolver_match.url_name == 'panel_service_create' or request.resolver_match.url_name == 'panel_service_edit' %}active{% endif %}">
+                  <i class="bi bi-scissors"></i>
+                  <span>Servicios</span>
+                </a>
 
-              <a href="{% url 'panel_settings' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_settings' %}active{% endif %}">
-                <i class="bi bi-gear-fill"></i>
-                <span>Configuración</span>
-              </a>
-            {% endif %}
-          </nav>
+                <a href="{% url 'panel_employees' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_employees' or request.resolver_match.url_name == 'panel_employee_create' or request.resolver_match.url_name == 'panel_employee_edit' %}active{% endif %}">
+                  <i class="bi bi-people-fill"></i>
+                  <span>Profesionales</span>
+                </a>
+
+                <a href="{% url 'panel_business_hours' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_business_hours' or request.resolver_match.url_name == 'panel_business_hours_create' or request.resolver_match.url_name == 'panel_business_hours_edit' %}active{% endif %}">
+                  <i class="bi bi-clock-history"></i>
+                  <span>Horarios</span>
+                </a>
+
+                <a href="{% url 'panel_bookings' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_bookings' or request.resolver_match.url_name == 'panel_booking_detail' %}active{% endif %}">
+                  <i class="bi bi-journal-check"></i>
+                  <span>Reservas</span>
+                </a>
+
+                <a href="{% url 'panel_settings' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_settings' %}active{% endif %}">
+                  <i class="bi bi-gear-fill"></i>
+                  <span>Configuración</span>
+                </a>
+              {% endif %}
+            </nav>
+          {% endif %}
 
           <div class="mt-4 pt-4 border-top border-light border-opacity-10">
             <div class="small nyx-session-label mb-2">Sesión</div>
@@ -416,11 +585,13 @@ document.addEventListener('DOMContentLoaded', function () {
             <div class="nyx-session-role">{{ panel_role }}</div>
           </div>
 
-          <div class="mt-3">
-            <a href="{% url 'password_change' %}" style="color:#d7f4f4; font-size:.9rem; font-weight:700; text-decoration:none;">
-              Cambiar contraseña
-            </a>
-          </div>
+          {% if not hide_panel_nav %}
+            <div class="mt-3">
+              <a href="{% url 'password_change' %}" style="color:#d7f4f4; font-size:.9rem; font-weight:700; text-decoration:none;">
+                Cambiar contraseña
+              </a>
+            </div>
+          {% endif %}
         </aside>
       </div>
 
@@ -443,7 +614,7 @@ document.addEventListener('DOMContentLoaded', function () {
                   id="copy-public-link-btn"
                   data-public-url="{{ request.scheme }}://{{ request.get_host }}{% url 'service_list' salon.slug %}"
                 >
-                  Compartir link
+                  Copiar link
                 </button>
               {% endif %}
 
@@ -459,6 +630,58 @@ document.addEventListener('DOMContentLoaded', function () {
               <a href="{% url 'panel_logout' %}" class="nyx-outline-light">Salir</a>
             </div>
           </div>
+
+          {% if not hide_panel_nav and request.salon_subscription and request.salon_subscription.status == "trial" and request.salon_subscription.is_trial_active %}
+            <section class="nyx-trial-banner" aria-label="Estado de prueba gratuita">
+              <div class="nyx-trial-content">
+                <div class="nyx-trial-left">
+                  <div class="nyx-trial-icon">
+                    <i class="bi bi-stars"></i>
+                  </div>
+
+                  <div>
+                    <div class="nyx-trial-kicker">
+                      <i class="bi bi-lightning-charge-fill"></i>
+                      Prueba gratuita activa
+                    </div>
+
+                    <h2 class="nyx-trial-title">
+                      Te quedan
+                      <span class="nyx-trial-days">
+                        {{ request.salon_subscription.days_left_in_trial }}
+                        {% if request.salon_subscription.days_left_in_trial == 1 %}día{% else %}días{% endif %}
+                      </span>
+                      para probar NYX.
+                    </h2>
+
+                    <p class="nyx-trial-text">
+                      Configurá tus servicios, horarios y compartí tu link público para empezar a recibir reservas.
+                      Vence el <strong>{{ request.salon_subscription.trial_ends_at|date:"d/m/Y" }}</strong>.
+                    </p>
+                  </div>
+                </div>
+
+                <div class="nyx-trial-actions">
+                  {% if salon %}
+                    <a href="{% url 'service_list' salon.slug %}" target="_blank" class="nyx-trial-link">
+                      <i class="bi bi-box-arrow-up-right"></i>
+                      Ver sitio público
+                    </a>
+
+                    <a
+                      href="https://wa.me/5493416959852?text=Hola,%20quiero%20activar%20mi%20plan%20de%20NYX%20para%20{{ salon.name|urlencode }}"
+                      target="_blank"
+                      rel="noopener"
+                      class="nyx-trial-link nyx-trial-link-primary"
+                    >
+                      <i class="bi bi-gem"></i>
+                      Activar plan
+                    </a>
+                  {% endif %}
+                </div>
+              </div>
+            </section>
+          {% endif %}
 
           {% if messages %}
             <div class="mb-4">

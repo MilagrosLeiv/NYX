@@ -7,6 +7,8 @@ from django.contrib.auth import get_user_model
 from django.utils.text import slugify
 import uuid
 
+from config import settings
+
 
 User = get_user_model()
 
@@ -152,7 +154,7 @@ class Salon(models.Model):
         if self.reschedule_limit_hours < 0:
             raise ValidationError("Las horas límite para modificar no pueden ser negativas.")
 
-    
+
 class SalonMembership(models.Model):
     ROLE_CHOICES = [
         ('owner', 'Dueña/o'),
@@ -184,6 +186,106 @@ class SalonMembership(models.Model):
 
     def __str__(self):
         return f"{self.user} - {self.salon} - {self.role}"
+    
+
+class SalonSubscription(models.Model):
+    class Status(models.TextChoices):
+        TRIAL = "trial", "Prueba gratuita"
+        ACTIVE = "active", "Activo"
+        PAST_DUE = "past_due", "Pago vencido"
+        SUSPENDED = "suspended", "Suspendido"
+        CANCELLED = "cancelled", "Cancelado"
+
+    class Plan(models.TextChoices):
+        BASIC = "basic", "Básico"
+        PRO = "pro", "Pro"
+
+    salon = models.OneToOneField(
+        Salon,
+        on_delete=models.CASCADE,
+        related_name="subscription",
+        verbose_name="Salón"
+    )
+
+    status = models.CharField(
+        "Estado",
+        max_length=20,
+        choices=Status.choices,
+        default=Status.TRIAL
+    )
+
+    plan = models.CharField(
+        "Plan",
+        max_length=20,
+        choices=Plan.choices,
+        default=Plan.BASIC
+    )
+
+    monthly_price_ars = models.PositiveIntegerField(
+        "Precio mensual ARS",
+        default=0
+    )
+
+    trial_starts_at = models.DateTimeField(
+        "Inicio de prueba",
+        default=timezone.now
+    )
+
+    trial_ends_at = models.DateTimeField(
+        "Fin de prueba",
+        null=True,
+        blank=True
+    )
+
+    current_period_starts_at = models.DateTimeField(
+        "Inicio del período actual",
+        null=True,
+        blank=True
+    )
+
+    current_period_ends_at = models.DateTimeField(
+        "Fin del período actual",
+        null=True,
+        blank=True
+    )
+
+    created_at = models.DateTimeField("Creado el", auto_now_add=True)
+    updated_at = models.DateTimeField("Actualizado el", auto_now=True)
+
+    class Meta:
+        verbose_name = "Suscripción de salón"
+        verbose_name_plural = "Suscripciones de salones"
+        ordering = ["-created_at"]
+
+    def save(self, *args, **kwargs):
+        if not self.trial_ends_at:
+            trial_days = getattr(settings, "NYX_TRIAL_DAYS", 15)
+            self.trial_ends_at = self.trial_starts_at + timedelta(days=trial_days)
+
+        super().save(*args, **kwargs)
+
+    def is_trial_active(self):
+        return (
+            self.status == self.Status.TRIAL
+            and self.trial_ends_at
+            and timezone.now() <= self.trial_ends_at
+        )
+
+    def is_active(self):
+        return self.status == self.Status.ACTIVE
+
+    def has_access(self):
+        return self.is_trial_active() or self.is_active()
+
+    def days_left_in_trial(self):
+        if self.status != self.Status.TRIAL or not self.trial_ends_at:
+            return 0
+
+        remaining = self.trial_ends_at - timezone.now()
+        return max(0, remaining.days)
+
+    def __str__(self):
+        return f"{self.salon.name} - {self.get_status_display()}"
     
 class SalonPaymentSettings(models.Model):
     salon = models.OneToOneField(

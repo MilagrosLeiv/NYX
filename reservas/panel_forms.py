@@ -671,3 +671,101 @@ class PanelSalonSettingsForm(forms.ModelForm):
             )
 
         return cleaned_data
+    
+class TrialSignupForm(forms.Form):
+    salon_name = forms.CharField(
+        label="Nombre del negocio",
+        max_length=120,
+        widget=forms.TextInput(attrs={
+            "class": "form-control nyx-input",
+            "placeholder": "Ej. Lux Salon",
+        })
+    )
+
+    owner_name = forms.CharField(
+        label="Tu nombre",
+        max_length=120,
+        widget=forms.TextInput(attrs={
+            "class": "form-control nyx-input",
+            "placeholder": "Ej. Camila",
+        })
+    )
+
+    phone = forms.CharField(
+        label="WhatsApp",
+        max_length=30,
+        widget=forms.TextInput(attrs={
+            "class": "form-control nyx-input",
+            "placeholder": "Ej. 3364123456",
+        })
+    )
+
+    email = forms.EmailField(
+        label="Email",
+        widget=forms.EmailInput(attrs={
+            "class": "form-control nyx-input",
+            "placeholder": "tu@email.com",
+        })
+    )
+
+    username = forms.CharField(
+        label="Usuario",
+        max_length=150,
+        widget=forms.TextInput(attrs={
+            "class": "form-control nyx-input",
+            "placeholder": "Ej. luxsalon",
+        })
+    )
+
+    password = forms.CharField(
+        label="Contraseña",
+        min_length=8,
+        widget=forms.PasswordInput(attrs={
+            "class": "form-control nyx-input",
+            "placeholder": "Mínimo 8 caracteres",
+        })
+    )
+
+    password_confirm = forms.CharField(
+        label="Confirmar contraseña",
+        min_length=8,
+        widget=forms.PasswordInput(attrs={
+            "class": "form-control nyx-input",
+            "placeholder": "Repetí tu contraseña",
+        })
+    )
+
+    def clean_email(self):
+        email = self.cleaned_data["email"].strip().lower()
+
+        if User.objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError("Ya existe una cuenta con ese email.")
+
+        return email
+
+    def clean_username(self):
+        username = self.cleaned_data["username"].strip()
+
+        if User.objects.filter(username__iexact=username).exists():
+            raise forms.ValidationError("Ya existe una cuenta con ese usuario.")
+
+        return username
+
+    def clean_salon_name(self):
+        salon_name = self.cleaned_data["salon_name"].strip()
+
+        if Salon.objects.filter(name__iexact=salon_name).exists():
+            raise forms.ValidationError("Ya existe un negocio registrado con ese nombre.")
+
+        return salon_name
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        password = cleaned_data.get("password")
+        password_confirm = cleaned_data.get("password_confirm")
+
+        if password and password_confirm and password != password_confirm:
+            raise forms.ValidationError("Las contraseñas no coinciden.")
+
+        return cleaned_data

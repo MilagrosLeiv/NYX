@@ -1,0 +1,535 @@
+{% extends "reservas/panel/base_panel.html" %}
+
+{% block title %}Primeros pasos | NYX{% endblock %}
+{% block panel_title %}Primeros pasos en NYX{% endblock %}
+{% block panel_subtitle %}Configurá tu negocio y empezá a recibir reservas online{% endblock %}
+
+{% block panel_content %}
+<section class="nyx-onboarding-hero">
+  <div class="nyx-onboarding-copy">
+    <div class="nyx-onboarding-badge">
+      <i class="bi bi-stars"></i>
+      Primeros pasos
+    </div>
+
+    <h1>Dejá tu agenda online lista en pocos minutos.</h1>
+
+    <p>
+      Para que tus clientes puedan reservar turnos, primero cargá tus servicios,
+        configurá tu equipo, definí tus horarios y compartí tu link público.
+    </p>
+
+    <div class="nyx-onboarding-actions">
+      <a href="{% url 'panel_services' %}" class="nyx-onboarding-primary">
+        <i class="bi bi-scissors"></i>
+        Empezar configuración
+      </a>
+
+      <a href="{% url 'panel_dashboard' %}" class="nyx-onboarding-secondary">
+        Ir al dashboard
+      </a>
+    </div>
+  </div>
+
+  <div class="nyx-onboarding-panel">
+    <div class="nyx-onboarding-panel-title">Tu link de reservas</div>
+    <div class="nyx-onboarding-url">{{ public_url }}</div>
+
+    <button
+      type="button"
+      class="nyx-onboarding-copy-btn"
+      id="onboarding-copy-link"
+      data-public-url="{{ public_url }}"
+    >
+      <i class="bi bi-copy"></i>
+      Copiar link
+    </button>
+
+    <a
+      href="{% url 'service_list' salon.slug %}"
+      target="_blank"
+      class="nyx-onboarding-preview"
+    >
+      <i class="bi bi-box-arrow-up-right"></i>
+      Ver sitio público
+    </a>
+  </div>
+</section>
+
+<section class="nyx-onboarding-steps">
+  <article class="nyx-step-card {% if has_services %}is-complete{% endif %}">
+    <div class="nyx-step-icon">
+      {% if has_services %}
+        <i class="bi bi-check2"></i>
+      {% else %}
+        <i class="bi bi-scissors"></i>
+      {% endif %}
+    </div>
+
+    <div class="nyx-step-body">
+      <div class="nyx-step-kicker">Paso 1</div>
+      <h2>Cargá tus servicios</h2>
+      <p>
+        Agregá los servicios que ofrezcas en tu negocio, para que tus clientes puedan elegir qué reservar.
+      </p>
+
+        <div class="nyx-step-footer">
+            <div class="nyx-step-meta">
+                {{ active_services_count }} servicio{% if active_services_count != 1 %}s{% endif %} activo{% if active_services_count != 1 %}s{% endif %}
+            </div>
+
+            <a href="{% url 'panel_services' %}" class="nyx-step-link">
+                {% if has_services %}Editar servicios{% else %}Agregar servicios{% endif %}
+                <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+  </article>
+
+  <article class="nyx-step-card {% if has_employees %}is-complete{% endif %}">
+    <div class="nyx-step-icon">
+      {% if has_employees %}
+        <i class="bi bi-check2"></i>
+      {% else %}
+        <i class="bi bi-people-fill"></i>
+      {% endif %}
+    </div>
+
+    <div class="nyx-step-body">
+      <div class="nyx-step-kicker">Paso 2</div>
+      <h2>Agregá tu equipo</h2>
+      <p>
+        Cargá quiénes atienden  y qué servicios puede realizar cada persona.
+      </p>
+
+        <div class="nyx-step-footer">
+            <div class="nyx-step-meta">
+                {{ employees_count }} profesional{% if employees_count != 1 %}es{% endif %} activo{% if employees_count != 1 %}s{% endif %}
+            </div>
+
+            <a href="{% url 'panel_employees' %}" class="nyx-step-link">
+                {% if has_employees %}Editar equipo{% else %}Agregar equipo{% endif %}
+                <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+  </article>
+
+  <article class="nyx-step-card {% if has_business_hours %}is-complete{% endif %}">
+    <div class="nyx-step-icon">
+      {% if has_business_hours %}
+        <i class="bi bi-check2"></i>
+      {% else %}
+        <i class="bi bi-clock-history"></i>
+      {% endif %}
+    </div>
+
+    <div class="nyx-step-body">
+      <div class="nyx-step-kicker">Paso 3</div>
+      <h2>Configurá tus horarios</h2>
+      <p>
+        Definí los días y franjas horarias en las que tu negocio acepta reservas.
+      </p>
+
+        <div class="nyx-step-footer">
+            <div class="nyx-step-meta">
+                {{ business_hours_count }} franja{% if business_hours_count != 1 %}s{% endif %} activa{% if business_hours_count != 1 %}s{% endif %}
+            </div>
+
+            <a href="{% url 'panel_business_hours' %}" class="nyx-step-link">
+                {% if has_business_hours %}Editar horarios{% else %}Configurar horarios{% endif %}
+                <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+  </article>
+</section>
+
+<section class="nyx-onboarding-final nyx-card">
+  <div>
+    <h2>Cuando termines, compartí tu link de reservas.</h2>
+    <p>
+      Ese link es el que tus clientes van a usar para ver tus servicios y reservar turno.
+    </p>
+  </div>
+
+  <div class="nyx-onboarding-final-actions">
+    <button
+      type="button"
+      class="nyx-onboarding-secondary"
+      id="onboarding-copy-link-bottom"
+      data-public-url="{{ public_url }}"
+    >
+      <i class="bi bi-copy"></i>
+      Copiar link
+    </button>
+
+    <a href="{% url 'service_list' salon.slug %}" target="_blank" class="nyx-onboarding-primary">
+      <i class="bi bi-box-arrow-up-right"></i>
+      Ver sitio público
+    </a>
+  </div>
+</section>
+
+<style>
+  .nyx-onboarding-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(280px, .8fr);
+    gap: 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+  .nyx-step-footer {
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: .55rem;
+    padding-top: .85rem;
+    }
+
+  .nyx-onboarding-copy,
+  .nyx-onboarding-panel {
+    background: #ffffff;
+    border: 1px solid var(--nyx-border);
+    border-radius: var(--nyx-radius);
+    box-shadow: var(--nyx-shadow);
+    padding: 1.55rem;
+  }
+
+  .nyx-onboarding-copy {
+    background:
+      radial-gradient(circle at top left, rgba(140, 220, 223, .22), transparent 35%),
+      linear-gradient(135deg, #ffffff 0%, #f8fbfb 100%);
+  }
+
+  .nyx-onboarding-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    padding: .35rem .7rem;
+    border-radius: 999px;
+    background: rgba(118, 207, 210, .14);
+    border: 1px solid rgba(118, 207, 210, .28);
+    color: #2f6d71;
+    font-size: .78rem;
+    font-weight: 850;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: .85rem;
+  }
+
+  .nyx-onboarding-copy h1 {
+    font-size: clamp(1.8rem, 4vw, 3rem);
+    line-height: 1.03;
+    letter-spacing: -.055em;
+    font-weight: 950;
+    color: var(--nyx-text);
+    margin: 0 0 .75rem;
+  }
+
+  .nyx-onboarding-copy p {
+    max-width: 680px;
+    color: var(--nyx-muted);
+    font-size: 1rem;
+    line-height: 1.55;
+    margin: 0;
+  }
+
+  .nyx-onboarding-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .75rem;
+    margin-top: 1.25rem;
+  }
+
+  .nyx-onboarding-primary,
+  .nyx-onboarding-secondary,
+  .nyx-onboarding-copy-btn,
+  .nyx-onboarding-preview {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    border-radius: 999px;
+    padding: .7rem 1.05rem;
+    font-weight: 850;
+    font-size: .92rem;
+    text-decoration: none;
+    transition: .2s ease;
+  }
+
+  .nyx-onboarding-primary {
+    border: 1px solid transparent;
+    background: linear-gradient(135deg, var(--nyx-primary), var(--nyx-primary-strong));
+    color: #ffffff !important;
+    box-shadow: 0 10px 22px rgba(118, 207, 210, .22);
+  }
+
+  .nyx-onboarding-primary:hover {
+    color: #ffffff !important;
+    transform: translateY(-1px);
+    opacity: .97;
+  }
+
+  .nyx-onboarding-secondary,
+  .nyx-onboarding-copy-btn,
+  .nyx-onboarding-preview {
+    border: 1px solid var(--nyx-border);
+    background: #ffffff;
+    color: #315558;
+  }
+
+  .nyx-onboarding-secondary:hover,
+  .nyx-onboarding-copy-btn:hover,
+  .nyx-onboarding-preview:hover {
+    background: #f8fbfb;
+    color: var(--nyx-text);
+    transform: translateY(-1px);
+  }
+
+  .nyx-onboarding-panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .nyx-onboarding-panel-title {
+    color: var(--nyx-muted);
+    font-weight: 800;
+    font-size: .85rem;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: .55rem;
+  }
+
+  .nyx-onboarding-url {
+    background: #f2fbfb;
+    border: 1px solid var(--nyx-border);
+    color: var(--nyx-primary-dark);
+    border-radius: 1rem;
+    padding: .8rem;
+    font-size: .86rem;
+    font-weight: 750;
+    word-break: break-all;
+    margin-bottom: .8rem;
+  }
+
+  .nyx-onboarding-copy-btn,
+  .nyx-onboarding-preview {
+    width: 100%;
+    margin-top: .55rem;
+  }
+
+  .nyx-onboarding-copy-btn {
+    cursor: pointer;
+  }
+
+  .nyx-onboarding-steps {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .nyx-step-card {
+    position: relative;
+    background: #ffffff;
+    border: 1px solid var(--nyx-border);
+    border-radius: var(--nyx-radius);
+    box-shadow: var(--nyx-shadow);
+    padding: 1.25rem;
+    display: flex;
+    gap: 1rem;
+    min-height: 100%;
+    height: 100%;
+    }
+
+  .nyx-step-card.is-complete {
+    background:
+      radial-gradient(circle at top right, rgba(140, 220, 223, .18), transparent 36%),
+      #ffffff;
+  }
+
+  .nyx-step-icon {
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+    border-radius: 16px;
+    background: #f2fbfb;
+    border: 1px solid var(--nyx-border);
+    color: var(--nyx-primary-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+  }
+
+  .nyx-step-card.is-complete .nyx-step-icon {
+    background: linear-gradient(135deg, var(--nyx-primary), var(--nyx-primary-strong));
+    border-color: transparent;
+    color: #ffffff;
+  }
+
+  .nyx-step-kicker {
+    color: var(--nyx-muted);
+    font-size: .76rem;
+    font-weight: 850;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    margin-bottom: .35rem;
+  }
+
+  .nyx-step-body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+    flex: 1;
+    }
+  .nyx-step-body h2 {
+    font-size: 1.08rem;
+    font-weight: 900;
+    color: var(--nyx-text);
+    margin: 0 0 .4rem;
+  }
+
+  .nyx-step-body p {
+    color: var(--nyx-muted);
+    font-size: .92rem;
+    line-height: 1.45;
+    margin: 0 0 .8rem;
+  }
+
+  .nyx-step-meta {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+    padding: .28rem .6rem;
+    border-radius: 999px;
+    background: #f2fbfb;
+    border: 1px solid var(--nyx-border);
+    color: #48797d;
+    font-size: .78rem;
+    font-weight: 800;
+    margin-bottom: 0;
+    }
+
+  .nyx-step-link {
+    margin-top: auto;
+    min-height: 40px;
+    width: fit-content;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .45rem;
+    border-radius: 999px;
+    padding: .58rem .95rem;
+    background: #ffffff;
+    border: 1px solid var(--nyx-border);
+    color: var(--nyx-primary-dark);
+    font-weight: 900;
+    font-size: .88rem;
+    text-decoration: none;
+    transition: .2s ease;
+    }
+
+  .nyx-step-link:hover {
+      background: #f2fbfb;
+        color: #183234;
+        transform: translateY(-1px);
+        }
+  
+
+  .nyx-onboarding-final {
+    padding: 1.35rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .nyx-onboarding-final h2 {
+    font-size: 1.2rem;
+    font-weight: 900;
+    color: var(--nyx-text);
+    margin: 0 0 .25rem;
+  }
+
+  .nyx-onboarding-final p {
+    color: var(--nyx-muted);
+    margin: 0;
+  }
+
+  .nyx-onboarding-final-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .65rem;
+  }
+
+  @media (max-width: 991.98px) {
+    .nyx-onboarding-hero,
+    .nyx-onboarding-steps {
+      grid-template-columns: 1fr;
+    }
+
+    .nyx-onboarding-final {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .nyx-onboarding-final-actions {
+      width: 100%;
+    }
+
+    .nyx-onboarding-final-actions > * {
+      flex: 1 1 180px;
+    }
+  }
+
+  @media (max-width: 575.98px) {
+    .nyx-onboarding-copy,
+    .nyx-onboarding-panel,
+    .nyx-step-card,
+    .nyx-onboarding-final {
+      border-radius: 1rem;
+      padding: 1rem;
+    }
+
+    .nyx-step-card {
+      flex-direction: column;
+    }
+
+    .nyx-onboarding-actions > *,
+    .nyx-onboarding-final-actions > * {
+      width: 100%;
+    }
+  }
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const buttons = [
+    document.getElementById("onboarding-copy-link"),
+    document.getElementById("onboarding-copy-link-bottom")
+  ].filter(Boolean);
+
+  buttons.forEach(function (button) {
+    button.addEventListener("click", async function () {
+      const publicUrl = this.dataset.publicUrl;
+      const originalText = this.innerHTML;
+
+      try {
+        await navigator.clipboard.writeText(publicUrl);
+        this.innerHTML = '<i class="bi bi-check2"></i> Link copiado';
+
+        setTimeout(() => {
+          this.innerHTML = originalText;
+        }, 1800);
+      } catch (error) {
+        window.prompt("Copiá el link de reservas:", publicUrl);
+      }
+    });
+  });
+});
+</script>
+{% endblock %}
