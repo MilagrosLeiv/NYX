@@ -2,7 +2,7 @@
 
 {% block title %}Configuración | NYX{% endblock %}
 {% block panel_title %}Configuración{% endblock %}
-{% block panel_subtitle %}Datos generales de la peluquería, pagos y políticas de reserva{% endblock %}
+{% block panel_subtitle %}Datos del negocio, pagos y políticas de reserva{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -63,6 +63,82 @@
   .nyx-hidden-by-payment-js{
     display: none;
   }
+  .nyx-public-link-box{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    background: linear-gradient(135deg, #ffffff 0%, #f2fbfb 100%);
+    border: 1px solid var(--nyx-border);
+    border-radius: 1rem;
+    padding: 1rem;
+  }
+
+  .nyx-public-link-title{
+    color: var(--nyx-text);
+    font-weight: 850;
+    margin-bottom: .25rem;
+  }
+
+  .nyx-public-link-url{
+    color: var(--nyx-primary-dark);
+    font-size: .9rem;
+    font-weight: 750;
+    word-break: break-all;
+  }
+
+  .nyx-public-link-actions{
+    display: flex;
+    gap: .5rem;
+    flex-wrap: wrap;
+    flex: 0 0 auto;
+  }
+
+  .nyx-mini-btn{
+    border: 1px solid var(--nyx-border);
+    background: #ffffff;
+    color: #315558;
+    border-radius: 999px;
+    padding: .55rem .9rem;
+    font-weight: 800;
+    font-size: .88rem;
+    text-decoration: none;
+    transition: .2s ease;
+  }
+
+  .nyx-mini-btn:hover{
+    background: #f8fbfb;
+    color: var(--nyx-text);
+    transform: translateY(-1px);
+  }
+
+  .nyx-mini-btn-primary{
+    background: linear-gradient(135deg, var(--nyx-primary), var(--nyx-primary-strong));
+    border-color: transparent;
+    color: #fff !important;
+  }
+
+  .nyx-mini-btn-primary:hover{
+    color: #fff !important;
+    opacity: .96;
+  }
+
+  @media (max-width: 767.98px){
+    .nyx-public-link-box{
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .nyx-public-link-actions{
+      width: 100%;
+    }
+
+    .nyx-mini-btn{
+      flex: 1 1 140px;
+      text-align: center;
+    }
+  }
+  
 </style>
 {% endblock %}
 
@@ -76,7 +152,7 @@
       <!-- Datos del salón -->
       <div class="col-12">
         <div class="nyx-settings-box">
-          <h5 class="nyx-settings-box-title">Datos del salón</h5>
+          <h5 class="nyx-settings-box-title">Información del negocio</h5>
 
           <div class="row g-4">
             <div class="col-md-6">
@@ -93,7 +169,7 @@
               {{ form.email }}
 
               <div class="nyx-settings-muted mt-1">
-                Este email puede mostrarse como contacto general del salón.
+                Este email puede mostrarse como contacto general del negocio.
               </div>
 
               {% if form.email.errors %}
@@ -128,6 +204,38 @@
                 </div>
               {% endif %}
             </div>
+            <div class="col-12">
+              <div class="nyx-public-link-box">
+                <div>
+                  <div class="nyx-public-link-title">Link de reservas</div>
+                  <div class="nyx-public-link-url">
+                    {{ request.scheme }}://{{ request.get_host }}{% url 'service_list' salon.slug %}
+                  </div>
+                  <div class="nyx-settings-muted mt-1">
+                    Compartí este link para que tus clientes puedan ver tus servicios y reservar turnos.
+                  </div>
+                </div>
+
+                <div class="nyx-public-link-actions">
+                  <button
+                    type="button"
+                    class="nyx-mini-btn"
+                    id="settings-copy-public-link"
+                    data-public-url="{{ request.scheme }}://{{ request.get_host }}{% url 'service_list' salon.slug %}"
+                  >
+                    Copiar link
+                  </button>
+
+                  <a
+                    href="{% url 'service_list' salon.slug %}"
+                    target="_blank"
+                    class="nyx-mini-btn nyx-mini-btn-primary"
+                  >
+                    Ver sitio
+                  </a>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -138,7 +246,7 @@
           <h5 class="nyx-settings-box-title">Notificaciones</h5>
 
           <p class="nyx-settings-section-description">
-            Configurá si el salón recibirá avisos automáticos cuando entren nuevos turnos,
+            Configurá si el negocio recibirá avisos automáticos cuando entren nuevos turnos,
             cancelaciones o modificaciones.
           </p>
 
@@ -546,6 +654,26 @@
     });
 
     updatePaymentSettingsVisibility();
+
+    const settingsCopyPublicLink = document.getElementById("settings-copy-public-link");
+
+    if (settingsCopyPublicLink) {
+      settingsCopyPublicLink.addEventListener("click", async function () {
+        const publicUrl = this.dataset.publicUrl;
+        const originalText = this.textContent;
+
+        try {
+          await navigator.clipboard.writeText(publicUrl);
+          this.textContent = "Link copiado";
+
+          setTimeout(() => {
+            this.textContent = originalText;
+          }, 1800);
+        } catch (error) {
+          window.prompt("Copiá el link de reservas:", publicUrl);
+        }
+      });
+    }
   });
 </script>
 {% endblock %}

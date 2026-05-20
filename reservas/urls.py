@@ -110,6 +110,7 @@ urlpatterns = [
     path('panel/servicios/<int:service_id>/editar/', panel_views.panel_service_edit, name='panel_service_edit'),
     path('panel/servicios/<int:service_id>/toggle-activo/', panel_views.panel_service_toggle_active, name='panel_service_toggle_active'),
     path('panel/profesionales/', panel_views.panel_employees, name='panel_employees'),
+    path('panel/mi-plan/', panel_views.panel_plan, name='panel_plan'),
     path('panel/profesionales/nuevo/', panel_views.panel_employee_create, name='panel_employee_create'),
     path('panel/profesionales/<int:employee_id>/editar/', panel_views.panel_employee_edit, name='panel_employee_edit'),
     path('panel/profesionales/<int:employee_id>/toggle-activo/', panel_views.panel_employee_toggle_active, name='panel_employee_toggle_active'),

@@ -1,0 +1,417 @@
+{% extends "reservas/panel/base_panel.html" %}
+
+{% block title %}Mi plan | NYX{% endblock %}
+{% block panel_title %}Mi plan{% endblock %}
+{% block panel_subtitle %}Estado de tu suscripción y activación mensual{% endblock %}
+
+{% block panel_content %}
+<section class="nyx-plan-layout">
+  <div class="nyx-plan-main">
+    <div class="nyx-card nyx-plan-hero">
+      <div class="nyx-plan-badge">
+        <i class="bi bi-gem"></i>
+        Plan {{ subscription.get_plan_display }}
+      </div>
+
+      <h1>
+        {% if subscription.status == "trial" %}
+          Estás usando tu prueba gratuita.
+        {% elif subscription.status == "active" %}
+          Tu plan está activo.
+        {% elif subscription.status == "past_due" %}
+          Tu pago está pendiente.
+        {% elif subscription.status == "suspended" %}
+          Tu cuenta está suspendida.
+        {% else %}
+          Tu suscripción no está activa.
+        {% endif %}
+      </h1>
+
+      <p>
+        {% if subscription.status == "trial" %}
+          Probá NYX, configurá tu negocio y compartí tu link de reservas. Para seguir usando el sistema después de la prueba, activá tu plan mensual.
+        {% elif subscription.status == "active" %}
+          Tu negocio puede seguir gestionando reservas, servicios, horarios y clientes desde NYX.
+        {% else %}
+          Para seguir usando el panel, activá tu plan mensual o contactanos por WhatsApp.
+        {% endif %}
+      </p>
+
+      <div class="nyx-plan-status-grid">
+        <div>
+          <span>Estado</span>
+          <strong>{{ subscription.get_status_display }}</strong>
+        </div>
+
+        <div>
+          <span>Precio mensual</span>
+          <strong>${{ subscription.monthly_price_ars }}</strong>
+        </div>
+
+        <div>
+          <span>Prueba</span>
+          {% if subscription.status == "trial" %}
+            <strong>{{ subscription.days_left_in_trial }} días restantes</strong>
+          {% else %}
+            <strong>No aplica</strong>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="nyx-plan-main-actions">
+        {% if mercadopago_subscription_url %}
+          <a
+            href="{{ mercadopago_subscription_url }}"
+            target="_blank"
+            rel="noopener"
+            class="nyx-plan-primary"
+          >
+            <i class="bi bi-credit-card-fill"></i>
+            Activar plan mensual
+          </a>
+        {% else %}
+          <button type="button" class="nyx-plan-primary" disabled>
+            <i class="bi bi-exclamation-circle"></i>
+            Link de pago no configurado
+          </button>
+        {% endif %}
+
+        <a
+          href="https://wa.me/{{ support_whatsapp }}?text={{ whatsapp_text|urlencode }}"
+          target="_blank"
+          rel="noopener"
+          class="nyx-plan-secondary"
+        >
+          <i class="bi bi-whatsapp"></i>
+          Hablar con soporte
+        </a>
+      </div>
+    </div>
+
+    <div class="nyx-card nyx-plan-info-card">
+      <div class="nyx-section-heading">
+        <h2>Cómo funciona la activación</h2>
+        <p>
+          Por ahora, el pago se realiza mediante el link mensual de Mercado Pago.
+          Después de confirmar el pago, la activación del plan se hace manualmente desde administración.
+        </p>
+      </div>
+
+      <div class="nyx-plan-steps">
+        <div class="nyx-plan-step">
+          <div class="nyx-plan-step-number">1</div>
+          <div>
+            <strong>Entrás al link de Mercado Pago</strong>
+            <span>Se abre la suscripción mensual segura.</span>
+          </div>
+        </div>
+
+        <div class="nyx-plan-step">
+          <div class="nyx-plan-step-number">2</div>
+          <div>
+            <strong>Activás la suscripción</strong>
+            <span>Mercado Pago gestiona el cobro recurrente mensual.</span>
+          </div>
+        </div>
+
+        <div class="nyx-plan-step">
+          <div class="nyx-plan-step-number">3</div>
+          <div>
+            <strong>Verificamos tu pago</strong>
+            <span>Tu cuenta queda activa para seguir usando NYX.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <aside class="nyx-plan-side">
+    <div class="nyx-card nyx-plan-help">
+      <div class="nyx-plan-help-icon">
+        <i class="bi bi-headset"></i>
+      </div>
+
+      <h2>¿Necesitás ayuda?</h2>
+      <p>
+        Si tenés dudas con el pago, la configuración o la activación, escribinos por WhatsApp.
+      </p>
+
+      <a
+        href="https://wa.me/{{ support_whatsapp }}?text=Hola,%20necesito%20ayuda%20con%20NYX.%20Mi%20negocio%20es%20{{ salon.name|urlencode }}."
+        target="_blank"
+        rel="noopener"
+        class="nyx-plan-secondary w-100"
+      >
+        <i class="bi bi-whatsapp"></i>
+        Contactar soporte
+      </a>
+    </div>
+
+    <div class="nyx-card nyx-plan-note">
+      <h3>Próxima mejora</h3>
+      <p>
+        Más adelante se puede conectar Mercado Pago con webhooks para activar automáticamente la cuenta cuando se confirme el pago.
+      </p>
+    </div>
+  </aside>
+</section>
+
+<style>
+  .nyx-plan-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: 1.25rem;
+  }
+
+  .nyx-plan-main,
+  .nyx-plan-side {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .nyx-plan-hero {
+    padding: 1.6rem;
+    background:
+      radial-gradient(circle at top left, rgba(140, 220, 223, .22), transparent 35%),
+      linear-gradient(135deg, #ffffff 0%, #f8fbfb 100%);
+  }
+
+  .nyx-plan-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    padding: .35rem .7rem;
+    border-radius: 999px;
+    background: rgba(118, 207, 210, .14);
+    border: 1px solid rgba(118, 207, 210, .28);
+    color: #2f6d71;
+    font-size: .78rem;
+    font-weight: 850;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: .85rem;
+  }
+
+  .nyx-plan-hero h1 {
+    margin: 0 0 .7rem;
+    color: var(--nyx-text);
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    line-height: 1.05;
+    font-weight: 950;
+    letter-spacing: -.055em;
+  }
+
+  .nyx-plan-hero p {
+    max-width: 760px;
+    margin: 0;
+    color: var(--nyx-muted);
+    font-size: 1rem;
+    line-height: 1.55;
+  }
+
+  .nyx-plan-status-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .8rem;
+    margin-top: 1.25rem;
+  }
+
+  .nyx-plan-status-grid div {
+    background: #ffffff;
+    border: 1px solid var(--nyx-border);
+    border-radius: 1.1rem;
+    padding: .95rem;
+  }
+
+  .nyx-plan-status-grid span {
+    display: block;
+    color: var(--nyx-muted);
+    font-size: .78rem;
+    font-weight: 850;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: .25rem;
+  }
+
+  .nyx-plan-status-grid strong {
+    color: var(--nyx-text);
+    font-size: .98rem;
+    font-weight: 900;
+  }
+
+  .nyx-plan-main-actions {
+    display: flex;
+    gap: .75rem;
+    flex-wrap: wrap;
+    margin-top: 1.25rem;
+  }
+
+  .nyx-plan-primary,
+  .nyx-plan-secondary {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    border-radius: 999px;
+    padding: .7rem 1.05rem;
+    font-weight: 850;
+    font-size: .92rem;
+    text-decoration: none;
+    transition: .2s ease;
+    border: 1px solid var(--nyx-border);
+  }
+
+  .nyx-plan-primary {
+    background: linear-gradient(135deg, var(--nyx-primary), var(--nyx-primary-strong));
+    color: #ffffff !important;
+    border-color: transparent;
+    box-shadow: 0 10px 22px rgba(118, 207, 210, .22);
+  }
+
+  .nyx-plan-primary:hover {
+    color: #ffffff !important;
+    transform: translateY(-1px);
+    opacity: .97;
+  }
+
+  .nyx-plan-primary:disabled {
+    opacity: .65;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .nyx-plan-secondary {
+    background: #ffffff;
+    color: #315558;
+  }
+
+  .nyx-plan-secondary:hover {
+    background: #f8fbfb;
+    color: var(--nyx-text);
+    transform: translateY(-1px);
+  }
+
+  .nyx-plan-info-card,
+  .nyx-plan-help,
+  .nyx-plan-note {
+    padding: 1.35rem;
+  }
+
+  .nyx-section-heading h2,
+  .nyx-plan-help h2 {
+    margin: 0 0 .35rem;
+    color: var(--nyx-text);
+    font-size: 1.25rem;
+    font-weight: 900;
+    letter-spacing: -.025em;
+  }
+
+  .nyx-section-heading p,
+  .nyx-plan-help p,
+  .nyx-plan-note p {
+    margin: 0;
+    color: var(--nyx-muted);
+    line-height: 1.5;
+  }
+
+  .nyx-plan-steps {
+    display: grid;
+    gap: .75rem;
+    margin-top: 1.1rem;
+  }
+
+  .nyx-plan-step {
+    display: flex;
+    gap: .85rem;
+    align-items: flex-start;
+    background: #f8fbfb;
+    border: 1px solid var(--nyx-border);
+    border-radius: 1rem;
+    padding: .9rem;
+  }
+
+  .nyx-plan-step-number {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--nyx-primary), var(--nyx-primary-strong));
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+  }
+
+  .nyx-plan-step strong {
+    display: block;
+    color: var(--nyx-text);
+    font-weight: 900;
+    margin-bottom: .15rem;
+  }
+
+  .nyx-plan-step span {
+    display: block;
+    color: var(--nyx-muted);
+    font-size: .92rem;
+    line-height: 1.4;
+  }
+
+  .nyx-plan-help-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 17px;
+    background: linear-gradient(135deg, var(--nyx-primary), var(--nyx-primary-strong));
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    box-shadow: 0 10px 22px rgba(118, 207, 210, .22);
+    margin-bottom: .9rem;
+  }
+
+  .nyx-plan-help p {
+    margin-bottom: 1rem;
+  }
+
+  .nyx-plan-note h3 {
+    margin: 0 0 .35rem;
+    color: var(--nyx-text);
+    font-size: 1rem;
+    font-weight: 900;
+  }
+
+  @media (max-width: 991.98px) {
+    .nyx-plan-layout {
+      grid-template-columns: 1fr;
+    }
+
+    .nyx-plan-status-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .nyx-plan-main-actions > * {
+      flex: 1 1 220px;
+    }
+  }
+
+  @media (max-width: 575.98px) {
+    .nyx-plan-hero,
+    .nyx-plan-info-card,
+    .nyx-plan-help,
+    .nyx-plan-note {
+      border-radius: 1rem;
+      padding: 1rem;
+    }
+
+    .nyx-plan-main-actions > *,
+    .nyx-plan-primary,
+    .nyx-plan-secondary {
+      width: 100%;
+    }
+  }
+</style>
+{% endblock %}

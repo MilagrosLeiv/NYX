@@ -32,20 +32,20 @@
   }
 
   .nyx-primary-btn{
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: .5rem;
-  border: none;
-  border-radius: 999px;
-  padding: .85rem 1.25rem;
-  background: linear-gradient(135deg, var(--nyx-primary), var(--nyx-primary-strong));
-  color: #fff !important;
-  font-weight: 800;
-  text-decoration: none !important;
-  transition: .2s ease;
-  box-shadow: 0 10px 24px rgba(118, 207, 210, .22);
-}
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    border: none;
+    border-radius: 999px;
+    padding: .85rem 1.25rem;
+    background: linear-gradient(135deg, var(--nyx-primary), var(--nyx-primary-strong));
+    color: #fff !important;
+    font-weight: 800;
+    text-decoration: none !important;
+    transition: .2s ease;
+    box-shadow: 0 10px 24px rgba(118, 207, 210, .22);
+  }
 
 .nyx-primary-btn:hover{
   color: #fff !important;
@@ -259,7 +259,7 @@
     }
 
     .nyx-trial-link{
-      flex: 1 1 180px;
+      flex: 1 1 auto;
     }
   }
 
@@ -269,23 +269,33 @@
       padding: 1rem;
     }
 
+    .nyx-trial-content{
+      gap: .9rem;
+    }
+
     .nyx-trial-left{
       align-items: flex-start;
+      gap: .75rem;
     }
 
     .nyx-trial-icon{
       width: 42px;
       height: 42px;
-      flex-basis: 42px;
+      flex: 0 0 42px;
       border-radius: 15px;
     }
 
     .nyx-trial-actions{
+      width: 100%;
       flex-direction: column;
+      gap: .6rem;
     }
 
     .nyx-trial-link{
       width: 100%;
+      min-height: 44px;
+      flex: 0 0 auto;
+      padding: .7rem 1rem;
     }
   }
 
@@ -444,9 +454,10 @@
       flex-direction: row !important;
       overflow-x: auto;
       gap: .5rem !important;
-      padding-bottom: .15rem;
+      padding-bottom: .35rem;
       scrollbar-width: thin;
       -webkit-overflow-scrolling: touch;
+      scroll-behavior: smooth;
     }
 
     .nyx-nav-link{
@@ -520,6 +531,31 @@ document.addEventListener('DOMContentLoaded', function () {
     } catch (error) {
       window.prompt('Copiá el link de reservas:', publicUrl);
     }
+    const panelNav = document.querySelector('.nyx-sidebar nav');
+
+    if (panelNav) {
+      const savedScroll = sessionStorage.getItem('nyxPanelNavScrollLeft');
+
+      if (savedScroll !== null) {
+        panelNav.scrollLeft = Number(savedScroll);
+      }
+
+      panelNav.addEventListener('scroll', function () {
+        sessionStorage.setItem('nyxPanelNavScrollLeft', panelNav.scrollLeft);
+      });
+
+      const activeLink = panelNav.querySelector('.nyx-nav-link.active');
+
+      if (activeLink && window.innerWidth <= 991) {
+        setTimeout(() => {
+          activeLink.scrollIntoView({
+            behavior: 'smooth',
+            inline: 'center',
+            block: 'nearest'
+          });
+        }, 80);
+      }
+    }
   });
 });
 </script>
@@ -539,7 +575,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 <span>Dashboard</span>
               </a>
 
-              <a href="{% url 'panel_onboarding' %}" class="nyx-filter-btn">Primeros pasos</a>
+              {% if panel_role == 'owner' %}
+                <a href="{% url 'panel_onboarding' %}" class="nyx-filter-btn">Primeros pasos</a>
+              {% endif %}
               <a href="{% url 'panel_agenda' %}?quick=today" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_agenda' %}active{% endif %}">
                 <i class="bi bi-calendar-week-fill"></i>
                 <span>Agenda</span>
@@ -574,6 +612,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 <a href="{% url 'panel_settings' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_settings' %}active{% endif %}">
                   <i class="bi bi-gear-fill"></i>
                   <span>Configuración</span>
+                </a>
+                <a href="{% url 'panel_plan' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_plan' %}active{% endif %}">
+                  <i class="bi bi-credit-card-2-front-fill"></i>
+                  <span>Mi plan</span>
                 </a>
               {% endif %}
             </nav>

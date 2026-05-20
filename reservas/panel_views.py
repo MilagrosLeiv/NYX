@@ -1313,6 +1313,37 @@ def panel_billing_required(request):
 
     return render(request, "reservas/panel/billing_required.html", context)
 
+@login_required
+@subscription_required
+def panel_plan(request):
+    if request.user.is_superuser:
+        return redirect('/admin/')
+
+    salon = get_user_salon(request.user)
+
+    if not salon or not is_owner_user(request.user):
+        raise PermissionDenied("Solo la dueña o dueño puede ver el plan.")
+
+    subscription = get_or_create_salon_subscription(salon)
+
+    support_whatsapp = getattr(settings, "NYX_SUPPORT_WHATSAPP", "5493416959852")
+    mercadopago_subscription_url = getattr(settings, "NYX_MERCADOPAGO_SUBSCRIPTION_URL", "")
+
+    whatsapp_text = (
+        f"Hola, necesito ayuda con mi plan de NYX. "
+        f"Mi negocio es {salon.name}."
+    )
+
+    context = {
+        "panel_role": "owner",
+        "salon": salon,
+        "subscription": subscription,
+        "support_whatsapp": support_whatsapp,
+        "mercadopago_subscription_url": mercadopago_subscription_url,
+        "whatsapp_text": whatsapp_text,
+    }
+
+    return render(request, "reservas/panel/plan.html", context)
 
 @login_required
 @subscription_required

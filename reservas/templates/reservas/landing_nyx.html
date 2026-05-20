@@ -709,7 +709,7 @@
 
       <div class="nyx-landing-actions">
         <a href="{% url 'panel_login' %}" class="nyx-link-login">Ingresar</a>
-        <a href="#demo" class="nyx-btn-solid">Solicitar demo</a>
+        <a href="{% url 'trial_signup' %}" class="nyx-btn-solid">Probar gratis 15 días</a>
       </div>
     </nav>
   </header>
@@ -719,7 +719,7 @@
       <div>
         <div class="nyx-pill">
           <i class="bi bi-stars"></i>
-          Sistema de gestión de turnos todo en uno
+          Prueba gratis 15 días · sin compromiso
         </div>
 
         <h1>
@@ -732,7 +732,9 @@
         </p>
 
         <div class="nyx-hero-buttons">
-          <a href="#demo" class="nyx-btn-solid">Solicitar demo</a>
+          <a href="{% url 'trial_signup' %}" class="nyx-btn-solid">
+            Probar gratis 15 días
+          </a>
           <a href="#como-funciona" class="nyx-btn-outline">Ver cómo funciona</a>
         </div>
 
@@ -844,7 +846,9 @@
           Interfaz limpia, rápida y pensada para que gestiones tu negocio sin complicaciones.
           Tus clientes reservan fácil y tu equipo trabaja con una agenda clara.
         </p>
-        <a href="#demo" class="nyx-btn-outline">Ver demo del sistema</a>
+        <a href="{% url 'trial_signup' %}" class="nyx-btn-outline">
+          Crear cuenta gratis
+        </a>
       </div>
 
   
@@ -918,7 +922,7 @@
           </p>
 
           <div class="nyx-price">$25.000</div>
-          <p class="nyx-mock-muted mb-3">por mes</p>
+          <p class="nyx-mock-muted mb-3">por mes · probalo gratis 15 días </p>
 
           <ul>
             <li>Reservas online para clientes</li>
@@ -939,7 +943,7 @@
             <li>Página pública del salón</li>
           </ul>
 
-          <a href="#demo" class="nyx-btn-solid w-100">Solicitar demo</a>
+          <a href="{% url 'trial_signup' %}" class="nyx-btn-solid w-100">Empezar prueba gratis</a>
         </div>
 
         <div class="nyx-price-card">
@@ -966,12 +970,11 @@
 
     <section id="demo" class="nyx-landing-container nyx-final-cta">
       <h2>¿Listo para llevar tu negocio al siguiente nivel?</h2>
-      <p>Solicitá una demo gratuita y descubrí cómo NYX puede simplificar tu gestión diaria.</p>
+      <p>Creá tu cuenta, probá el sistema gratis durante 15 días y activá tu suscripción mensual cuando quieras continuar.</p>
 
       <div class="d-flex justify-content-center gap-2 flex-wrap">
-        <a href="https://wa.me/549TU_NUMERO?text=Hola%2C%20quiero%20consultar%20por%20NYX%20para%20mi%20negocio"
-           class="nyx-btn-solid">
-          Solicitar demo
+        <a href="{% url 'trial_signup' %}" class="nyx-btn-solid">
+          Probar gratis 15 días
         </a>
 
         <a href="https://wa.me/5493416959852?text=Hola%2C%20quiero%20ver%20una%20demo%20de%20NYX"

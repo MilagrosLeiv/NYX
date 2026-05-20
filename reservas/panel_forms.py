@@ -541,7 +541,7 @@ class PanelSalonSettingsForm(forms.ModelForm):
         widgets = {
             'name': forms.TextInput(attrs={
                 'class': 'form-control nyx-form-input',
-                'placeholder': 'Nombre de la peluquería',
+                'placeholder': 'Nombre del negocio',
             }),
             'email': forms.EmailInput(attrs={
                 'class': 'form-control nyx-form-input',
@@ -605,7 +605,7 @@ class PanelSalonSettingsForm(forms.ModelForm):
             
             'transfer_account_holder': forms.TextInput(attrs={
                 'class': 'form-control nyx-form-input',
-                'placeholder': 'Ej. Lux Salon',
+                'placeholder': 'Ej. Nombre del negocio o titular',
             }),
             'transfer_alias': forms.TextInput(attrs={
                 'class': 'form-control nyx-form-input',

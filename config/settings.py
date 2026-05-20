@@ -3,10 +3,14 @@ import os
 from pathlib import Path
 import dj_database_url
 
+from dotenv import load_dotenv
+
+
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
+load_dotenv(BASE_DIR / ".env")
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
@@ -164,6 +168,8 @@ MERCADOPAGO_USE_SANDBOX = os.getenv('MERCADOPAGO_USE_SANDBOX', 'true').lower() =
 SITE_URL = os.getenv("SITE_URL", "http://127.0.0.1:8000").rstrip("/")
 NYX_TRIAL_DAYS = int(os.getenv("NYX_TRIAL_DAYS", "15"))
 NYX_BASIC_MONTHLY_PRICE_ARS = int(os.getenv("NYX_BASIC_MONTHLY_PRICE_ARS", "25000"))
+NYX_SUPPORT_WHATSAPP = os.getenv("NYX_SUPPORT_WHATSAPP", "5493416959852")
+NYX_MERCADOPAGO_SUBSCRIPTION_URL = os.getenv("NYX_MERCADOPAGO_SUBSCRIPTION_URL", "")
 
 MERCADOPAGO_CLIENT_ID = os.getenv("MERCADOPAGO_CLIENT_ID", "")
 MERCADOPAGO_CLIENT_SECRET = os.getenv("MERCADOPAGO_CLIENT_SECRET", "")
