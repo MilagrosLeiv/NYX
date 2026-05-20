@@ -5,7 +5,7 @@ from django.utils import timezone
 
 from reservas.utils import get_working_ranges_for_date
 
-from .models import BookingItem, Booking, BusinessHours, Appointment, Employee, EmployeeTimeOff
+from .models import BookingItem, Booking, Appointment, Employee, EmployeeTimeOff
 
 
 def make_aware_datetime(selected_date, selected_time_str):
@@ -251,23 +251,13 @@ def find_auto_assignment_for_start(*, salon, services, selected_date, start_time
     if not services:
         return []
 
-    weekday = selected_date.weekday()
-    business_hours = BusinessHours.objects.filter(
+    working_ranges = get_working_ranges_for_date(
         salon=salon,
-        weekday=weekday
-    ).first()
+        selected_date=selected_date
+    )
 
-    if not business_hours or business_hours.is_closed:
+    if not working_ranges:
         return []
-
-    day_start = timezone.make_aware(
-        datetime.combine(selected_date, business_hours.start_time),
-        timezone.get_current_timezone()
-    )
-    day_end = timezone.make_aware(
-        datetime.combine(selected_date, business_hours.end_time),
-        timezone.get_current_timezone()
-    )
 
     sequence_start = timezone.make_aware(
         datetime.combine(selected_date, start_time),
@@ -279,7 +269,12 @@ def find_auto_assignment_for_start(*, salon, services, selected_date, start_time
         return []
 
     sequence_end = sequence_start + timedelta(minutes=total_duration)
-    if sequence_start < day_start or sequence_end > day_end:
+    is_inside_working_range = any(
+        sequence_start >= range_start and sequence_end <= range_end
+        for range_start, range_end in working_ranges
+    )
+
+    if not is_inside_working_range:
         return []
 
     employees_by_service = {}

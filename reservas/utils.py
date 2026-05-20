@@ -21,21 +21,11 @@ def get_working_ranges_for_date(salon, selected_date):
     """
     Devuelve rangos reales de atención para un salón en una fecha.
 
-    Reglas finales:
-    - Si no existe BusinessHours para ese día: cerrado.
-    - Si BusinessHours.is_closed=True: cerrado.
-    - Si no hay bloques activos: cerrado.
-    - Si hay bloques activos: usar solo esos bloques.
+    Regla actual:
+    - Si hay bloques activos para ese día, el negocio atiende.
+    - Si no hay bloques activos, el día está cerrado.
     """
     weekday = selected_date.weekday()
-
-    business_hours = BusinessHours.objects.filter(
-        salon=salon,
-        weekday=weekday
-    ).first()
-
-    if not business_hours or business_hours.is_closed:
-        return []
 
     active_blocks = list(
         BusinessHourBlock.objects.filter(
@@ -68,7 +58,6 @@ def get_working_ranges_for_date(salon, selected_date):
         working_ranges.append((start_datetime, end_datetime))
 
     return working_ranges
-
 
 def get_available_slots(employee, services, selected_date):
     working_ranges = get_working_ranges_for_date(
