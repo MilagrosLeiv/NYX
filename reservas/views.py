@@ -26,7 +26,10 @@ from django.contrib.auth.decorators import login_required
 
 from .payment_utils import create_pending_payment_session
 from .forms import AppointmentForm, PublicAppointmentForm, AppointmentConfirmForm
-from .models import Appointment, Employee, Salon, Service, Booking, SalonPaymentSettings, SalonMembership
+from .models import (Appointment, Employee,
+    Salon, Service, Booking,
+    SalonPaymentSettings, SalonMembership,
+    Employee,BusinessHourBlock)
 from .utils import get_available_slots
 from .booking_utils import (
     expire_unpaid_bookings,
@@ -100,8 +103,29 @@ def service_list(request, salon_slug):
         .order_by('name')
     )
 
+    employees = (
+        Employee.objects
+        .filter(
+            salon=salon,
+            is_active=True
+        )
+        .prefetch_related('services')
+        .order_by('name')
+    )
+
+    active_blocks = (
+        BusinessHourBlock.objects
+        .filter(
+            salon=salon,
+            is_active=True
+        )
+        .order_by('weekday', 'start_time')
+    )
+
     context = {
         'services': services,
+        'employees': employees,
+        'active_blocks': active_blocks,
         'salon': salon,
         'deposit_enabled': salon.deposit_enabled,
         'deposit_percentage': salon.deposit_percentage,

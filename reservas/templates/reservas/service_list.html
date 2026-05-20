@@ -5,87 +5,332 @@
 
 {% block extra_css %}
 <style>
-  .salon-hero{
-    background: #ffffff;
-    border: 1px solid var(--nyx-border);
-    border-top: 4px solid var(--nyx-primary);
-    border-radius: 1.6rem;
-    box-shadow: var(--nyx-shadow);
-    overflow: hidden;
-    margin-bottom: 2rem;
-  }
-
-  .salon-hero-content{
-    display: grid;
-    grid-template-columns: 1fr;
-    align-items: center;
-    gap: 1.5rem;
-    padding: 2.2rem 2.6rem;
+  
+  .salon-public-profile{
+    background:#ffffff;
+    border:1px solid var(--nyx-border);
+    border-radius:1.6rem;
+    overflow:hidden;
+    box-shadow:var(--nyx-shadow);
+    margin-bottom:2rem;
     }
-  .salon-pill{
-    display: inline-flex;
-    align-items: center;
-    width: fit-content;
-    padding: .5rem .85rem;
-    border-radius: 999px;
-    background: var(--nyx-surface-soft);
-    color: var(--nyx-primary);
-    font-size: .85rem;
-    font-weight: 800;
-    margin-bottom: 1rem;
-  }
 
-  .salon-title{
-    font-size: clamp(2rem, 4vw, 3rem);
-    line-height: 1.05;
-    letter-spacing: -0.04em;
-    font-weight: 800;
-    color: var(--nyx-text);
-    margin-bottom: .75rem;
-  }
+    .salon-cover{
+    height:260px;
+    background:
+        radial-gradient(circle at top left, rgba(140,220,223,.35), transparent 35%),
+        linear-gradient(135deg, #f2fbfb, #ffffff);
+    overflow:hidden;
+    }
 
-  .salon-description{
-    color: var(--nyx-text-muted);
-    font-size: 1.05rem;
-    line-height: 1.6;
-    max-width: 620px;
-    margin-bottom: 1.25rem;
-  }
+    .salon-cover img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+    }
 
-  .salon-meta{
-    display: flex;
-    flex-wrap: wrap;
-    gap: .8rem;
-  }
+    .salon-cover-placeholder{
+    height:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:rgba(64,136,136,.18);
+    font-size:4rem;
+    font-weight:950;
+    letter-spacing:.18em;
+    }
 
-  .salon-meta-item{
-    display: inline-flex;
-    align-items: center;
-    gap: .35rem;
-    padding: .65rem .9rem;
-    border: 1px solid var(--nyx-border);
-    border-radius: 999px;
-    background: #fbfefe;
-    color: var(--nyx-text);
-    font-size: .92rem;
-  }
+    .salon-profile-card{
+    padding:0 2rem 2rem;
+    }
 
-  .salon-meta-label{
-    color: var(--nyx-text-muted);
-    font-weight: 700;
-  }
+    .salon-profile-main{
+    display:flex;
+    gap:1.25rem;
+    align-items:flex-start;
+    margin-top:-52px;
+    }
+
+    .salon-logo-wrap{
+    width:112px;
+    height:112px;
+    flex:0 0 112px;
+    border-radius:1.35rem;
+    background:#ffffff;
+    border:1px solid var(--nyx-border);
+    box-shadow:0 16px 36px rgba(24,49,49,.12);
+    overflow:hidden;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    }
+
+    .salon-logo-wrap img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+    }
+
+    .salon-logo-placeholder{
+    width:100%;
+    height:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:linear-gradient(135deg, var(--nyx-primary), var(--nyx-soft));
+    color:#ffffff;
+    font-size:2.3rem;
+    font-weight:950;
+    text-transform:uppercase;
+    }
+
+    .salon-profile-info{
+    flex:1;
+    min-width:0;
+    padding-top:4.2rem;
+    }
+
+    .salon-pill{
+    display:inline-flex;
+    align-items:center;
+    width:fit-content;
+    padding:.42rem .75rem;
+    border-radius:999px;
+    background:var(--nyx-surface-soft);
+    color:var(--nyx-primary);
+    font-size:.78rem;
+    font-weight:850;
+    margin-bottom:.65rem;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    }
+
+    .salon-title-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:1rem;
+    }
+
+    .salon-title{
+    font-size:clamp(2rem, 4vw, 3.1rem);
+    line-height:1.04;
+    letter-spacing:-0.05em;
+    font-weight:900;
+    color:var(--nyx-text);
+    margin:0 0 .7rem;
+    }
+
+    .salon-instagram-link{
+    width:44px;
+    height:44px;
+    flex:0 0 44px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    border:1px solid var(--nyx-border);
+    border-radius:999px;
+    background:#ffffff;
+    color:var(--nyx-primary);
+    text-decoration:none;
+    font-size:1.25rem;
+    transition:.2s ease;
+    }
+
+    .salon-instagram-link:hover{
+    background:var(--nyx-primary);
+    color:#ffffff;
+    transform:translateY(-1px);
+    }
+
+    .salon-description{
+    color:var(--nyx-text-muted);
+    font-size:1.02rem;
+    line-height:1.65;
+    max-width:820px;
+    margin:0 0 1.25rem;
+    white-space:pre-line;
+    }
+
+    .salon-meta{
+    display:flex;
+    flex-wrap:wrap;
+    gap:.7rem;
+    }
+
+    .salon-meta-item{
+    display:inline-flex;
+    align-items:center;
+    gap:.45rem;
+    padding:.62rem .85rem;
+    border:1px solid var(--nyx-border);
+    border-radius:999px;
+    background:#fbfefe;
+    color:var(--nyx-text);
+    font-size:.9rem;
+    font-weight:700;
+    }
+
+    .salon-meta-item i{
+    color:var(--nyx-primary);
+    }
+
+    .salon-address-featured{
+    background:linear-gradient(135deg, #e8f7f7, #f7ffff);
+    border-color:var(--nyx-border-strong);
+    }
+
+    .salon-public-panels{
+    display:grid;
+    gap:.75rem;
+    margin-top:1.4rem;
+    }
+
+    .salon-public-detail{
+    border:1px solid var(--nyx-border);
+    border-radius:1rem;
+    background:#fbfefe;
+    overflow:hidden;
+    }
+
+    .salon-public-detail summary{
+    list-style:none;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:1rem;
+    padding:1rem 1.1rem;
+    color:var(--nyx-text);
+    font-weight:850;
+    }
+
+    .salon-public-detail summary::-webkit-details-marker{
+    display:none;
+    }
+
+    .salon-public-detail summary span{
+    display:flex;
+    align-items:center;
+    gap:.6rem;
+    }
+
+    .salon-public-detail summary i{
+    color:var(--nyx-primary);
+    }
+
+    .salon-public-detail[open] summary .bi-chevron-down{
+    transform:rotate(180deg);
+    }
+
+    .salon-public-detail-body{
+    border-top:1px solid var(--nyx-border);
+    padding:1rem 1.1rem;
+    color:var(--nyx-text-muted);
+    }
+
+    .salon-hours-list{
+    display:grid;
+    gap:.55rem;
+    }
+
+    .salon-hours-list div{
+    display:flex;
+    justify-content:space-between;
+    gap:1rem;
+    padding:.65rem .8rem;
+    border-radius:.85rem;
+    background:#ffffff;
+    border:1px solid var(--nyx-border);
+    }
+
+    .salon-hours-list span{
+    color:var(--nyx-text-muted);
+    font-weight:750;
+    }
+
+    .salon-hours-list strong{
+    color:var(--nyx-text);
+    }
+
+    .salon-employees-list{
+    display:flex;
+    flex-wrap:wrap;
+    gap:.6rem;
+    }
+
+    .salon-employee-chip{
+    display:inline-flex;
+    align-items:center;
+    gap:.45rem;
+    padding:.48rem .7rem;
+    border-radius:999px;
+    background:#ffffff;
+    border:1px solid var(--nyx-border);
+    color:var(--nyx-text);
+    font-weight:800;
+    }
+
+    .salon-employee-chip span{
+    width:26px;
+    height:26px;
+    border-radius:999px;
+    background:linear-gradient(135deg, var(--nyx-primary), var(--nyx-soft));
+    color:#ffffff;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-size:.78rem;
+    font-weight:900;
+    }
+
+    @media (max-width: 767.98px){
+    .salon-cover{
+        height:210px;
+    }
+
+    .salon-profile-card{
+        padding:0 1rem 1.25rem;
+    }
+
+    .salon-profile-main{
+        flex-direction:column;
+        margin-top:-46px;
+    }
+
+    .salon-logo-wrap{
+        width:96px;
+        height:96px;
+        flex-basis:96px;
+        border-radius:1.1rem;
+    }
+
+    .salon-profile-info{
+        padding-top:0;
+    }
+
+    .salon-title-row{
+        align-items:flex-start;
+    }
+
+    .salon-meta{
+        flex-direction:column;
+    }
+
+    .salon-meta-item{
+        border-radius:1rem;
+        width:100%;
+    }
+
+    .salon-hours-list div{
+        flex-direction:column;
+        gap:.2rem;
+    }
+    }
 
   
-
-  .salon-address-featured{
-        background: linear-gradient(135deg, #e8f7f7, #f7ffff);
-        border-color: var(--nyx-border-strong);
-        box-shadow: 0 10px 24px rgba(64,136,136,.08);
-    }
-
-    .salon-address-featured .salon-meta-label{
-        color:var(--nyx-primary);
-    }
 
     .services-heading{
         display: flex;
@@ -140,36 +385,126 @@
 {% endblock %}
 
 {% block content %}
-<section class="salon-hero">
-  <div class="salon-hero-content">
-    <div class="salon-hero-left">
-      <div class="salon-pill">
-        Reserva online
+<section class="salon-public-profile">
+  <div class="salon-cover">
+    {% if salon.cover_image %}
+      <img src="{{ salon.cover_image.url }}" alt="Imagen de portada de {{ salon.name }}">
+    {% else %}
+      <div class="salon-cover-placeholder">
+        <span>NYX</span>
       </div>
+    {% endif %}
+  </div>
 
-      <h1 class="salon-title">
-        {{ salon.name }}
-      </h1>
-
-      <p class="salon-description">
-        Elegí tus servicios, seleccioná profesional, fecha y horario en pocos pasos.
-      </p>
-
-      <div class="salon-meta">
-        {% if salon.address %}
-          <div class="salon-meta-item salon-address-featured">
-            <span class="salon-meta-label">Dirección</span>
-            <span>{{ salon.address }}</span>
-          </div>
-        {% endif %}
-
-        {% if salon.phone %}
-          <div class="salon-meta-item">
-            <span class="salon-meta-label">Contacto</span>
-            <span>{{ salon.phone }}</span>
+  <div class="salon-profile-card">
+    <div class="salon-profile-main">
+      <div class="salon-logo-wrap">
+        {% if salon.logo %}
+          <img src="{{ salon.logo.url }}" alt="Logo de {{ salon.name }}">
+        {% else %}
+          <div class="salon-logo-placeholder">
+            {{ salon.name|slice:":1" }}
           </div>
         {% endif %}
       </div>
+
+      <div class="salon-profile-info">
+        <div class="salon-pill">
+          Reserva online
+        </div>
+
+        <div class="salon-title-row">
+          <h1 class="salon-title">{{ salon.name }}</h1>
+
+          {% if salon.instagram_url %}
+            <a
+              href="{{ salon.instagram_url }}"
+              target="_blank"
+              rel="noopener"
+              class="salon-instagram-link"
+              aria-label="Instagram de {{ salon.name }}"
+            >
+              <i class="bi bi-instagram"></i>
+            </a>
+          {% endif %}
+        </div>
+
+        <p class="salon-description">
+          {% if salon.public_description %}
+            {{ salon.public_description }}
+          {% else %}
+            Elegí tus servicios, seleccioná profesional, fecha y horario en pocos pasos.
+          {% endif %}
+        </p>
+
+        {% if salon.phone or salon.email %}
+            <div class="salon-meta">
+                {% if salon.phone %}
+                <div class="salon-meta-item">
+                    <i class="bi bi-whatsapp"></i>
+                    <span>{{ salon.phone }}</span>
+                </div>
+                {% endif %}
+
+                {% if salon.email %}
+                <div class="salon-meta-item">
+                    <i class="bi bi-envelope"></i>
+                    <span>{{ salon.email }}</span>
+                </div>
+                {% endif %}
+            </div>
+        {% endif %}
+      
+    </div>
+
+    <div class="salon-public-panels">
+      <details class="salon-public-detail">
+        <summary>
+          <span><i class="bi bi-clock-history"></i> Ubicación y horario</span>
+          <i class="bi bi-chevron-down"></i>
+        </summary>
+
+        <div class="salon-public-detail-body">
+          {% if salon.address %}
+            <p><strong>Dirección:</strong> {{ salon.address }}</p>
+          {% endif %}
+
+          {% if active_blocks %}
+            <div class="salon-hours-list">
+              {% for block in active_blocks %}
+                <div>
+                  <span>{{ block.get_weekday_display }}</span>
+                  <strong>{{ block.start_time|time:"H:i" }} - {{ block.end_time|time:"H:i" }}</strong>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="mb-0">El negocio todavía no cargó sus horarios públicos.</p>
+          {% endif %}
+        </div>
+      </details>
+
+      <details class="salon-public-detail">
+        <summary>
+          <span><i class="bi bi-people"></i> Profesionales</span>
+          <i class="bi bi-chevron-down"></i>
+        </summary>
+
+        <div class="salon-public-detail-body">
+          {% if employees %}
+            <div class="salon-employees-list">
+              {% for employee in employees %}
+                <div class="salon-employee-chip">
+                  <span>{{ employee.name|slice:":1" }}</span>
+                  {{ employee.name }}
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="mb-0">El negocio todavía no cargó profesionales públicos.</p>
+          {% endif %}
+        </div>
+      </details>
     </div>
   </div>
 </section>

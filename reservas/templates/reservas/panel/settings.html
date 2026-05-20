@@ -139,17 +139,95 @@
     }
   }
   
+  .nyx-upload-box{
+    background:#fbfefe;
+    border:1px solid var(--nyx-border);
+    border-radius:1rem;
+    padding:1rem;
+  }
+
+  .nyx-current-image{
+    display:flex;
+    align-items:center;
+    gap:.85rem;
+    padding:.75rem;
+    border:1px solid var(--nyx-border);
+    border-radius:.9rem;
+    background:#ffffff;
+    margin-bottom:.75rem;
+  }
+
+  .nyx-current-image img{
+    width:64px;
+    height:64px;
+    border-radius:.8rem;
+    object-fit:cover;
+    border:1px solid var(--nyx-border);
+    background:#f2fbfb;
+  }
+
+  .nyx-current-cover img{
+    width:120px;
+    height:68px;
+  }
+
+  .nyx-current-image strong{
+    display:block;
+    color:var(--nyx-text);
+    font-weight:850;
+    margin-bottom:.15rem;
+  }
+
+  .nyx-current-image span{
+    display:block;
+    color:var(--nyx-muted);
+    font-size:.86rem;
+    line-height:1.35;
+  }
+
+  .nyx-delete-image-option{
+    display:flex;
+    align-items:center;
+    gap:.55rem;
+    width:fit-content;
+    padding:.55rem .8rem;
+    border-radius:999px;
+    border:1px solid #f1c5c5;
+    background:#fff7f7;
+    color:#9b3030;
+    font-weight:750;
+    font-size:.88rem;
+    cursor:pointer;
+    margin-bottom:.85rem;
+  }
+
+  .nyx-delete-image-option input{
+    accent-color:#c0392b;
+  }
+
+  @media (max-width:575.98px){
+    .nyx-current-image{
+      align-items:flex-start;
+      flex-direction:column;
+    }
+
+    .nyx-current-cover img{
+      width:100%;
+      height:140px;
+    }
+  }
 </style>
 {% endblock %}
 
 {% block panel_content %}
 <div class="nyx-card p-4 nyx-form-card">
-  <form method="post">
+  <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
 
     <div class="row g-4">
 
-      <!-- Datos del salón -->
+    
+  
       <div class="col-12">
         <div class="nyx-settings-box">
           <h5 class="nyx-settings-box-title">Información del negocio</h5>
@@ -201,6 +279,126 @@
               {% if form.address.errors %}
                 <div class="text-danger small mt-1">
                   {{ form.address.errors.0 }}
+                </div>
+              {% endif %}
+            </div>
+
+            <div class="col-12">
+              <label class="nyx-form-label" for="{{ form.public_description.id_for_label }}">
+                Descripción pública
+              </label>
+              {{ form.public_description }}
+              <div class="nyx-settings-muted mt-1">
+                Este texto se muestra en la página pública de reservas. Ideal para contar qué ofrece tu negocio.
+              </div>
+              {% if form.public_description.errors %}
+                <div class="text-danger small mt-1">
+                  {{ form.public_description.errors.0 }}
+                </div>
+              {% endif %}
+            </div>
+
+            <div class="col-md-6">
+              <label class="nyx-form-label" for="{{ form.instagram_url.id_for_label }}">
+                Instagram
+              </label>
+              {{ form.instagram_url }}
+              <div class="nyx-settings-muted mt-1">
+                Pegá el link completo de Instagram. Ejemplo: https://www.instagram.com/tuusuario
+              </div>
+              {% if form.instagram_url.errors %}
+                <div class="text-danger small mt-1">
+                  {{ form.instagram_url.errors.0 }}
+                </div>
+              {% endif %}
+            </div>
+
+            <div class="col-md-6">
+              <label class="nyx-form-label" for="id_logo">
+                Logo del negocio
+              </label>
+
+              <div class="nyx-upload-box">
+                {% if salon.logo %}
+                  <div class="nyx-current-image">
+                    <img src="{{ salon.logo.url }}" alt="Logo actual de {{ salon.name }}">
+                    <div>
+                      <strong>Logo actual</strong>
+                      <span>Podés reemplazarlo subiendo una nueva imagen.</span>
+                    </div>
+                  </div>
+
+                  <label class="nyx-delete-image-option">
+                    <input type="checkbox" name="logo-clear" id="logo-clear_id">
+                    <span>Eliminar logo actual al guardar</span>
+                  </label>
+                {% else %}
+                  <div class="nyx-settings-muted mb-2">
+                    Todavía no cargaste un logo.
+                  </div>
+                {% endif %}
+
+                <input
+                  type="file"
+                  name="logo"
+                  accept="image/*"
+                  id="id_logo"
+                  class="form-control nyx-form-input"
+                >
+
+                <div class="nyx-settings-muted mt-1">
+                  Se muestra junto al nombre del negocio en la página pública.
+                </div>
+              </div>
+
+              {% if form.logo.errors %}
+                <div class="text-danger small mt-1">
+                  {{ form.logo.errors.0 }}
+                </div>
+              {% endif %}
+            </div>
+
+            <div class="col-12">
+              <label class="nyx-form-label" for="id_cover_image">
+                Imagen de portada
+              </label>
+
+              <div class="nyx-upload-box">
+                {% if salon.cover_image %}
+                  <div class="nyx-current-image nyx-current-cover">
+                    <img src="{{ salon.cover_image.url }}" alt="Portada actual de {{ salon.name }}">
+                    <div>
+                      <strong>Portada actual</strong>
+                      <span>Podés reemplazarla subiendo una nueva imagen.</span>
+                    </div>
+                  </div>
+
+                  <label class="nyx-delete-image-option">
+                    <input type="checkbox" name="cover_image-clear" id="cover_image-clear_id">
+                    <span>Eliminar portada actual al guardar</span>
+                  </label>
+                {% else %}
+                  <div class="nyx-settings-muted mb-2">
+                    Todavía no cargaste una imagen de portada.
+                  </div>
+                {% endif %}
+
+                <input
+                  type="file"
+                  name="cover_image"
+                  accept="image/*"
+                  id="id_cover_image"
+                  class="form-control nyx-form-input"
+                >
+
+                <div class="nyx-settings-muted mt-1">
+                  Imagen horizontal para encabezar la página pública. Ideal: foto del local, gabinete, barbería o espacio de atención.
+                </div>
+              </div>
+
+              {% if form.cover_image.errors %}
+                <div class="text-danger small mt-1">
+                  {{ form.cover_image.errors.0 }}
                 </div>
               {% endif %}
             </div>

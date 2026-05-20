@@ -32,6 +32,33 @@ class Salon(models.Model):
     email = models.EmailField('Email', blank=True)
     phone = models.CharField('Teléfono', max_length=30, blank=True)
     address = models.CharField('Dirección', max_length=200, blank=True)
+    public_description = models.TextField(
+        'Descripción pública',
+        blank=True,
+        default='',
+        help_text='Texto que se muestra en la página pública del negocio.'
+    )
+
+    instagram_url = models.URLField(
+        'Instagram',
+        blank=True,
+        default='',
+        help_text='Link al Instagram del negocio.'
+    )
+
+    logo = models.ImageField(
+        'Logo del negocio',
+        upload_to='salons/logos/',
+        blank=True,
+        null=True
+    )
+
+    cover_image = models.ImageField(
+        'Imagen de portada',
+        upload_to='salons/covers/',
+        blank=True,
+        null=True
+    )
     is_active = models.BooleanField('Activo', default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

@@ -521,6 +521,10 @@ class PanelSalonSettingsForm(forms.ModelForm):
             'notify_new_bookings_by_email',
             'phone',
             'address',
+            'public_description',
+            'instagram_url',
+            'logo',
+            'cover_image',
             'deposit_enabled',
             'deposit_percentage',
             'allow_full_payment',
@@ -561,6 +565,22 @@ class PanelSalonSettingsForm(forms.ModelForm):
             'address': forms.TextInput(attrs={
                 'class': 'form-control nyx-form-input',
                 'placeholder': 'Dirección',
+            }),
+
+            'public_description': forms.Textarea(attrs={
+                'class': 'form-control nyx-form-input',
+                'rows': 4,
+                'placeholder': 'Contá brevemente qué ofrece tu negocio, tu estilo de atención o qué te diferencia.',
+            }),
+            'instagram_url': forms.URLInput(attrs={
+                'class': 'form-control nyx-form-input',
+                'placeholder': 'https://www.instagram.com/tuusuario',
+            }),
+            'logo': forms.ClearableFileInput(attrs={
+                'class': 'form-control nyx-form-input',
+            }),
+            'cover_image': forms.ClearableFileInput(attrs={
+                'class': 'form-control nyx-form-input',
             }),
             'deposit_enabled': forms.CheckboxInput(attrs={
                 'class': 'form-check-input',

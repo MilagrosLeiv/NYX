@@ -1053,7 +1053,7 @@ def panel_settings(request):
     mercadopago_ready = payment_settings.has_valid_mercadopago_connection()
     mercadopago_visible_to_clients = accepts_integrated and mercadopago_ready
     if request.method == 'POST':
-        form = PanelSalonSettingsForm(request.POST, instance=salon)
+        form = PanelSalonSettingsForm(request.POST,request.FILES, instance=salon)
         if form.is_valid():
             form.save()
             messages.success(request, 'Configuración actualizada correctamente.')
