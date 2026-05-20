@@ -31,6 +31,14 @@
     font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   }
 
+  .nyx-mobile-topbar{
+    display: none;
+  }
+
+  .nyx-desktop-sidebar{
+    display: block;
+  }
+
   .nyx-primary-btn{
     display: inline-flex;
     align-items: center;
@@ -418,69 +426,101 @@
   }
 
   @media (max-width: 991.98px){
-    .nyx-sidebar{
-      width: 100%;
-      min-height: auto;
+    .nyx-desktop-sidebar{
+      display: none;
+    }
+
+    .nyx-mobile-topbar{
+      display: flex;
       position: sticky;
       top: 0;
-      z-index: 1030;
-      padding: .75rem !important;
-      border-right: 0;
+      z-index: 1040;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: .85rem 1rem;
+      background: #2f4b4d;
+      color: #eaf6f6;
       border-bottom: 1px solid rgba(255,255,255,.08);
     }
 
-    .nyx-sidebar .mb-4{
-      margin-bottom: .65rem !important;
+    .nyx-mobile-brand{
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: .75rem;
+      flex-direction: column;
+      min-width: 0;
     }
 
-    .nyx-brand{
-      font-size: 1.35rem;
+    .nyx-mobile-brand-main{
+      font-size: 1.3rem;
+      font-weight: 900;
+      letter-spacing: .08em;
+      color: #dff8f8;
+      line-height: 1;
     }
 
-    .nyx-sidebar .small.nyx-session-label{
-      margin-top: 0 !important;
-      max-width: 55%;
+    .nyx-mobile-brand-salon{
+      color: rgba(234, 246, 246, .72);
+      font-size: .78rem;
+      font-weight: 700;
+      margin-top: .25rem;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      text-align: right;
+      max-width: 220px;
     }
 
-    .nyx-sidebar nav{
-      flex-direction: row !important;
-      overflow-x: auto;
-      gap: .5rem !important;
-      padding-bottom: .35rem;
-      scrollbar-width: thin;
-      -webkit-overflow-scrolling: touch;
-      scroll-behavior: smooth;
+    .nyx-mobile-menu-btn{
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(118, 207, 210, .14);
+      color: #ffffff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.35rem;
     }
 
-    .nyx-nav-link{
-      flex: 0 0 auto;
-      padding: .65rem .85rem;
-      border-radius: 999px;
-      white-space: nowrap;
-      font-size: .9rem;
+    .nyx-mobile-offcanvas{
+      background: #2f4b4d;
+      color: #eaf6f6;
     }
 
-    .nyx-nav-link i{
-      font-size: 1rem;
+    .nyx-mobile-offcanvas .offcanvas-header{
+      border-bottom: 1px solid rgba(255,255,255,.08);
     }
 
-    .nyx-sidebar .mt-4.pt-4{
-      display: none;
+    .nyx-mobile-offcanvas .btn-close{
+      filter: invert(1) grayscale(100%);
+      opacity: .85;
+    }
+
+    .nyx-mobile-nav{
+      display: flex;
+      flex-direction: column;
+      gap: .55rem;
+    }
+
+    .nyx-mobile-nav .nyx-nav-link{
+      width: 100%;
+      border-radius: 1rem;
+    }
+
+    .nyx-mobile-session{
+      margin-top: 1.25rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid rgba(255,255,255,.10);
     }
 
     .nyx-main{
       padding: 1rem;
     }
 
-
+    .nyx-topbar{
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
 
     .nyx-panel-title{
       font-size: 1.45rem;
@@ -514,56 +554,153 @@
 document.addEventListener('DOMContentLoaded', function () {
   const copyBtn = document.getElementById('copy-public-link-btn');
 
-  if (!copyBtn) return;
+  if (copyBtn) {
+    copyBtn.addEventListener('click', async function () {
+      const publicUrl = this.dataset.publicUrl;
 
-  copyBtn.addEventListener('click', async function () {
-    const publicUrl = this.dataset.publicUrl;
+      try {
+        await navigator.clipboard.writeText(publicUrl);
 
-    try {
-      await navigator.clipboard.writeText(publicUrl);
+        const originalText = this.textContent;
+        this.textContent = 'Link copiado';
 
-      const originalText = this.textContent;
-      this.textContent = 'Link copiado';
-
-      setTimeout(() => {
-        this.textContent = originalText;
-      }, 1800);
-    } catch (error) {
-      window.prompt('Copiá el link de reservas:', publicUrl);
-    }
-    const panelNav = document.querySelector('.nyx-sidebar nav');
-
-    if (panelNav) {
-      const savedScroll = sessionStorage.getItem('nyxPanelNavScrollLeft');
-
-      if (savedScroll !== null) {
-        panelNav.scrollLeft = Number(savedScroll);
-      }
-
-      panelNav.addEventListener('scroll', function () {
-        sessionStorage.setItem('nyxPanelNavScrollLeft', panelNav.scrollLeft);
-      });
-
-      const activeLink = panelNav.querySelector('.nyx-nav-link.active');
-
-      if (activeLink && window.innerWidth <= 991) {
         setTimeout(() => {
-          activeLink.scrollIntoView({
-            behavior: 'smooth',
-            inline: 'center',
-            block: 'nearest'
-          });
-        }, 80);
+          this.textContent = originalText;
+        }, 1800);
+      } catch (error) {
+        window.prompt('Copiá el link de reservas:', publicUrl);
       }
-    }
-  });
+    });
+  }
 });
 </script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <body>
+  {% if not hide_panel_nav %}
+    <div class="nyx-mobile-topbar">
+      <div class="nyx-mobile-brand">
+        <div class="nyx-mobile-brand-main">
+          NYX<span class="nyx-logo-dot"></span>
+        </div>
+        <div class="nyx-mobile-brand-salon">
+          {{ salon.name }}
+        </div>
+      </div>
+
+      <button
+        class="nyx-mobile-menu-btn"
+        type="button"
+        data-bs-toggle="offcanvas"
+        data-bs-target="#nyxMobileMenu"
+        aria-controls="nyxMobileMenu"
+        aria-label="Abrir menú"
+      >
+        <i class="bi bi-list"></i>
+      </button>
+    </div>
+
+    <div
+      class="offcanvas offcanvas-end nyx-mobile-offcanvas"
+      tabindex="-1"
+      id="nyxMobileMenu"
+      aria-labelledby="nyxMobileMenuLabel"
+    >
+      <div class="offcanvas-header">
+        <div>
+          <h5 class="offcanvas-title nyx-brand mb-1" id="nyxMobileMenuLabel">
+            NYX<span class="nyx-logo-dot"></span>
+          </h5>
+          <div class="small nyx-session-label">{{ salon.name }}</div>
+        </div>
+
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="offcanvas"
+          aria-label="Cerrar"
+        ></button>
+      </div>
+
+      <div class="offcanvas-body">
+        <nav class="nyx-mobile-nav">
+          <a href="{% url 'panel_dashboard' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_dashboard' %}active{% endif %}">
+            <i class="bi bi-grid-1x2-fill"></i>
+            <span>Dashboard</span>
+          </a>
+
+          {% if panel_role == 'owner' %}
+            <a href="{% url 'panel_onboarding' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_onboarding' %}active{% endif %}">
+              <i class="bi bi-rocket-takeoff-fill"></i>
+              <span>Primeros pasos</span>
+            </a>
+          {% endif %}
+
+          <a href="{% url 'panel_agenda' %}?quick=today" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_agenda' %}active{% endif %}">
+            <i class="bi bi-calendar-week-fill"></i>
+            <span>Agenda</span>
+          </a>
+
+          <a href="{% url 'panel_bloqueos' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_bloqueos' %}active{% endif %}">
+            <i class="bi bi-slash-circle-fill"></i>
+            <span>Bloqueos</span>
+          </a>
+
+          {% if panel_role == 'owner' %}
+            <a href="{% url 'panel_services' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_services' or request.resolver_match.url_name == 'panel_service_create' or request.resolver_match.url_name == 'panel_service_edit' %}active{% endif %}">
+              <i class="bi bi-scissors"></i>
+              <span>Servicios</span>
+            </a>
+
+            <a href="{% url 'panel_employees' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_employees' or request.resolver_match.url_name == 'panel_employee_create' or request.resolver_match.url_name == 'panel_employee_edit' %}active{% endif %}">
+              <i class="bi bi-people-fill"></i>
+              <span>Profesionales</span>
+            </a>
+
+            <a href="{% url 'panel_business_hours' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_business_hours' or request.resolver_match.url_name == 'panel_business_hours_create' or request.resolver_match.url_name == 'panel_business_hours_edit' %}active{% endif %}">
+              <i class="bi bi-clock-history"></i>
+              <span>Horarios</span>
+            </a>
+
+            <a href="{% url 'panel_bookings' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_bookings' or request.resolver_match.url_name == 'panel_booking_detail' %}active{% endif %}">
+              <i class="bi bi-journal-check"></i>
+              <span>Reservas</span>
+            </a>
+
+            <a href="{% url 'panel_settings' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_settings' %}active{% endif %}">
+              <i class="bi bi-gear-fill"></i>
+              <span>Configuración</span>
+            </a>
+
+            <a href="{% url 'panel_plan' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_plan' %}active{% endif %}">
+              <i class="bi bi-credit-card-2-front-fill"></i>
+              <span>Mi plan</span>
+            </a>
+          {% endif %}
+
+          <a href="{% url 'password_change' %}" class="nyx-nav-link">
+            <i class="bi bi-key-fill"></i>
+            <span>Cambiar contraseña</span>
+          </a>
+
+          <a href="{% url 'panel_logout' %}" class="nyx-nav-link">
+            <i class="bi bi-box-arrow-right"></i>
+            <span>Salir</span>
+          </a>
+        </nav>
+
+        <div class="nyx-mobile-session">
+          <div class="small nyx-session-label mb-2">Sesión</div>
+          <div class="nyx-session-user">{{ request.user.username }}</div>
+          <div class="nyx-session-role">{{ panel_role }}</div>
+        </div>
+      </div>
+    </div>
+  {% endif %}
   <div class="container-fluid px-0">
     <div class="row g-0">
       <div class="col-lg-auto">
-        <aside class="nyx-sidebar p-3 p-lg-4">
+        <aside class="nyx-sidebar nyx-desktop-sidebar p-3 p-lg-4">
           <div class="mb-4">
             <div class="nyx-brand">NYX<span class="nyx-logo-dot"></span></div>
             <div class="small nyx-session-label mt-2">{{ salon.name }}</div>
