@@ -1,4 +1,5 @@
 from datetime import timedelta
+from xml.parsers.expat import errors
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -1076,25 +1077,20 @@ class BookingItem(models.Model):
         if start_date != end_date:
             errors.append("Cada bloque debe comenzar y terminar el mismo día.")
 
-        weekday = self.start_datetime.weekday()
-        business_hours = BusinessHours.objects.filter(
+        weekday = timezone.localtime(self.start_datetime).weekday()
+        start_time = timezone.localtime(self.start_datetime).time()
+        end_time = timezone.localtime(self.end_datetime).time()
+
+        business_blocks = BusinessHourBlock.objects.filter(
             salon=self.booking.salon,
-            weekday=weekday
-        ).first()
+            weekday=weekday,
+            is_active=True,
+            start_time__lte=start_time,
+            end_time__gte=end_time,
+        )
 
-        if not business_hours:
-            errors.append("No hay horario configurado para ese día.")
-        elif business_hours.is_closed:
-            errors.append("La peluquería no atiende ese día.")
-        else:
-            start_time = timezone.localtime(self.start_datetime).time()
-            end_time = timezone.localtime(self.end_datetime).time()
-
-            if start_time < business_hours.start_time or start_time >= business_hours.end_time:
-                errors.append("El bloque comienza fuera del horario de atención.")
-
-            if end_time > business_hours.end_time:
-                errors.append("El bloque termina fuera del horario de atención.")
+        if not business_blocks.exists():
+            errors.append("El horario seleccionado está fuera del horario de atención del negocio.")
 
         overlapping_items = BookingItem.objects.select_related('booking').filter(
             employee=self.employee,
