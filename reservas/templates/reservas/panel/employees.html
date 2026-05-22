@@ -23,8 +23,8 @@
 
 <div class="nyx-card p-4">
   {% if employees %}
-    <div class="table-responsive">
-      <table class="table nyx-table align-middle">
+    <div class="table-responsive nyx-table-responsive">
+      <table class="table nyx-table align-middle mb-0">
         <thead>
           <tr>
             <th>Profesional</th>
@@ -35,10 +35,11 @@
             <th class="text-end">Acciones</th>
           </tr>
         </thead>
+
         <tbody>
           {% for employee in employees %}
             <tr>
-              <td>
+              <td data-label="Profesional">
                 <div class="fw-semibold">{{ employee.name }}</div>
 
                 {% if employee.email %}
@@ -53,8 +54,12 @@
                   <span class="text-secondary small d-block mt-1">Sin avisos por email</span>
                 {% endif %}
               </td>
-              <td>{{ employee.phone|default:"-" }}</td>
-              <td>
+
+              <td data-label="Teléfono">
+                {{ employee.phone|default:"-" }}
+              </td>
+
+              <td data-label="Servicios">
                 <div class="d-flex flex-wrap gap-2">
                   {% for service in employee.services.all %}
                     <span class="nyx-badge">{{ service.name }}</span>
@@ -63,10 +68,19 @@
                   {% endfor %}
                 </div>
               </td>
-              
-              <td>
+
+              <td data-label="Acceso">
                 {% if employee.user %}
-                  <span class="nyx-badge">Staff activo</span>
+                  {% if employee.is_owner_professional %}
+                    <span class="nyx-badge nyx-badge-soft">
+                      Dueña/o y profesional
+                    </span>
+                  {% else %}
+                    <span class="nyx-badge nyx-badge-soft">
+                      Staff activo
+                    </span>
+                  {% endif %}
+
                   <div class="text-secondary small mt-1">
                     {{ employee.user.username }}
                   </div>
@@ -77,19 +91,24 @@
                 {% endif %}
               </td>
 
-              <td>
+              <td data-label="Estado">
                 {% if employee.is_active %}
                   <span class="nyx-badge">Activo</span>
                 {% else %}
-                  <span class="nyx-badge" style="background:#fff3f3;color:#b54747;border-color:#f1caca;">Inactivo</span>
+                  <span class="nyx-badge" style="background:#fff3f3;color:#b54747;border-color:#f1caca;">
+                    Inactivo
+                  </span>
                 {% endif %}
               </td>
-              <td class="text-end">
+
+              <td data-label="Acciones" class="text-end">
                 <div class="d-flex justify-content-end gap-2 flex-wrap">
-                  <a href="{% url 'panel_employee_edit' employee.id %}" class="nyx-filter-btn">Editar</a>
+                  <a href="{% url 'panel_employee_edit' employee.id %}" class="nyx-filter-btn">
+                    Editar
+                  </a>
 
                   {% if not employee.user %}
-                    <a href="{% url 'panel_employee_create_access' employee.id %}" class="nyx-filter-btn">
+                    <a href="{% url 'panel_employee_access_create' employee.id %}" class="nyx-filter-btn">
                       Crear acceso
                     </a>
                   {% endif %}
@@ -117,4 +136,113 @@
     </div>
   {% endif %}
 </div>
+
+<style>
+  @media (max-width: 767.98px){
+    .nyx-table-responsive{
+      overflow: visible !important;
+    }
+
+    .nyx-table{
+      border-collapse: separate;
+      border-spacing: 0 1rem;
+    }
+
+    .nyx-table thead{
+      display: none;
+    }
+
+    .nyx-table tbody,
+    .nyx-table tr,
+    .nyx-table td{
+      display: block;
+      width: 100%;
+    }
+
+    .nyx-table tr{
+      background: #ffffff;
+      border: 1px solid var(--nyx-border);
+      border-radius: 1.25rem;
+      box-shadow: var(--nyx-shadow);
+      padding: 1rem;
+    }
+
+    .nyx-table td{
+      border: 0 !important;
+      padding: .65rem 0 !important;
+      text-align: left !important;
+    }
+
+    .nyx-table td:not(:last-child){
+      border-bottom: 1px solid var(--nyx-border) !important;
+    }
+
+    .nyx-table td::before{
+      content: attr(data-label);
+      display: block;
+      color: var(--nyx-text-muted);
+      font-size: .74rem;
+      font-weight: 850;
+      text-transform: uppercase;
+      letter-spacing: .045em;
+      margin-bottom: .35rem;
+    }
+
+    .nyx-table td[data-label="Profesional"]::before{
+      display: none;
+    }
+
+    .nyx-table td[data-label="Profesional"]{
+      padding-top: 0 !important;
+    }
+
+    .nyx-table td[data-label="Acciones"]{
+      padding-bottom: 0 !important;
+      border-bottom: 0 !important;
+    }
+
+    .nyx-table td[data-label="Acciones"] .d-flex{
+      justify-content: stretch !important;
+      width: 100%;
+    }
+
+    .nyx-table td[data-label="Acciones"] .nyx-filter-btn,
+    .nyx-table td[data-label="Acciones"] form{
+      flex: 1 1 130px;
+    }
+
+    .nyx-table td[data-label="Acciones"] form{
+      display: flex !important;
+    }
+
+    .nyx-table td[data-label="Acciones"] form .nyx-filter-btn{
+      width: 100%;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .nyx-table td[data-label="Acciones"] a.nyx-filter-btn{
+      justify-content: center;
+      text-align: center;
+    }
+
+    .nyx-badge,
+    .nyx-badge-soft{
+      display: inline-flex;
+      width: fit-content;
+      max-width: 100%;
+      white-space: normal;
+      line-height: 1.2;
+    }
+
+    .nyx-primary-btn{
+      width: 100%;
+      justify-content: center;
+    }
+
+    .nyx-card.p-4{
+      padding: 1rem !important;
+    }
+  }
+</style>
 {% endblock %}

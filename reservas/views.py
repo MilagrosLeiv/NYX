@@ -690,7 +690,54 @@ def select_time(request):
     selected_service_ids = request.GET.getlist('services')
     employee_id = request.GET.get('employee')
     mode = request.GET.get('mode', 'single_employee')
-    selected_date_raw = request.GET.get('date')
+    today = timezone.localdate()
+    selected_date_raw = request.GET.get('date') or today.strftime("%Y-%m-%d")
+
+    date_options = []
+
+    weekday_labels = {
+        0: "Lun",
+        1: "Mar",
+        2: "Mié",
+        3: "Jue",
+        4: "Vie",
+        5: "Sáb",
+        6: "Dom",
+    }
+
+    month_labels = {
+        1: "Ene",
+        2: "Feb",
+        3: "Mar",
+        4: "Abr",
+        5: "May",
+        6: "Jun",
+        7: "Jul",
+        8: "Ago",
+        9: "Sep",
+        10: "Oct",
+        11: "Nov",
+        12: "Dic",
+    }
+
+    for index in range(14):
+        current_date = today + timedelta(days=index)
+        current_date_value = current_date.strftime("%Y-%m-%d")
+
+        if index == 0:
+            label = "Hoy"
+        elif index == 1:
+            label = "Mañana"
+        else:
+            label = weekday_labels[current_date.weekday()]
+
+        date_options.append({
+            "value": current_date_value,
+            "day_number": current_date.strftime("%d"),
+            "month": month_labels[current_date.month],
+            "label": label,
+            "is_selected": current_date_value == selected_date_raw,
+        })
     service_employee_map = {}
     expire_unpaid_bookings()
 
@@ -805,6 +852,7 @@ def select_time(request):
         'selected_employees': selected_employees,
         'mode': mode,
         'selected_date': selected_date_raw or '',
+        'date_options': date_options,
         'available_slots': available_slots,
         'salon': salon,
         'total_price': total_price,
@@ -1099,6 +1147,25 @@ def confirm_booking(request):
         if request.method == 'GET'
         else request.POST.get('selected_payment_method', '')
     )
+
+    def build_select_time_redirect_url():
+        params = []
+
+        for service_id in selected_service_ids:
+            params.append(("services", service_id))
+
+        params.append(("mode", mode))
+        params.append(("date", selected_date_raw))
+
+        if employee_id:
+            params.append(("employee", employee_id))
+
+        if mode == "per_service_consecutive":
+            for service, selected_employee in service_employee_pairs:
+                params.append((f"employee_{service.id}", selected_employee.id))
+
+        return f"{reverse('select_time')}?{urlencode(params)}"
+    
     if request.method == 'POST':
         form = AppointmentConfirmForm(request.POST)
 
@@ -1228,10 +1295,14 @@ def confirm_booking(request):
                         create_pending_payment_session(booking)
 
             except ValidationError as e:
-                form.add_error(
-                    None,
-                    e.messages[0] if getattr(e, 'messages', None) else 'No se pudo reservar el turno.'
+                error_message = (
+                    e.messages[0]
+                    if getattr(e, 'messages', None)
+                    else 'Ese horario ya no está disponible. Elegí otro horario.'
                 )
+
+                messages.error(request, error_message)
+                return redirect(build_select_time_redirect_url())
             else:
                 if booking.selected_payment_method == 'transfer' and booking.requires_payment():
                     send_booking_payment_pending_email(booking, request=request)
@@ -1273,6 +1344,7 @@ def confirm_booking(request):
         'deposit_amount': deposit_amount,
         'full_amount': full_amount,
         'payment_instructions': payment_instructions,
+        'selected_payment_method': selected_payment_method,
         'selected_payment_choice': selected_payment_choice,
     }
     return render(request, 'reservas/confirm_booking.html', context)

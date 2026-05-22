@@ -14,7 +14,7 @@
       </div>
     </div>
 
-    <div class="ms-auto">
+    <div class="ms-auto nyx-hours-main-action">
       <a href="{% url 'panel_business_hour_block_create' %}" class="nyx-primary-btn">
         <span>+</span>
         <span>Agregar franja horaria</span>
@@ -24,13 +24,13 @@
 </div>
 
 <div class="nyx-card p-4">
-  <div class="d-grid gap-3">
+  <div class="nyx-hours-days">
 
     {% for day in blocks_by_weekday %}
-      <div class="border rounded-4 p-3" style="border-color: var(--nyx-border) !important; background:#fbfefe;">
-        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+      <section class="nyx-hours-day-card">
+        <div class="nyx-hours-day-header">
           <div>
-            <h5 class="fw-bold mb-1">{{ day.weekday_name }}</h5>
+            <h5 class="nyx-hours-day-title">{{ day.weekday_name }}</h5>
 
             {% if day.active_blocks_count > 0 %}
               <div class="text-secondary small">
@@ -55,8 +55,8 @@
         </div>
 
         {% if day.blocks %}
-          <div class="table-responsive">
-            <table class="table nyx-table align-middle mb-0">
+          <div class="table-responsive nyx-table-responsive">
+            <table class="table nyx-table nyx-hours-table align-middle mb-0">
               <thead>
                 <tr>
                   <th>Inicio</th>
@@ -69,9 +69,15 @@
               <tbody>
                 {% for block in day.blocks %}
                   <tr>
-                    <td class="fw-semibold">{{ block.start_time|time:"H:i" }}</td>
-                    <td class="fw-semibold">{{ block.end_time|time:"H:i" }}</td>
-                    <td>
+                    <td data-label="Inicio" class="fw-semibold">
+                      {{ block.start_time|time:"H:i" }}
+                    </td>
+
+                    <td data-label="Fin" class="fw-semibold">
+                      {{ block.end_time|time:"H:i" }}
+                    </td>
+
+                    <td data-label="Estado">
                       {% if block.is_active %}
                         <span class="nyx-badge">Activa</span>
                       {% else %}
@@ -80,7 +86,8 @@
                         </span>
                       {% endif %}
                     </td>
-                    <td class="text-end">
+
+                    <td data-label="Acciones" class="text-end">
                       <div class="d-flex justify-content-end gap-2 flex-wrap">
                         <a href="{% url 'panel_business_hour_block_edit' block.id %}" class="nyx-filter-btn">
                           Editar
@@ -101,9 +108,143 @@
             No hay franjas cargadas para este día.
           </div>
         {% endif %}
-      </div>
+      </section>
     {% endfor %}
 
   </div>
 </div>
+
+<style>
+  .nyx-hours-days{
+    display: grid;
+    gap: 1rem;
+  }
+
+  .nyx-hours-day-card{
+    border: 1px solid var(--nyx-border);
+    border-radius: 1.25rem;
+    padding: 1rem;
+    background: #fbfefe;
+  }
+
+  .nyx-hours-day-header{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: .75rem;
+    margin-bottom: 1rem;
+  }
+
+  .nyx-hours-day-title{
+    color: var(--nyx-text);
+    font-weight: 900;
+    margin: 0 0 .2rem;
+  }
+
+  @media (max-width: 767.98px){
+    .nyx-card.p-4{
+      padding: 1rem !important;
+    }
+
+    .nyx-hours-main-action{
+      width: 100%;
+      margin-left: 0 !important;
+    }
+
+    .nyx-hours-main-action .nyx-primary-btn{
+      width: 100%;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .nyx-hours-day-card{
+      padding: 1rem;
+      border-radius: 1.15rem;
+      background: #ffffff;
+      box-shadow: var(--nyx-shadow);
+    }
+
+    .nyx-hours-day-header{
+      align-items: flex-start;
+      margin-bottom: .85rem;
+    }
+
+    .nyx-hours-day-title{
+      font-size: 1.25rem;
+    }
+
+    .nyx-table-responsive{
+      overflow: visible !important;
+    }
+
+    .nyx-hours-table{
+      border-collapse: separate;
+      border-spacing: 0 .75rem;
+    }
+
+    .nyx-hours-table thead{
+      display: none;
+    }
+
+    .nyx-hours-table tbody,
+    .nyx-hours-table tr,
+    .nyx-hours-table td{
+      display: block;
+      width: 100%;
+    }
+
+    .nyx-hours-table tr{
+      background: #fbfefe;
+      border: 1px solid var(--nyx-border);
+      border-radius: 1rem;
+      padding: .9rem;
+    }
+
+    .nyx-hours-table td{
+      border: 0 !important;
+      padding: .55rem 0 !important;
+      text-align: left !important;
+    }
+
+    .nyx-hours-table td:not(:last-child){
+      border-bottom: 1px solid var(--nyx-border) !important;
+    }
+
+    .nyx-hours-table td::before{
+      content: attr(data-label);
+      display: block;
+      color: var(--nyx-text-muted);
+      font-size: .72rem;
+      font-weight: 850;
+      text-transform: uppercase;
+      letter-spacing: .045em;
+      margin-bottom: .3rem;
+    }
+
+    .nyx-hours-table td[data-label="Acciones"]{
+      border-bottom: 0 !important;
+      padding-bottom: 0 !important;
+    }
+
+    .nyx-hours-table td[data-label="Acciones"] .d-flex{
+      justify-content: stretch !important;
+      width: 100%;
+    }
+
+    .nyx-hours-table td[data-label="Acciones"] .nyx-filter-btn{
+      flex: 1 1 130px;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .nyx-badge{
+      display: inline-flex;
+      width: fit-content;
+      max-width: 100%;
+      white-space: normal;
+      line-height: 1.2;
+    }
+  }
+</style>
 {% endblock %}

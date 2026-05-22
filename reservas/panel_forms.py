@@ -711,6 +711,15 @@ class TrialSignupForm(forms.Form):
         })
     )
 
+    owner_works = forms.BooleanField(
+        label="Yo también atiendo turnos en el negocio",
+        required=False,
+        initial=True,
+        widget=forms.CheckboxInput(attrs={
+            "class": "form-check-input",
+        })
+    )
+
     phone = forms.CharField(
         label="WhatsApp",
         max_length=30,

@@ -54,6 +54,11 @@ urlpatterns = [
     path('panel/', panel_views.panel_dashboard, name='panel_dashboard'),
     path('panel/agenda/', panel_views.panel_agenda, name='panel_agenda'),
     path('panel/bloqueos/', panel_views.panel_bloqueos, name='panel_bloqueos'),
+    path(
+        'panel/bloqueos/<int:block_id>/eliminar/',
+        panel_views.panel_bloqueo_delete,
+        name='panel_bloqueo_delete'
+    ), 
     path('login/', panel_views.panel_login, name='panel_login'),
     path('registro/', panel_views.trial_signup, name='trial_signup'),
     path('logout/', panel_views.panel_logout, name='panel_logout'),

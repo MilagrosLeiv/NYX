@@ -174,6 +174,10 @@ EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
 
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)
+ADMIN_NOTIFICATION_EMAIL = os.environ.get(
+    "ADMIN_NOTIFICATION_EMAIL",
+    EMAIL_HOST_USER
+)
 LOGIN_URL = 'panel_login'
 LOGIN_REDIRECT_URL = 'panel_dashboard'
 LOGOUT_REDIRECT_URL = 'panel_login'

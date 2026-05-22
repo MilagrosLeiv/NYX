@@ -877,5 +877,91 @@ document.addEventListener('DOMContentLoaded', function () {
       </div>
     </div>
   </div>
+  <script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const STORAGE_KEY = "nyxScrollRestore";
+
+    function getPageKey(url) {
+      return url.pathname + url.search;
+    }
+
+    function saveScrollForUrl(url) {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
+        key: getPageKey(url),
+        y: window.scrollY,
+        createdAt: Date.now()
+      }));
+    }
+
+    function restoreScroll() {
+      const raw = sessionStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+
+      let data;
+
+      try {
+        data = JSON.parse(raw);
+      } catch (error) {
+        sessionStorage.removeItem(STORAGE_KEY);
+        return;
+      }
+
+      const currentKey = window.location.pathname + window.location.search;
+      const isExpired = Date.now() - data.createdAt > 15000;
+
+      if (isExpired || data.key !== currentKey) {
+        sessionStorage.removeItem(STORAGE_KEY);
+        return;
+      }
+
+      requestAnimationFrame(function () {
+        window.scrollTo({
+          top: Number(data.y) || 0,
+          behavior: "instant"
+        });
+
+        sessionStorage.removeItem(STORAGE_KEY);
+      });
+    }
+
+    restoreScroll();
+
+    document.querySelectorAll("a[href]").forEach(function (link) {
+      link.addEventListener("click", function () {
+        if (link.hasAttribute("data-no-scroll-restore")) return;
+
+        const href = link.getAttribute("href");
+
+        if (!href || href.startsWith("#") || href.startsWith("javascript:")) return;
+
+        const targetUrl = new URL(href, window.location.origin);
+
+        if (targetUrl.origin !== window.location.origin) return;
+
+        saveScrollForUrl(targetUrl);
+      });
+    });
+
+    document.querySelectorAll("form").forEach(function (form) {
+      form.addEventListener("submit", function () {
+        if (form.hasAttribute("data-no-scroll-restore")) return;
+
+        const method = (form.getAttribute("method") || "get").toLowerCase();
+        const action = form.getAttribute("action") || window.location.href;
+        const targetUrl = new URL(action, window.location.origin);
+
+        if (targetUrl.origin !== window.location.origin) return;
+
+        if (method === "get") {
+          const formData = new FormData(form);
+          targetUrl.search = new URLSearchParams(formData).toString();
+          saveScrollForUrl(targetUrl);
+        } else {
+          saveScrollForUrl(new URL(window.location.href));
+        }
+      });
+    });
+  });
+  </script>
 </body>
 </html>

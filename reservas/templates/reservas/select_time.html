@@ -3,6 +3,200 @@
 
 {% block title %}Elegir horario | NYX{% endblock %}
 
+{% block extra_css %}
+<style>
+  .nyx-date-strip{
+    display:flex;
+    gap:.75rem;
+    overflow-x:auto;
+    padding:.25rem .1rem .85rem;
+    scroll-snap-type:x mandatory;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  .nyx-date-strip::-webkit-scrollbar{
+    height:6px;
+  }
+
+  .nyx-date-strip::-webkit-scrollbar-thumb{
+    background:var(--nyx-border-strong);
+    border-radius:999px;
+  }
+
+  .nyx-date-option{
+    min-width:86px;
+    scroll-snap-align:start;
+    border:1px solid var(--nyx-border);
+    background:#ffffff;
+    color:var(--nyx-text);
+    border-radius:1rem;
+    padding:.75rem .7rem;
+    text-decoration:none;
+    text-align:center;
+    box-shadow:0 10px 24px rgba(34, 83, 83, .06);
+    transition:.2s ease;
+  }
+
+  .nyx-date-option:hover{
+    transform:translateY(-1px);
+    border-color:var(--nyx-border-strong);
+    color:var(--nyx-text);
+  }
+
+
+
+  .nyx-date-label{
+    display:block;
+    font-size:.78rem;
+    font-weight:850;
+    line-height:1;
+    margin-bottom:.4rem;
+  }
+
+  .nyx-date-day{
+    display:block;
+    font-size:1.35rem;
+    line-height:1;
+    font-weight:950;
+  }
+
+  .nyx-date-month{
+    display:block;
+    font-size:.75rem;
+    font-weight:800;
+    opacity:.82;
+    margin-top:.25rem;
+  }
+
+  .nyx-slots-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(96px, 1fr));
+    gap:.75rem;
+  }
+
+  .booking-slot{
+    width:100%;
+    min-height:46px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:999px;
+    font-weight:850;
+  }
+
+  
+
+  .nyx-time-panel{
+    background:
+      radial-gradient(circle at top right, rgba(140, 220, 223, .16), transparent 34%),
+      #ffffff;
+  }
+
+  .nyx-date-selected-pill{
+    display:inline-flex;
+    align-items:center;
+    gap:.4rem;
+    padding:.42rem .75rem;
+    border-radius:999px;
+    background:var(--nyx-surface-soft);
+    color:var(--nyx-primary-dark);
+    font-size:.82rem;
+    font-weight:850;
+  }
+
+  .nyx-flow-actions{
+    display:flex;
+    justify-content:flex-end;
+    margin-top:1.25rem;
+  }
+
+  .nyx-flow-actions .nyx-flow-btn{
+    min-width:160px;
+  }
+
+  @media (max-width: 767.98px){
+    .booking-page{
+      padding-top:1rem !important;
+    }
+
+    .nyx-page-title{
+      font-size:1.75rem;
+    }
+
+    .nyx-date-strip{
+      margin-left:-.15rem;
+      margin-right:-.15rem;
+    }
+
+    .nyx-date-option{
+      min-width:78px;
+      border-radius:.95rem;
+      padding:.7rem .6rem;
+    }
+
+    .nyx-slots-grid{
+      grid-template-columns:1fr 1fr;
+      gap:.65rem;
+    }
+
+    .booking-slot{
+      min-height:48px;
+    }
+
+    .nyx-flow-actions{
+      justify-content:stretch;
+    }
+
+    .nyx-flow-actions .nyx-flow-btn{
+      width:100%;
+      min-height:48px;
+      border-radius:999px;
+      font-weight:900;
+    }
+
+    .nyx-summary-align{
+      margin-top:.5rem;
+    }
+  }
+
+  .nyx-date-option.is-selected,
+  .nyx-date-option.is-selected:hover{
+    background: linear-gradient(
+      135deg,
+      var(--nyx-primary, #408888),
+      var(--nyx-primary-hover, #326d6d)
+    ) !important;
+    border-color: transparent !important;
+    color: #ffffff !important;
+    box-shadow: 0 16px 34px rgba(64, 136, 136, .28) !important;
+  }
+
+  .nyx-date-option.is-selected .nyx-date-label,
+  .nyx-date-option.is-selected .nyx-date-day,
+  .nyx-date-option.is-selected .nyx-date-month{
+    color: #ffffff !important;
+    opacity: 1 !important;
+  }
+
+  .btn-check:checked + .booking-slot,
+  .btn-check:checked + .booking-slot:hover{
+    background: linear-gradient(
+      135deg,
+      var(--nyx-primary, #408888),
+      var(--nyx-primary-hover, #326d6d)
+    ) !important;
+    border-color: transparent !important;
+    color: #ffffff !important;
+    box-shadow: 0 16px 34px rgba(64, 136, 136, .28) !important;
+  }
+
+  .btn-check:checked + .booking-slot,
+  .btn-check:checked + .booking-slot *{
+    color: #ffffff !important;
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="booking-page py-4">
   <div class="container">
@@ -20,7 +214,7 @@
 
         <h1 class="nyx-page-title">Elegí fecha y horario</h1>
         <p class="nyx-text-muted nyx-page-subtitle mb-4">
-          Seleccioná una fecha para ver los horarios disponibles.
+          Seleccioná una fecha y elegí uno de los horarios disponibles.
         </p>
 
         {% if mode == 'per_service_consecutive' %}
@@ -66,63 +260,49 @@
           </div>
         {% endif %}
 
-        <div class="card nyx-panel">
+        <div class="card nyx-panel nyx-time-panel">
           <div class="card-body p-4">
-            <form method="get" action="{% url 'select_time' %}" class="mb-0">
-              {% for service_id in selected_service_ids %}
-                <input type="hidden" name="services" value="{{ service_id }}">
-              {% endfor %}
-
-              {% if employee %}
-                <input type="hidden" name="employee" value="{{ employee.id }}">
-              {% endif %}
-
-              {% if mode == 'per_service_consecutive' %}
-                {% for service in selected_services %}
-                  {% with selected_employee=selected_employees|get_item:service.id %}
-                    {% if selected_employee %}
-                      <input type="hidden" name="employee_{{ service.id }}" value="{{ selected_employee.id }}">
-                    {% endif %}
-                  {% endwith %}
-                {% endfor %}
-              {% endif %}
-
-              <input type="hidden" name="mode" value="{{ mode }}">
-
-              <div class="row g-3 align-items-end">
-                <div class="col-sm-8 col-md-7">
-                  <label for="date" class="form-label fw-semibold">Fecha</label>
-                  <input
-                    type="date"
-                    id="date"
-                    name="date"
-                    class="form-control form-control-lg nyx-input"
-                    value="{{ selected_date }}"
-                    min="{% now 'Y-m-d' %}"
-                    {% if not employee and not has_valid_per_service_assignment and mode != 'auto' %}disabled{% endif %}
-                  >
-                </div>
-
-                <div class="col-sm-4 col-md-5">
-                  <button type="submit" class="btn nyx-flow-btn w-100">
-                    Ver horarios
-                  </button>
+            <div class="d-flex justify-content-between align-items-center gap-3 mb-3 flex-wrap">
+              <div>
+                <h2 class="h5 mb-1 fw-bold">Seleccioná una fecha</h2>
+                <div class="nyx-text-muted small">
+                  Mostramos los próximos días disponibles para reservar.
                 </div>
               </div>
-            </form>
 
-            {% if selected_date and employee or selected_date and has_valid_per_service_assignment or selected_date and mode == 'auto' %}
+              {% if selected_date %}
+                <div class="nyx-date-selected-pill">
+                  <i class="bi bi-calendar2-check"></i>
+                  {{ selected_date }}
+                </div>
+              {% endif %}
+            </div>
+
+            <div class="nyx-date-strip mb-3">
+              {% for date_option in date_options %}
+                <a
+                  href="{% url 'select_time' %}?{% for service_id in selected_service_ids %}services={{ service_id }}&{% endfor %}{% if employee %}employee={{ employee.id }}&{% endif %}{% if mode == 'per_service_consecutive' %}{% for service in selected_services %}{% with selected_employee=selected_employees|get_item:service.id %}{% if selected_employee %}employee_{{ service.id }}={{ selected_employee.id }}&{% endif %}{% endwith %}{% endfor %}{% endif %}mode={{ mode }}&date={{ date_option.value }}"
+                  class="nyx-date-option {% if date_option.is_selected %}is-selected{% endif %}"
+                >
+                  <span class="nyx-date-label">{{ date_option.label }}</span>
+                  <span class="nyx-date-day">{{ date_option.day_number }}</span>
+                  <span class="nyx-date-month">{{ date_option.month }}</span>
+                </a>
+              {% endfor %}
+            </div>
+
+            {% if employee or has_valid_per_service_assignment or mode == 'auto' %}
               <hr class="my-4 nyx-divider">
 
               <div class="d-flex justify-content-between align-items-center gap-3 mb-3 flex-wrap">
-                <h2 class="h5 mb-0">Horarios disponibles</h2>
+                <h2 class="h5 mb-0 fw-bold">Horarios disponibles</h2>
                 <div class="nyx-text-muted small">
-                  Fecha seleccionada: {{ selected_date }}
+                  Tocá un horario para continuar.
                 </div>
               </div>
 
               {% if available_slots %}
-                <form method="get" action="{% url 'confirm_booking' %}">
+                <form method="get" action="{% url 'confirm_booking' %}" data-no-scroll-restore>
                   {% for service_id in selected_service_ids %}
                     <input type="hidden" name="services" value="{{ service_id }}">
                   {% endfor %}
@@ -144,7 +324,7 @@
                   <input type="hidden" name="date" value="{{ selected_date }}">
                   <input type="hidden" name="mode" value="{{ mode }}">
 
-                  <div class="d-flex flex-wrap gap-2 mb-4">
+                  <div class="nyx-slots-grid mb-4">
                     {% for slot in available_slots %}
                       <input
                         type="radio"
@@ -155,15 +335,17 @@
                         autocomplete="off"
                         required
                       >
-                      <label class="btn nyx-btn-outline px-3 py-2 booking-slot" for="slot-{{ forloop.counter }}">
+                      <label class="btn nyx-btn-outline booking-slot" for="slot-{{ forloop.counter }}">
                         {{ slot }}
                       </label>
                     {% endfor %}
                   </div>
 
-                  <button type="submit" class="btn nyx-flow-btn">
-                    Continuar
-                  </button>
+                  <div class="nyx-flow-actions">
+                    <button type="submit" class="btn nyx-flow-btn">
+                      Continuar
+                    </button>
+                  </div>
                 </form>
               {% else %}
                 <div class="nyx-empty-state">

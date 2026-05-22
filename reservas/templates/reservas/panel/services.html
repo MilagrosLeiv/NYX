@@ -13,17 +13,42 @@
       <div class="text-secondary">Editá precios, duración y disponibilidad.</div>
     </div>
 
-    <a href="{% url 'panel_service_create' %}" class="nyx-primary-btn">
-      <span>+</span>
-      <span>Nuevo servicio</span>
-    </a>
+    <div class="ms-auto nyx-services-main-action">
+      <a href="{% url 'panel_service_create' %}" class="nyx-primary-btn">
+        <span>+</span>
+        <span>Nuevo servicio</span>
+      </a>
+    </div>
   </div>
 </div>
 
+{% if services %}
+  <div class="nyx-card p-3 mb-4">
+    <label for="service-search-input" class="nyx-service-search-label">
+      Buscar servicio
+    </label>
+
+    <div class="nyx-service-search-wrap">
+      <i class="bi bi-search"></i>
+      <input
+        type="search"
+        id="service-search-input"
+        class="form-control nyx-service-search-input"
+        placeholder="Buscar por nombre, precio, duración o estado..."
+        autocomplete="off"
+      >
+    </div>
+
+    <div class="nyx-service-search-count mt-2" id="service-search-count">
+      Mostrando {{ services|length }} servicio{% if services|length != 1 %}s{% endif %}.
+    </div>
+  </div>
+{% endif %}
+
 <div class="nyx-card p-4">
   {% if services %}
-    <div class="table-responsive">
-      <table class="table nyx-table align-middle">
+    <div class="table-responsive nyx-table-responsive">
+      <table class="table nyx-table nyx-services-table align-middle mb-0">
         <thead>
           <tr>
             <th>Servicio</th>
@@ -33,27 +58,51 @@
             <th class="text-end">Acciones</th>
           </tr>
         </thead>
+
         <tbody>
           {% for service in services %}
-            <tr>
-              <td>
+            <tr
+              class="nyx-service-row"
+              data-search-text="{{ service.name }} {{ service.description }} {{ service.price }} {{ service.duration_minutes }} {% if service.is_active %}activo{% else %}inactivo{% endif %}"
+            >
+              <td data-label="Servicio">
                 <div class="fw-semibold">{{ service.name }}</div>
+
                 {% if service.description %}
-                  <div class="text-secondary small">{{ service.description|truncatechars:80 }}</div>
+                  <div class="text-secondary small mt-1">
+                    {{ service.description|truncatechars:100 }}
+                  </div>
+                {% else %}
+                  <div class="text-secondary small mt-1">
+                    Sin descripción.
+                  </div>
                 {% endif %}
               </td>
-              <td>${{ service.price|miles_punto }}</td>
-              <td>{{ service.duration_minutes }} min</td>
-              <td>
+
+              <td data-label="Precio" class="fw-semibold">
+                ${{ service.price|miles_punto }}
+              </td>
+
+              <td data-label="Duración">
+                {{ service.duration_minutes }} min
+              </td>
+
+              <td data-label="Estado">
                 {% if service.is_active %}
                   <span class="nyx-badge">Activo</span>
                 {% else %}
-                  <span class="nyx-badge" style="background:#fff3f3;color:#b54747;border-color:#f1caca;">Inactivo</span>
+                  <span class="nyx-badge" style="background:#fff3f3;color:#b54747;border-color:#f1caca;">
+                    Inactivo
+                  </span>
                 {% endif %}
               </td>
-              <td class="text-end">
+
+              <td data-label="Acciones" class="text-end">
                 <div class="d-flex justify-content-end gap-2 flex-wrap">
-                  <a href="{% url 'panel_service_edit' service.id %}" class="nyx-filter-btn">Editar</a>
+                  <a href="{% url 'panel_service_edit' service.id %}" class="nyx-filter-btn">
+                    Editar
+                  </a>
+
                   <a href="{% url 'panel_service_toggle_active' service.id %}" class="nyx-filter-btn">
                     {% if service.is_active %}Desactivar{% else %}Activar{% endif %}
                   </a>
@@ -64,12 +113,65 @@
         </tbody>
       </table>
     </div>
+
+    <div id="service-search-empty" class="nyx-empty mt-3 d-none">
+      No se encontraron servicios con esa búsqueda.
+    </div>
   {% else %}
     <div class="nyx-empty">
       Todavía no hay servicios cargados.
     </div>
   {% endif %}
 </div>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const input = document.getElementById("service-search-input");
+  const rows = Array.from(document.querySelectorAll(".nyx-service-row"));
+  const count = document.getElementById("service-search-count");
+  const empty = document.getElementById("service-search-empty");
+
+  if (!input || rows.length === 0) return;
+
+  function normalizeText(value) {
+    return String(value || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+  }
+
+  function updateCount(visibleCount) {
+    if (!count) return;
+
+    count.textContent = "Mostrando " + visibleCount + " servicio" + (visibleCount === 1 ? "" : "s") + ".";
+  }
+
+  input.addEventListener("input", function () {
+    const query = normalizeText(input.value.trim());
+    let visibleCount = 0;
+
+    rows.forEach(function (row) {
+      const text = normalizeText(row.dataset.searchText);
+      const matches = query === "" || text.includes(query);
+
+      if (matches) {
+        row.style.display = "";
+        visibleCount += 1;
+      } else {
+        row.style.display = "none";
+      }
+    });
+
+    updateCount(visibleCount);
+
+    if (empty) {
+      empty.classList.toggle("d-none", visibleCount !== 0);
+    }
+  });
+});
+</script>
 {% endblock %}
 
 {% block extra_css %}
@@ -83,5 +185,197 @@
     color: #fff !important;
     text-decoration: none;
   }
+
+  .nyx-service-search-label{
+    color: var(--nyx-text);
+    font-weight: 850;
+    margin-bottom: .45rem;
+  }
+
+  .nyx-service-search-wrap{
+    position: relative;
+  }
+
+  .nyx-service-search-wrap i{
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--nyx-text-muted);
+    pointer-events: none;
+  }
+
+  .nyx-service-search-input{
+    border-radius: 999px;
+    border: 1px solid var(--nyx-border);
+    padding: .8rem 1rem .8rem 2.75rem;
+    font-weight: 700;
+  }
+
+  .nyx-service-search-input:focus{
+    border-color: var(--nyx-primary);
+    box-shadow: 0 0 0 .2rem rgba(118,207,210,.18);
+  }
+
+  .nyx-service-search-count{
+    color: var(--nyx-text-muted);
+    font-size: .86rem;
+    font-weight: 700;
+  }
+
+  @media (max-width: 767.98px){
+    .nyx-card.p-4{
+      padding: 1rem !important;
+    }
+
+    .nyx-services-main-action{
+      width: 100%;
+      margin-left: 0 !important;
+    }
+
+    .nyx-services-main-action .nyx-primary-btn{
+      width: 100%;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .nyx-table-responsive{
+      overflow: visible !important;
+    }
+
+    .nyx-services-table{
+      border-collapse: separate;
+      border-spacing: 0 1.8rem;
+    }
+
+    .nyx-services-table thead{
+      display: none;
+    }
+
+    .nyx-services-table tbody,
+    .nyx-services-table tr,
+    .nyx-services-table td{
+      display: block;
+      width: 100%;
+    }
+
+    .nyx-services-table tr{
+      position: relative;
+      background:
+        radial-gradient(circle at top right, rgba(140, 220, 223, .18), transparent 34%),
+        #ffffff;
+      border: 1px solid var(--nyx-border);
+      border-radius: 1.35rem;
+      box-shadow: 0 14px 34px rgba(34, 83, 83, .09);
+      padding: 1.05rem;
+      overflow: hidden;
+      margin-bottom: .5rem;
+    }
+
+    .nyx-services-table tr::before{
+      content: "";
+      position: absolute;
+      inset: 0 0 auto 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--nyx-primary), var(--nyx-soft));
+    }
+
+    .nyx-services-table td{
+      border: 0 !important;
+      padding: .65rem 0 !important;
+      text-align: left !important;
+    }
+
+    .nyx-services-table td:not(:last-child){
+      border-bottom: 1px solid var(--nyx-border) !important;
+    }
+
+    .nyx-services-table td::before{
+      content: attr(data-label);
+      display: block;
+      color: var(--nyx-text-muted);
+      font-size: .74rem;
+      font-weight: 850;
+      text-transform: uppercase;
+      letter-spacing: .045em;
+      margin-bottom: .35rem;
+    }
+
+    .nyx-services-table td[data-label="Servicio"]::before{
+      display: none;
+    }
+
+    .nyx-services-table td[data-label="Servicio"]{
+      padding-top: 0 !important;
+    }
+
+    .nyx-services-table td[data-label="Acciones"]{
+      padding-bottom: 0 !important;
+      border-bottom: 0 !important;
+    }
+
+    .nyx-services-table td[data-label="Acciones"] .d-flex{
+      justify-content: stretch !important;
+      width: 100%;
+    }
+
+    .nyx-services-table td[data-label="Acciones"] .nyx-filter-btn{
+      flex: 1 1 130px;
+      justify-content: center;
+      text-align: center;
+      min-height: 44px;
+      border-radius: 999px;
+      font-weight: 850;
+    }
+
+    .nyx-services-table td[data-label="Servicio"] .fw-semibold{
+      font-size: 1.08rem;
+      font-weight: 900;
+      color: var(--nyx-text);
+    }
+
+    .nyx-services-table td[data-label="Precio"],
+    .nyx-services-table td[data-label="Duración"]{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: .75rem;
+    }
+
+    .nyx-services-table td[data-label="Precio"]::before,
+    .nyx-services-table td[data-label="Duración"]::before{
+      margin-bottom: 0;
+    }
+
+    .nyx-services-table td[data-label="Precio"]{
+      color: var(--nyx-primary-dark);
+      font-size: 1.05rem;
+      font-weight: 900;
+    }
+
+    .nyx-services-table td[data-label="Duración"]{
+      font-weight: 800;
+    }
+
+    .nyx-services-table td[data-label="Estado"]{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: .75rem;
+    }
+
+    .nyx-services-table td[data-label="Estado"]::before{
+      margin-bottom: 0;
+    }
+
+    .nyx-badge{
+      display: inline-flex;
+      width: fit-content;
+      max-width: 100%;
+      white-space: normal;
+      line-height: 1.2;
+    }
+  }
 </style>
 {% endblock %}
+

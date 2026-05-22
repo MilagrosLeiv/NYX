@@ -5,75 +5,74 @@
 
 {% block extra_css %}
 <style>
-  
   .salon-public-profile{
     background:#ffffff;
     border:1px solid var(--nyx-border);
-    border-radius:1.6rem;
+    border-radius:1.35rem;
     overflow:hidden;
     box-shadow:var(--nyx-shadow);
-    margin-bottom:2rem;
-    }
+    margin-bottom:1.5rem;
+  }
 
-    .salon-cover{
-    height:260px;
+  .salon-cover{
+    height:180px;
     background:
-        radial-gradient(circle at top left, rgba(140,220,223,.35), transparent 35%),
-        linear-gradient(135deg, #f2fbfb, #ffffff);
+      radial-gradient(circle at top left, rgba(140,220,223,.30), transparent 35%),
+      linear-gradient(135deg, #f2fbfb, #ffffff);
     overflow:hidden;
-    }
+  }
 
-    .salon-cover img{
+  .salon-cover img{
     width:100%;
     height:100%;
     object-fit:cover;
     display:block;
-    }
+  }
 
-    .salon-cover-placeholder{
+  .salon-cover-placeholder{
     height:100%;
     display:flex;
     align-items:center;
     justify-content:center;
-    color:rgba(64,136,136,.18);
-    font-size:4rem;
+    color:rgba(64,136,136,.16);
+    font-size:3.2rem;
     font-weight:950;
     letter-spacing:.18em;
-    }
+  }
 
-    .salon-profile-card{
-    padding:0 2rem 2rem;
-    }
+  .salon-profile-card{
+    padding:0 1.5rem 1.5rem;
+  }
 
-    .salon-profile-main{
+  .salon-profile-main{
     display:flex;
-    gap:1.25rem;
+    gap:1rem;
     align-items:flex-start;
-    margin-top:-52px;
-    }
+    margin-top:-38px;
+  }
 
-    .salon-logo-wrap{
-    width:112px;
-    height:112px;
-    flex:0 0 112px;
-    border-radius:1.35rem;
+  .salon-logo-wrap{
+    width:86px;
+    height:86px;
+    flex:0 0 86px;
+    border-radius:1.1rem;
     background:#ffffff;
     border:1px solid var(--nyx-border);
-    box-shadow:0 16px 36px rgba(24,49,49,.12);
+    box-shadow:0 12px 28px rgba(24,49,49,.12);
     overflow:hidden;
     display:flex;
     align-items:center;
     justify-content:center;
-    }
+  }
 
-    .salon-logo-wrap img{
+  .salon-logo-wrap img{
     width:100%;
     height:100%;
     object-fit:cover;
     display:block;
-    }
+  }
 
-    .salon-logo-placeholder{
+  .salon-logo-placeholder{
     width:100%;
     height:100%;
     display:flex;
@@ -81,52 +80,52 @@
     justify-content:center;
     background:linear-gradient(135deg, var(--nyx-primary), var(--nyx-soft));
     color:#ffffff;
-    font-size:2.3rem;
+    font-size:2rem;
     font-weight:950;
     text-transform:uppercase;
-    }
+  }
 
-    .salon-profile-info{
+  .salon-profile-info{
     flex:1;
     min-width:0;
-    padding-top:4.2rem;
-    }
+    padding-top:2.9rem;
+  }
 
-    .salon-pill{
+  .salon-pill{
     display:inline-flex;
     align-items:center;
     width:fit-content;
-    padding:.42rem .75rem;
+    padding:.36rem .7rem;
     border-radius:999px;
     background:var(--nyx-surface-soft);
     color:var(--nyx-primary);
-    font-size:.78rem;
+    font-size:.72rem;
     font-weight:850;
-    margin-bottom:.65rem;
+    margin-bottom:.5rem;
     text-transform:uppercase;
     letter-spacing:.04em;
-    }
+  }
 
-    .salon-title-row{
+  .salon-title-row{
     display:flex;
     align-items:center;
     justify-content:space-between;
-    gap:1rem;
-    }
+    gap:.85rem;
+  }
 
-    .salon-title{
-    font-size:clamp(2rem, 4vw, 3.1rem);
-    line-height:1.04;
-    letter-spacing:-0.05em;
+  .salon-title{
+    font-size:clamp(1.65rem, 3vw, 2.35rem);
+    line-height:1.05;
+    letter-spacing:-0.045em;
     font-weight:900;
     color:var(--nyx-text);
-    margin:0 0 .7rem;
-    }
+    margin:0 0 .5rem;
+  }
 
-    .salon-instagram-link{
-    width:44px;
-    height:44px;
-    flex:0 0 44px;
+  .salon-instagram-link{
+    width:40px;
+    height:40px;
+    flex:0 0 40px;
     display:inline-flex;
     align-items:center;
     justify-content:center;
@@ -135,250 +134,272 @@
     background:#ffffff;
     color:var(--nyx-primary);
     text-decoration:none;
-    font-size:1.25rem;
+    font-size:1.15rem;
     transition:.2s ease;
-    }
+  }
 
-    .salon-instagram-link:hover{
+  .salon-instagram-link:hover{
     background:var(--nyx-primary);
     color:#ffffff;
     transform:translateY(-1px);
-    }
+  }
 
-    .salon-description{
+  .salon-description{
     color:var(--nyx-text-muted);
-    font-size:1.02rem;
-    line-height:1.65;
+    font-size:.96rem;
+    line-height:1.55;
     max-width:820px;
-    margin:0 0 1.25rem;
-    ;
-    }
+    margin:0 0 1rem;
+  }
 
-    .salon-meta{
+  .salon-meta{
     display:flex;
     flex-wrap:wrap;
-    gap:.7rem;
-    }
+    gap:.55rem;
+  }
 
-    .salon-meta-item{
+  .salon-meta-item{
     display:inline-flex;
     align-items:center;
-    gap:.45rem;
-    padding:.62rem .85rem;
+    gap:.4rem;
+    padding:.52rem .75rem;
     border:1px solid var(--nyx-border);
     border-radius:999px;
     background:#fbfefe;
     color:var(--nyx-text);
-    font-size:.9rem;
+    font-size:.86rem;
     font-weight:700;
-    }
+  }
 
-    .salon-meta-item i{
+  .salon-meta-item i{
     color:var(--nyx-primary);
-    }
+  }
 
-    .salon-address-featured{
-    background:linear-gradient(135deg, #e8f7f7, #f7ffff);
-    border-color:var(--nyx-border-strong);
-    }
-
-    .salon-public-panels{
+  .salon-public-panels{
     display:grid;
-    gap:.75rem;
-    margin-top:1.4rem;
-    }
+    gap:.65rem;
+    margin-top:1.15rem;
+  }
 
-    .salon-public-detail{
+  .salon-public-detail{
     border:1px solid var(--nyx-border);
-    border-radius:1rem;
+    border-radius:.9rem;
     background:#fbfefe;
     overflow:hidden;
-    }
+  }
 
-    .salon-public-detail summary{
+  .salon-public-detail summary{
     list-style:none;
     cursor:pointer;
     display:flex;
     align-items:center;
     justify-content:space-between;
     gap:1rem;
-    padding:1rem 1.1rem;
+    padding:.82rem 1rem;
     color:var(--nyx-text);
     font-weight:850;
-    }
+  }
 
-    .salon-public-detail summary::-webkit-details-marker{
+  .salon-public-detail summary::-webkit-details-marker{
     display:none;
-    }
+  }
 
-    .salon-public-detail summary span{
+  .salon-public-detail summary span{
     display:flex;
     align-items:center;
-    gap:.6rem;
-    }
-
-    .salon-public-detail summary i{
-    color:var(--nyx-primary);
-    }
-
-    .salon-public-detail[open] summary .bi-chevron-down{
-    transform:rotate(180deg);
-    }
-
-    .salon-public-detail-body{
-    border-top:1px solid var(--nyx-border);
-    padding:1rem 1.1rem;
-    color:var(--nyx-text-muted);
-    }
-
-    .salon-hours-list{
-    display:grid;
     gap:.55rem;
-    }
+  }
 
-    .salon-hours-list div{
+  .salon-public-detail summary i{
+    color:var(--nyx-primary);
+  }
+
+  .salon-public-detail[open] summary .bi-chevron-down{
+    transform:rotate(180deg);
+  }
+
+  .salon-public-detail-body{
+    border-top:1px solid var(--nyx-border);
+    padding:.9rem 1rem;
+    color:var(--nyx-text-muted);
+  }
+
+  .salon-hours-list{
+    display:grid;
+    gap:.5rem;
+  }
+
+  .salon-hours-list div{
     display:flex;
     justify-content:space-between;
     gap:1rem;
-    padding:.65rem .8rem;
-    border-radius:.85rem;
+    padding:.58rem .75rem;
+    border-radius:.8rem;
     background:#ffffff;
     border:1px solid var(--nyx-border);
-    }
+  }
 
-    .salon-hours-list span{
+  .salon-hours-list span{
     color:var(--nyx-text-muted);
     font-weight:750;
-    }
+  }
 
-    .salon-hours-list strong{
+  .salon-hours-list strong{
     color:var(--nyx-text);
-    }
+  }
 
-    .salon-employees-list{
+  .salon-employees-list{
     display:flex;
     flex-wrap:wrap;
-    gap:.6rem;
-    }
+    gap:.5rem;
+  }
 
-    .salon-employee-chip{
+  .salon-employee-chip{
     display:inline-flex;
     align-items:center;
-    gap:.45rem;
-    padding:.48rem .7rem;
+    gap:.4rem;
+    padding:.42rem .65rem;
     border-radius:999px;
     background:#ffffff;
     border:1px solid var(--nyx-border);
     color:var(--nyx-text);
     font-weight:800;
-    }
+    font-size:.9rem;
+  }
 
-    .salon-employee-chip span{
-    width:26px;
-    height:26px;
+  .salon-employee-chip span{
+    width:24px;
+    height:24px;
     border-radius:999px;
     background:linear-gradient(135deg, var(--nyx-primary), var(--nyx-soft));
     color:#ffffff;
     display:inline-flex;
     align-items:center;
     justify-content:center;
-    font-size:.78rem;
+    font-size:.72rem;
     font-weight:900;
+  }
+
+  .services-heading{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    gap:1rem;
+    margin-bottom:1.5rem;
+  }
+
+  .services-heading .nyx-page-title{
+    font-weight:700;
+    letter-spacing:-0.035em;
+  }
+
+  @media (max-width: 767.98px){
+    .salon-public-profile{
+      border-radius:1.1rem;
+      margin-bottom:1.25rem;
     }
 
-    @media (max-width: 767.98px){
     .salon-cover{
-        height:210px;
+      height:135px;
+    }
+
+    .salon-cover-placeholder{
+      font-size:2.5rem;
     }
 
     .salon-profile-card{
-        padding:0 1rem 1.25rem;
+      padding:0 1rem 1rem;
     }
 
     .salon-profile-main{
-        flex-direction:column;
-        margin-top:-46px;
+      flex-direction:row;
+      gap:.8rem;
+      margin-top:-34px;
     }
 
     .salon-logo-wrap{
-        width:96px;
-        height:96px;
-        flex-basis:96px;
-        border-radius:1.1rem;
+      width:72px;
+      height:72px;
+      flex-basis:72px;
+      border-radius:1rem;
+    }
+
+    .salon-logo-placeholder{
+      font-size:1.65rem;
     }
 
     .salon-profile-info{
-        padding-top:0;
+      padding-top:2.35rem;
+    }
+
+    .salon-pill{
+      font-size:.68rem;
+      padding:.3rem .6rem;
+      margin-bottom:.42rem;
     }
 
     .salon-title-row{
-        align-items:flex-start;
+      align-items:flex-start;
+    }
+
+    .salon-title{
+      font-size:1.55rem;
+      margin-bottom:.42rem;
+    }
+
+    .salon-instagram-link{
+      width:36px;
+      height:36px;
+      flex-basis:36px;
+      font-size:1rem;
+    }
+
+    .salon-description{
+      font-size:.9rem;
+      line-height:1.45;
+      margin-bottom:.85rem;
     }
 
     .salon-meta{
-        flex-direction:column;
+      flex-direction:column;
+      gap:.45rem;
     }
 
     .salon-meta-item{
-        border-radius:1rem;
-        width:100%;
+      width:100%;
+      border-radius:.9rem;
+      padding:.58rem .75rem;
+      font-size:.84rem;
+    }
+
+    .salon-public-panels{
+      margin-top:.9rem;
+    }
+
+    .salon-public-detail summary{
+      padding:.75rem .85rem;
+      font-size:.92rem;
+    }
+
+    .salon-public-detail-body{
+      padding:.8rem .85rem;
     }
 
     .salon-hours-list div{
-        flex-direction:column;
-        gap:.2rem;
+      flex-direction:column;
+      gap:.15rem;
     }
-    }
-
-  
 
     .services-heading{
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-end;
-        gap: 1rem;
-        margin-bottom: 1.5rem;
+      margin-bottom:1rem;
     }
 
     .services-heading .nyx-page-title{
-        font-weight: 700;
-        letter-spacing: -0.035em;
-    }
-  @media (max-width: 991.98px){
-    .salon-hero-content{
-      grid-template-columns: 1fr;
-      padding: 2rem;
+      font-size:1.55rem;
     }
 
-    .salon-hero-right{
-      align-items: flex-start;
-    }
-
-    .salon-main-cta{
-      width: 100%;
-      justify-content: center;
-    }
-  }
-
-  @media (max-width: 575.98px){
-    .salon-hero-content{
-      padding: 1.4rem;
-    }
-
-    .salon-meta{
-      flex-direction: column;
-    }
-
-    .salon-meta-item{
-    display: inline-flex;
-    align-items: center;
-    gap: .45rem;
-    padding: .7rem 1rem;
-    border: 1px solid var(--nyx-border);
-    border-radius: 999px;
-    background: #fbfefe;
-    color: var(--nyx-text);
-    font-size: .94rem;
+    .services-heading .nyx-page-subtitle{
+      font-size:.92rem;
     }
   }
 </style>
@@ -438,23 +459,23 @@
         </p>
 
         {% if salon.phone or salon.email %}
-            <div class="salon-meta">
-                {% if salon.phone %}
-                <div class="salon-meta-item">
-                    <i class="bi bi-whatsapp"></i>
-                    <span>{{ salon.phone }}</span>
-                </div>
-                {% endif %}
+          <div class="salon-meta">
+            {% if salon.phone %}
+              <div class="salon-meta-item">
+                <i class="bi bi-whatsapp"></i>
+                <span>{{ salon.phone }}</span>
+              </div>
+            {% endif %}
 
-                {% if salon.email %}
-                <div class="salon-meta-item">
-                    <i class="bi bi-envelope"></i>
-                    <span>{{ salon.email }}</span>
-                </div>
-                {% endif %}
-            </div>
+            {% if salon.email %}
+              <div class="salon-meta-item">
+                <i class="bi bi-envelope"></i>
+                <span>{{ salon.email }}</span>
+              </div>
+            {% endif %}
+          </div>
         {% endif %}
-      
+      </div>
     </div>
 
     <div class="salon-public-panels">
@@ -519,119 +540,117 @@
 </section>
 
 <div class="row g-4 align-items-start">
-    <div class="col-12 col-lg-8">
-        {% if services %}
-            <div class="row g-4">
-                {% for service in services %}
-                    <div class="col-12 col-md-6 col-xl-4">
-                        <div class="card h-100 border-0 shadow-sm service-card">
-                            <div class="card-body d-flex flex-column">
-                                <div class="service-card-header mb-3">
-                                    <div>
-                                        <h2 class="h5 card-title mb-2">{{ service.name }}</h2>
-                                        <span class="badge nyx-badge-soft">
-                                            {{ service.duration_minutes }} min
-                                        </span>
-                                    </div>
+  <div class="col-12 col-lg-8">
+    {% if services %}
+      <div class="row g-4">
+        {% for service in services %}
+          <div class="col-12 col-md-6 col-xl-4">
+            <div class="card h-100 border-0 shadow-sm service-card">
+              <div class="card-body d-flex flex-column">
+                <div class="service-card-header mb-3">
+                  <div>
+                    <h2 class="h5 card-title mb-2">{{ service.name }}</h2>
+                    <span class="badge nyx-badge-soft">
+                      {{ service.duration_minutes }} min
+                    </span>
+                  </div>
 
-                                    <div class="service-price-pill">
-                                        ${{ service.price|miles_punto }}
-                                    </div>
-                                </div>
+                  <div class="service-price-pill">
+                    ${{ service.price|miles_punto }}
+                  </div>
+                </div>
 
-                                {% if service.description %}
-                                    <p class="card-text nyx-text-muted mb-4">
-                                        {{ service.description }}
-                                    </p>
-                                {% else %}
-                                    <p class="card-text nyx-text-muted mb-4">
-                                        Sin descripción.
-                                    </p>
-                                {% endif %}
+                {% if service.description %}
+                  <p class="card-text nyx-text-muted mb-4">
+                    {{ service.description }}
+                  </p>
+                {% else %}
+                  <p class="card-text nyx-text-muted mb-4">
+                    Sin descripción.
+                  </p>
+                {% endif %}
 
-                                <div class="mt-auto">
-                                    <button
-                                        type="button"
-                                        class="btn nyx-btn-outline w-100 add-service-btn"
-                                        data-id="{{ service.id }}"
-                                        data-name="{{ service.name }}"
-                                        data-price="{{ service.price }}"
-                                        data-duration="{{ service.duration_minutes }}"
-                                    >
-                                        Agregar
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                {% endfor %}
+                <div class="mt-auto">
+                  <button
+                    type="button"
+                    class="btn nyx-btn-outline w-100 add-service-btn"
+                    data-id="{{ service.id }}"
+                    data-name="{{ service.name }}"
+                    data-price="{{ service.price }}"
+                    data-duration="{{ service.duration_minutes }}"
+                  >
+                    Agregar
+                  </button>
+                </div>
+              </div>
             </div>
-        {% else %}
-            <div class="card border-0 shadow-sm service-card">
-                <div class="card-body py-5 text-center">
-                    <h2 class="h4 mb-2">No hay servicios disponibles</h2>
-                    <p class="nyx-text-muted mb-0">
-                        Este salón todavía no tiene servicios disponibles para reservar online.
-                    </p>
-                </div>
-            </div>
-        {% endif %}
-    </div>
-
-    <div class="col-12 col-lg-4 align-self-start">
-        <div class="card border-0 shadow-sm selection-summary sticky-summary">
-            <div class="card-body p-4">
-                <h2 class="h4 mb-3">Tu selección</h2>
-                <p class="nyx-text-muted small mb-4">
-                    Agregá los servicios que quieras reservar en un mismo turno.
-                </p>
-
-                <div id="selected-services-list" class="mb-4">
-                    <div id="empty-selection" class="nyx-text-muted">
-                        Todavía no agregaste ningún servicio.
-                    </div>
-                </div>
-
-                <hr class="nyx-divider">
-
-                <div class="d-flex justify-content-between mb-2">
-                    <span class="nyx-text-muted">Servicios</span>
-                    <span class="fw-semibold" id="services-count">0</span>
-                </div>
-
-                <div class="d-flex justify-content-between mb-2">
-                    <span class="nyx-text-muted">Duración estimada</span>
-                    <span class="fw-semibold" id="total-duration">0 min</span>
-                </div>
-
-                <div class="d-flex justify-content-between">
-                    <span>Total estimado</span>
-                    <strong id="summary-total">$0</strong>
-                </div>
-
-                <div id="payment-summary-block" class="mt-2"></div>
-
-                <form method="get" action="{% url 'select_professional' %}">
-                    <div id="selected-services-inputs"></div>
-
-                    <button
-                        type="submit"
-                        id="continue-btn"
-                        class="mt-3 btn nyx-btn-primary w-100"
-                        disabled
-                    >
-                        Continuar
-                    </button>
-                </form>
-            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="card border-0 shadow-sm service-card">
+        <div class="card-body py-5 text-center">
+          <h2 class="h4 mb-2">No hay servicios disponibles</h2>
+          <p class="nyx-text-muted mb-0">
+            Este negocio todavía no tiene servicios disponibles para reservar online.
+          </p>
         </div>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="col-12 col-lg-4 align-self-start">
+    <div class="card border-0 shadow-sm selection-summary sticky-summary">
+      <div class="card-body p-4">
+        <h2 class="h4 mb-3">Tu selección</h2>
+        <p class="nyx-text-muted small mb-4">
+          Agregá los servicios que quieras reservar en un mismo turno.
+        </p>
+
+        <div id="selected-services-list" class="mb-4">
+          <div id="empty-selection" class="nyx-text-muted">
+            Todavía no agregaste ningún servicio.
+          </div>
+        </div>
+
+        <hr class="nyx-divider">
+
+        <div class="d-flex justify-content-between mb-2">
+          <span class="nyx-text-muted">Servicios</span>
+          <span class="fw-semibold" id="services-count">0</span>
+        </div>
+
+        <div class="d-flex justify-content-between mb-2">
+          <span class="nyx-text-muted">Duración estimada</span>
+          <span class="fw-semibold" id="total-duration">0 min</span>
+        </div>
+
+        <div class="d-flex justify-content-between">
+          <span>Total estimado</span>
+          <strong id="summary-total">$0</strong>
+        </div>
+
+        <div id="payment-summary-block" class="mt-2"></div>
+
+        <form method="get" action="{% url 'select_professional' %}">
+          <div id="selected-services-inputs"></div>
+
+          <button
+            type="submit"
+            id="continue-btn"
+            class="mt-3 btn nyx-btn-primary w-100"
+            disabled
+          >
+            Continuar
+          </button>
+        </form>
+      </div>
     </div>
+  </div>
 </div>
 {% endblock %}
 
-
 {% block scripts %}
-
 <script>
   const DEPOSIT_ENABLED = {{ deposit_enabled|yesno:"true,false" }};
   const DEPOSIT_PERCENTAGE = Number("{{ deposit_percentage|default:'0' }}");
@@ -641,203 +660,203 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const selectedServices = [];
+  const selectedServices = [];
 
-    const buttons = document.querySelectorAll('.add-service-btn');
-    const selectedList = document.getElementById('selected-services-list');
-    const servicesCount = document.getElementById('services-count');
-    const totalDuration = document.getElementById('total-duration');
-    const summaryTotal = document.getElementById('summary-total');
-    const paymentSummaryBlock = document.getElementById('payment-summary-block');
-    const selectedInputsContainer = document.getElementById('selected-services-inputs');
-    const continueBtn = document.getElementById('continue-btn');
+  const buttons = document.querySelectorAll('.add-service-btn');
+  const selectedList = document.getElementById('selected-services-list');
+  const servicesCount = document.getElementById('services-count');
+  const totalDuration = document.getElementById('total-duration');
+  const summaryTotal = document.getElementById('summary-total');
+  const paymentSummaryBlock = document.getElementById('payment-summary-block');
+  const selectedInputsContainer = document.getElementById('selected-services-inputs');
+  const continueBtn = document.getElementById('continue-btn');
 
-    function formatPrice(value) {
-        return '$' + new Intl.NumberFormat('es-AR').format(Number(value || 0));
+  function formatPrice(value) {
+    return '$' + new Intl.NumberFormat('es-AR').format(Number(value || 0));
+  }
+
+  function renderPaymentSummary(totalAmount) {
+    if (!paymentSummaryBlock) return;
+
+    const depositAmount = Math.round((Number(totalAmount) * Number(DEPOSIT_PERCENTAGE))) / 100;
+
+    if (FULL_PAYMENT_REQUIRED) {
+      paymentSummaryBlock.innerHTML = `
+        <div class="d-flex justify-content-between mt-2">
+          <span>Pago requerido</span>
+          <strong>${formatPrice(totalAmount)}</strong>
+        </div>
+        <div class="mt-3 small text-muted">
+          Para reservar este turno se solicitará el pago total.
+        </div>
+      `;
+      return;
     }
 
-    function renderPaymentSummary(totalAmount) {
-        if (!paymentSummaryBlock) return;
+    if (DEPOSIT_ENABLED && ALLOW_FULL_PAYMENT) {
+      paymentSummaryBlock.innerHTML = `
+        <div class="d-flex justify-content-between mt-2">
+          <span>Seña requerida (${DEPOSIT_PERCENTAGE}%)</span>
+          <strong>${formatPrice(depositAmount)}</strong>
+        </div>
+        <div class="d-flex justify-content-between mt-2">
+          <span>Pago total opcional</span>
+          <strong>${formatPrice(totalAmount)}</strong>
+        </div>
+        <div class="mt-3 small text-muted">
+          Para reservar se solicitará una seña, aunque también vas a poder pagar el total si querés.
+        </div>
+      `;
+      return;
+    }
 
-        const depositAmount = Math.round((Number(totalAmount) * Number(DEPOSIT_PERCENTAGE))) / 100;
+    if (DEPOSIT_ENABLED) {
+      paymentSummaryBlock.innerHTML = `
+        <div class="d-flex justify-content-between mt-2">
+          <span>Seña requerida (${DEPOSIT_PERCENTAGE}%)</span>
+          <strong>${formatPrice(depositAmount)}</strong>
+        </div>
+        <div class="mt-3 small text-muted">
+          Para reservar se solicitará una seña de ${formatPrice(depositAmount)}.
+        </div>
+      `;
+      return;
+    }
 
-        if (FULL_PAYMENT_REQUIRED) {
-            paymentSummaryBlock.innerHTML = `
-                <div class="d-flex justify-content-between mt-2">
-                    <span>Pago requerido</span>
-                    <strong>${formatPrice(totalAmount)}</strong>
-                </div>
-                <div class="mt-3 small text-muted">
-                    Para reservar este turno se solicitará el pago total.
-                </div>
-            `;
-            return;
-        }
+    if (ALLOW_FULL_PAYMENT) {
+      paymentSummaryBlock.innerHTML = `
+        <div class="d-flex justify-content-between mt-2">
+          <span>Pago total opcional</span>
+          <strong>${formatPrice(totalAmount)}</strong>
+        </div>
+        <div class="mt-3 small text-muted">
+          Más adelante vas a poder elegir pagar el total si querés.
+        </div>
+      `;
+      return;
+    }
 
-        if (DEPOSIT_ENABLED && ALLOW_FULL_PAYMENT) {
-            paymentSummaryBlock.innerHTML = `
-                <div class="d-flex justify-content-between mt-2">
-                    <span>Seña requerida (${DEPOSIT_PERCENTAGE}%)</span>
-                    <strong>${formatPrice(depositAmount)}</strong>
-                </div>
-                <div class="d-flex justify-content-between mt-2">
-                    <span>Pago total opcional</span>
-                    <strong>${formatPrice(totalAmount)}</strong>
-                </div>
-                <div class="mt-3 small text-muted">
-                    Para reservar se solicitará una seña, aunque también vas a poder pagar el total si querés.
-                </div>
-            `;
-            return;
-        }
+    paymentSummaryBlock.innerHTML = '';
+  }
 
-        if (DEPOSIT_ENABLED) {
-            paymentSummaryBlock.innerHTML = `
-                <div class="d-flex justify-content-between mt-2">
-                    <span>Seña requerida (${DEPOSIT_PERCENTAGE}%)</span>
-                    <strong>${formatPrice(depositAmount)}</strong>
-                </div>
-                <div class="mt-3 small text-muted">
-                    Para reservar se solicitará una seña de ${formatPrice(depositAmount)}.
-                </div>
-            `;
-            return;
-        }
+  function renderSelection() {
+    if (!selectedList || !servicesCount || !totalDuration || !summaryTotal) {
+      console.error('Faltan elementos del resumen en el HTML');
+      return;
+    }
 
-        if (ALLOW_FULL_PAYMENT) {
-            paymentSummaryBlock.innerHTML = `
-                <div class="d-flex justify-content-between mt-2">
-                    <span>Pago total opcional</span>
-                    <strong>${formatPrice(totalAmount)}</strong>
-                </div>
-                <div class="mt-3 small text-muted">
-                    Más adelante vas a poder elegir pagar el total si querés.
-                </div>
-            `;
-            return;
-        }
+    if (selectedServices.length === 0) {
+      selectedList.innerHTML = `
+        <div id="empty-selection" class="nyx-text-muted">
+          Todavía no agregaste ningún servicio.
+        </div>
+      `;
 
+      if (selectedInputsContainer) selectedInputsContainer.innerHTML = '';
+      servicesCount.textContent = '0';
+      totalDuration.textContent = '0 min';
+      summaryTotal.textContent = '$0';
+
+      if (paymentSummaryBlock) {
         paymentSummaryBlock.innerHTML = '';
+      }
+
+      if (continueBtn) continueBtn.disabled = true;
+      return;
     }
 
-    function renderSelection() {
-        if (!selectedList || !servicesCount || !totalDuration || !summaryTotal) {
-            console.error('Faltan elementos del resumen en el HTML');
-            return;
-        }
+    let totalMinutes = 0;
+    let totalAmount = 0;
 
-        if (selectedServices.length === 0) {
-            selectedList.innerHTML = `
-                <div id="empty-selection" class="nyx-text-muted">
-                    Todavía no agregaste ningún servicio.
-                </div>
-            `;
+    selectedList.innerHTML = selectedServices.map((service, index) => {
+      totalMinutes += Number(service.duration);
+      totalAmount += Number(service.price);
 
-            if (selectedInputsContainer) selectedInputsContainer.innerHTML = '';
-            servicesCount.textContent = '0';
-            totalDuration.textContent = '0 min';
-            summaryTotal.textContent = '$0';
+      return `
+        <div class="nyx-selected-service p-3 mb-2">
+          <div class="d-flex justify-content-between align-items-start gap-2">
+            <div>
+              <div class="fw-semibold">${service.name}</div>
+              <div class="small nyx-text-muted">
+                ${service.duration} min · ${formatPrice(service.price)}
+              </div>
+            </div>
+            <button
+              type="button"
+              class="btn btn-sm nyx-btn-remove remove-service-btn"
+              data-index="${index}"
+            >
+              Quitar
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
 
-            if (paymentSummaryBlock) {
-                paymentSummaryBlock.innerHTML = '';
-            }
-
-            if (continueBtn) continueBtn.disabled = true;
-            return;
-        }
-
-        let totalMinutes = 0;
-        let totalAmount = 0;
-
-        selectedList.innerHTML = selectedServices.map((service, index) => {
-            totalMinutes += Number(service.duration);
-            totalAmount += Number(service.price);
-
-            return `
-                <div class="nyx-selected-service p-3 mb-2">
-                    <div class="d-flex justify-content-between align-items-start gap-2">
-                        <div>
-                            <div class="fw-semibold">${service.name}</div>
-                            <div class="small nyx-text-muted">
-                                ${service.duration} min · ${formatPrice(service.price)}
-                            </div>
-                        </div>
-                        <button
-                            type="button"
-                            class="btn btn-sm nyx-btn-remove remove-service-btn"
-                            data-index="${index}"
-                        >
-                            Quitar
-                        </button>
-                    </div>
-                </div>
-            `;
-        }).join('');
-
-        if (selectedInputsContainer) {
-            selectedInputsContainer.innerHTML = selectedServices.map(service => `
-                <input type="hidden" name="services" value="${service.id}">
-            `).join('');
-        }
-
-        servicesCount.textContent = selectedServices.length;
-        totalDuration.textContent = `${totalMinutes} min`;
-        summaryTotal.textContent = formatPrice(totalAmount);
-        renderPaymentSummary(totalAmount);
-        if (continueBtn) continueBtn.disabled = false;
-
-        bindRemoveButtons();
+    if (selectedInputsContainer) {
+      selectedInputsContainer.innerHTML = selectedServices.map(service => `
+        <input type="hidden" name="services" value="${service.id}">
+      `).join('');
     }
 
-    function bindRemoveButtons() {
-        document.querySelectorAll('.remove-service-btn').forEach(button => {
-            button.addEventListener('click', function () {
-                const index = Number(this.dataset.index);
-                const removedService = selectedServices[index];
+    servicesCount.textContent = selectedServices.length;
+    totalDuration.textContent = `${totalMinutes} min`;
+    summaryTotal.textContent = formatPrice(totalAmount);
+    renderPaymentSummary(totalAmount);
+    if (continueBtn) continueBtn.disabled = false;
 
-                selectedServices.splice(index, 1);
+    bindRemoveButtons();
+  }
 
-                buttons.forEach(btn => {
-                    if (btn.dataset.id === String(removedService.id)) {
-                        btn.disabled = false;
-                        btn.textContent = 'Agregar';
-                        btn.classList.remove('nyx-btn-added');
-                        btn.classList.add('nyx-btn-outline');
-                    }
-                });
+  function bindRemoveButtons() {
+    document.querySelectorAll('.remove-service-btn').forEach(button => {
+      button.addEventListener('click', function () {
+        const index = Number(this.dataset.index);
+        const removedService = selectedServices[index];
 
-                renderSelection();
-            });
+        selectedServices.splice(index, 1);
+
+        buttons.forEach(btn => {
+          if (btn.dataset.id === String(removedService.id)) {
+            btn.disabled = false;
+            btn.textContent = 'Agregar';
+            btn.classList.remove('nyx-btn-added');
+            btn.classList.add('nyx-btn-outline');
+          }
         });
-    }
 
-    buttons.forEach(button => {
-        button.addEventListener('click', function () {
-            const serviceId = this.dataset.id;
-
-            const alreadySelected = selectedServices.some(
-                service => String(service.id) === String(serviceId)
-            );
-
-            if (alreadySelected) return;
-
-            selectedServices.push({
-                id: this.dataset.id,
-                name: this.dataset.name,
-                price: this.dataset.price,
-                duration: this.dataset.duration
-            });
-
-            this.disabled = true;
-            this.textContent = 'Agregado';
-            this.classList.remove('nyx-btn-outline');
-            this.classList.add('nyx-btn-added');
-
-            renderSelection();
-        });
+        renderSelection();
+      });
     });
+  }
 
-    renderSelection();
+  buttons.forEach(button => {
+    button.addEventListener('click', function () {
+      const serviceId = this.dataset.id;
+
+      const alreadySelected = selectedServices.some(
+        service => String(service.id) === String(serviceId)
+      );
+
+      if (alreadySelected) return;
+
+      selectedServices.push({
+        id: this.dataset.id,
+        name: this.dataset.name,
+        price: this.dataset.price,
+        duration: this.dataset.duration
+      });
+
+      this.disabled = true;
+      this.textContent = 'Agregado';
+      this.classList.remove('nyx-btn-outline');
+      this.classList.add('nyx-btn-added');
+
+      renderSelection();
+    });
+  });
+
+  renderSelection();
 });
 </script>
 {% endblock %}

@@ -87,7 +87,11 @@
                 {% endif %}
               </div>
 
-              <button type="submit" class="btn nyx-flow-btn"> 
+              <button
+                type="submit"
+                id="confirm-booking-btn"
+                class="btn nyx-flow-btn w-100"
+              >
                 Confirmar reserva
               </button>
             </form>
@@ -318,4 +322,23 @@
     </div>
   </div>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const form = document.getElementById("booking-confirm-form");
+  const button = document.getElementById("confirm-booking-btn");
+
+  if (!form || !button) return;
+
+  form.addEventListener("submit", function () {
+    if (button.disabled) return;
+
+    button.disabled = true;
+    button.innerHTML = `
+      <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+      Confirmando...
+    `;
+  });
+});
+</script>
 {% endblock %}

@@ -11,6 +11,8 @@ from django.shortcuts import get_object_or_404, render, redirect
 from django.urls import reverse
 from django.utils import timezone
 
+from reservas.notifications import notify_admin_new_trial_account
+
 from .mail_utils import send_booking_confirmed_email, send_staff_invitation_email, send_booking_cancelled_email, send_booking_payment_pending_email
 from .models import (
     BookingItem,
@@ -407,7 +409,21 @@ def panel_service_create(request):
             service = form.save(commit=False)
             service.salon = salon
             service.save()
-            messages.success(request, 'Servicio creado correctamente.')
+            active_employees = list(
+                Employee.objects.filter(
+                    salon=salon,
+                    is_active=True
+                )[:2]
+            )
+
+            if len(active_employees) == 1:
+                active_employees[0].services.add(service)
+                messages.success(
+                    request,
+                    f"Servicio creado y asignado automáticamente a {active_employees[0].name}."
+                )
+            else:
+                messages.success(request, "Servicio creado correctamente.")
             return redirect('panel_services')
     else:
         form = PanelServiceForm()
@@ -489,7 +505,23 @@ def panel_employees(request):
     if not salon or not is_owner_user(request.user):
         raise PermissionDenied("Solo la dueña puede gestionar profesionales.")
 
-    employees = Employee.objects.filter(salon=salon).prefetch_related('services').order_by('name')
+    employees = (
+        Employee.objects
+        .filter(salon=salon)
+        .select_related("user")
+        .prefetch_related("services", "user__salon_memberships")
+        .order_by("name")
+    )
+
+    for employee in employees:
+        employee.is_owner_professional = False
+
+        if employee.user_id:
+            employee.is_owner_professional = employee.user.salon_memberships.filter(
+                salon=salon,
+                role="owner",
+                is_active=True
+            ).exists()
 
     context = {
         'panel_role': 'owner',
@@ -1030,6 +1062,36 @@ def panel_business_hour_block_toggle_active(request, block_id):
 
     return redirect('panel_business_hours')
 
+@login_required
+@subscription_required
+def panel_bloqueo_delete(request, block_id):
+    if request.user.is_superuser:
+        return redirect('/admin/')
+
+    salon = get_user_salon(request.user)
+
+    if not salon:
+        raise PermissionDenied("No encontramos el negocio asociado.")
+
+    block = get_object_or_404(
+        EmployeeTimeOff,
+        pk=block_id,
+        employee__salon=salon,
+    )
+
+    if not is_owner_user(request.user):
+        employee = get_user_employee(request.user)
+
+        if not employee or block.employee_id != employee.id:
+            raise PermissionDenied("No podés eliminar bloqueos de otro profesional.")
+
+    if request.method != "POST":
+        return redirect("panel_bloqueos")
+
+    block.delete()
+    messages.success(request, "Bloqueo eliminado correctamente.")
+    return redirect("panel_bloqueos")
+
 
 @login_required
 @subscription_required
@@ -1262,7 +1324,8 @@ def trial_signup(request):
             now = timezone.now()
             trial_days = getattr(settings, "NYX_TRIAL_DAYS", 15)
             monthly_price = getattr(settings, "NYX_BASIC_MONTHLY_PRICE_ARS", 30000)
-
+            notify_admin_new_trial_account(user=user, salon=salon)
+            
             SalonSubscription.objects.create(
                 salon=salon,
                 status=SalonSubscription.Status.TRIAL,
@@ -1271,6 +1334,17 @@ def trial_signup(request):
                 trial_starts_at=now,
                 trial_ends_at=now + timedelta(days=trial_days),
             )
+
+            if form.cleaned_data.get("owner_works"):
+                Employee.objects.create(
+                    salon=salon,
+                    user=user,
+                    name=form.cleaned_data["owner_name"],
+                    phone=form.cleaned_data["phone"],
+                    email=form.cleaned_data["email"],
+                    is_active=True,
+                    notify_by_email=True,
+                )
 
             login(request, user)
 

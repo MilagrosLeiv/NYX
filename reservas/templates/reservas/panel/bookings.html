@@ -38,6 +38,197 @@
     font-size: .82rem;
     color: #6b7280;
   }
+
+  .nyx-booking-date{
+    color: var(--nyx-text);
+    font-weight: 850;
+  }
+
+  .nyx-booking-time{
+    color: var(--nyx-text-muted);
+    font-size: .9rem;
+    font-weight: 700;
+    margin-top: .1rem;
+  }
+
+  .nyx-booking-services{
+    display: flex;
+    flex-direction: column;
+    gap: .35rem;
+  }
+
+  .nyx-booking-service-item{
+    color: var(--nyx-text);
+    font-size: .9rem;
+    line-height: 1.35;
+  }
+
+  .nyx-booking-service-item strong{
+    font-weight: 850;
+  }
+
+  @media (max-width: 767.98px){
+    .nyx-card.p-4{
+      padding: 1rem !important;
+    }
+
+    .nyx-filter-form{
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: .9rem;
+    }
+
+    .nyx-filter-form > div,
+    .nyx-filter-input{
+      width: 100%;
+      min-width: 0;
+    }
+
+    .nyx-filter-form .d-flex{
+      width: 100%;
+      justify-content: stretch;
+    }
+
+    .nyx-filter-form .nyx-primary-btn,
+    .nyx-filter-form .nyx-filter-btn{
+      flex: 1 1 0;
+      justify-content: center;
+      text-align: center;
+      min-height: 44px;
+    }
+
+    .nyx-table-responsive{
+      overflow: visible !important;
+    }
+
+    .nyx-bookings-table{
+      border-collapse: separate;
+      border-spacing: 0 1.8rem;
+    }
+
+    .nyx-bookings-table thead{
+      display: none;
+    }
+
+    .nyx-bookings-table tbody,
+    .nyx-bookings-table tr,
+    .nyx-bookings-table td{
+      display: block;
+      width: 100%;
+    }
+
+    .nyx-bookings-table tr{
+      position: relative;
+      background:
+        radial-gradient(circle at top right, rgba(140, 220, 223, .16), transparent 34%),
+        #ffffff;
+      border: 1px solid var(--nyx-border);
+      border-radius: 1.35rem;
+      box-shadow: 0 14px 34px rgba(34, 83, 83, .09);
+      padding: 1.05rem;
+      overflow: hidden;
+      margin-bottom: 1.8rem;
+    }
+
+    .nyx-bookings-table tr::before{
+      content: "";
+      position: absolute;
+      inset: 0 0 auto 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--nyx-primary), var(--nyx-soft));
+    }
+
+    .nyx-bookings-table td{
+      border: 0 !important;
+      padding: .65rem 0 !important;
+      text-align: left !important;
+    }
+
+    .nyx-bookings-table td:not(:last-child){
+      border-bottom: 1px solid var(--nyx-border) !important;
+    }
+
+    .nyx-bookings-table td::before{
+      content: attr(data-label);
+      display: block;
+      color: var(--nyx-text-muted);
+      font-size: .74rem;
+      font-weight: 850;
+      text-transform: uppercase;
+      letter-spacing: .045em;
+      margin-bottom: .35rem;
+    }
+
+    .nyx-bookings-table td[data-label="Reserva"]::before{
+      display: none;
+    }
+
+    .nyx-bookings-table td[data-label="Reserva"]{
+      padding-top: 0 !important;
+    }
+
+    .nyx-bookings-table td[data-label="Reserva"] .fw-semibold{
+      color: var(--nyx-text);
+      font-size: 1.08rem;
+      font-weight: 900;
+    }
+
+    .nyx-bookings-table td[data-label="Teléfono"],
+    .nyx-bookings-table td[data-label="Fecha"],
+    .nyx-bookings-table td[data-label="Estado"]{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: .75rem;
+    }
+
+    .nyx-bookings-table td[data-label="Teléfono"]::before,
+    .nyx-bookings-table td[data-label="Fecha"]::before,
+    .nyx-bookings-table td[data-label="Estado"]::before{
+      margin-bottom: 0;
+    }
+
+    .nyx-bookings-table td[data-label="Fecha"] > div{
+      text-align: right;
+    }
+
+    .nyx-bookings-table td[data-label="Servicios"]{
+      color: var(--nyx-text);
+      font-weight: 700;
+      line-height: 1.4;
+    }
+
+    .nyx-bookings-table td[data-label="Acciones"]{
+      padding-bottom: 0 !important;
+      border-bottom: 0 !important;
+    }
+
+    .nyx-bookings-table td[data-label="Acciones"] .d-flex{
+      justify-content: stretch !important;
+      width: 100%;
+    }
+
+    .nyx-bookings-table td[data-label="Acciones"] .nyx-filter-btn{
+      flex: 1 1 130px;
+      justify-content: center;
+      text-align: center;
+      min-height: 44px;
+      border-radius: 999px;
+      font-weight: 850;
+    }
+
+    .nyx-payment-stack{
+      align-items: flex-start;
+    }
+
+    .nyx-badge{
+      display: inline-flex;
+      width: fit-content;
+      max-width: 100%;
+      white-space: normal;
+      line-height: 1.2;
+    }
+  }
 </style>
 {% endblock %}
 
@@ -100,8 +291,8 @@
 
 <div class="nyx-card p-4">
   {% if bookings %}
-    <div class="table-responsive">
-      <table class="table nyx-table align-middle">
+    <div class="table-responsive nyx-table-responsive">
+      <table class="table nyx-table nyx-bookings-table align-middle mb-0">
         <thead>
           <tr>
             <th>ID</th>
@@ -114,31 +305,50 @@
             <th class="text-end">Acciones</th>
           </tr>
         </thead>
+
         <tbody>
           {% for booking in bookings %}
             <tr>
-              <td class="fw-semibold">#{{ booking.id }}</td>
-              <td class="fw-semibold">{{ booking.customer_name }}</td>
-              <td>{{ booking.customer_phone }}</td>
-              <td>
+              <td data-label="Reserva">
+                <div class="fw-semibold">
+                  #{{ booking.id }} · {{ booking.customer_name }}
+                </div>
+              </td>
+
+              <td data-label="Teléfono">
+                {{ booking.customer_phone|default:"-" }}
+              </td>
+
+              <td data-label="Fecha">
                 {% for item in booking.items.all %}
                   {% if forloop.first %}
-                    {{ item.start_datetime|date:"d/m/Y H:i" }}
+                    <div>
+                      <div class="nyx-booking-date">
+                        {{ item.start_datetime|date:"d/m/Y" }}
+                      </div>
+                      <div class="nyx-booking-time">
+                        {{ item.start_datetime|date:"H:i" }}
+                      </div>
+                    </div>
                   {% endif %}
                 {% empty %}
                   -
                 {% endfor %}
               </td>
-              <td>
-                <div class="d-flex flex-column gap-1">
+
+              <td data-label="Servicios">
+                <div class="nyx-booking-services">
                   {% for item in booking.items.all %}
-                    <div class="small">
+                    <div class="nyx-booking-service-item">
                       <strong>{{ item.service.name }}</strong> · {{ item.employee.name }}
                     </div>
+                  {% empty %}
+                    <span class="text-secondary small">Sin servicios cargados</span>
                   {% endfor %}
                 </div>
               </td>
-              <td>
+
+              <td data-label="Estado">
                 {% if booking.status == 'cancelled' %}
                   <span class="nyx-badge" style="background:#fff3f3;color:#b54747;border-color:#f1caca;">
                     {{ booking.get_status_display }}
@@ -147,10 +357,10 @@
                   <span class="nyx-badge" style="background:#f3f4f6;color:#5f6b76;border-color:#d7dde3;">
                     {{ booking.get_status_display }}
                   </span>
-                  {% elif booking.status == 'expired' %}
-                    <span class="nyx-badge" style="background:#fff7ed;color:#b45309;border-color:#f3d3a1;">
-                      {{ booking.get_status_display }}
-                    </span>
+                {% elif booking.status == 'expired' %}
+                  <span class="nyx-badge" style="background:#fff7ed;color:#b45309;border-color:#f3d3a1;">
+                    {{ booking.get_status_display }}
+                  </span>
                 {% else %}
                   <span class="nyx-badge">
                     {{ booking.get_status_display }}
@@ -158,7 +368,7 @@
                 {% endif %}
               </td>
 
-              <td>
+              <td data-label="Pago">
                 <div class="nyx-payment-stack">
                   {% if booking.payment_choice == 'none' %}
                     <span class="nyx-badge" style="background:#f3f4f6;color:#5f6b76;border-color:#d7dde3;">
@@ -182,11 +392,16 @@
                 </div>
               </td>
 
-              <td class="text-end">
+              <td data-label="Acciones" class="text-end">
                 <div class="d-flex justify-content-end gap-2 flex-wrap">
-                  <a href="{% url 'panel_booking_detail' booking.id %}" class="nyx-filter-btn">Ver</a>
+                  <a href="{% url 'panel_booking_detail' booking.id %}" class="nyx-filter-btn">
+                    Ver
+                  </a>
+
                   {% if booking.status != 'cancelled' %}
-                    <a href="{% url 'panel_booking_cancel' booking.id %}" class="nyx-filter-btn">Cancelar</a>
+                    <a href="{% url 'panel_booking_cancel' booking.id %}" class="nyx-filter-btn">
+                      Cancelar
+                    </a>
                   {% endif %}
                 </div>
               </td>

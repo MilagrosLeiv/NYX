@@ -6,19 +6,14 @@
 
 {% block panel_content %}
 
-{% if messages %}
-  <div class="mb-3">
-    {% for message in messages %}
-      <div class="alert alert-{{ message.tags }} mb-2">
-        {{ message }}
-      </div>
-    {% endfor %}
-  </div>
-{% endif %}
+<div class="nyx-card p-4 mb-4 nyx-block-form-card">
+  <div class="nyx-block-form-head">
+    <div class="nyx-block-icon">
+      <i class="bi bi-slash-circle"></i>
+    </div>
 
-<div class="nyx-card p-4 mb-4">
-  <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-3">
     <div>
+      <div class="nyx-block-kicker">Disponibilidad</div>
       <h2 class="h5 fw-bold mb-1">Cargar bloqueo</h2>
 
       {% if panel_role == 'staff' %}
@@ -33,12 +28,12 @@
     </div>
   </div>
 
-  <form method="post" class="row g-3">
+  <form method="post" class="row g-3 mt-1">
     {% csrf_token %}
 
     {% if form.non_field_errors %}
       <div class="col-12">
-        <div class="alert alert-danger mb-0">
+        <div class="alert alert-danger mb-0 rounded-4">
           {{ form.non_field_errors }}
         </div>
       </div>
@@ -88,17 +83,21 @@
       {% endif %}
     </div>
 
-    <div class="col-12 d-flex justify-content-end">
-      <button type="submit" class="btn nyx-btn-primary px-4">
-        Cargar bloqueo
+    <div class="col-12 d-flex justify-content-end nyx-block-submit-wrap">
+      <button type="submit" class="nyx-block-submit-btn">
+        <span class="nyx-block-submit-icon">
+          <i class="bi bi-plus-lg"></i>
+        </span>
+        <span>Cargar bloqueo</span>
       </button>
     </div>
   </form>
 </div>
 
 <div class="nyx-card p-4">
-  <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap mb-3">
+  <div class="nyx-block-list-head">
     <div>
+      <div class="nyx-block-kicker">Agenda bloqueada</div>
       <h2 class="h5 fw-bold mb-1">Bloqueos cargados</h2>
       <p class="text-muted mb-0">
         Estos horarios no aparecerán disponibles para reservas.
@@ -107,8 +106,8 @@
   </div>
 
   {% if blocks %}
-    <div class="table-responsive">
-      <table class="table nyx-table align-middle">
+    <div class="table-responsive nyx-table-responsive mt-3">
+      <table class="table nyx-table nyx-blocks-table align-middle mb-0">
         <thead>
           <tr>
             {% if panel_role == 'owner' %}
@@ -118,6 +117,7 @@
             <th>Hasta</th>
             <th>Motivo</th>
             <th>Creado por</th>
+            <th class="text-end">Acciones</th>
           </tr>
         </thead>
 
@@ -125,22 +125,513 @@
           {% for block in blocks %}
             <tr>
               {% if panel_role == 'owner' %}
-                <td class="fw-semibold">{{ block.employee.name }}</td>
+                <td data-label="Profesional">
+                  <div class="fw-semibold">{{ block.employee.name }}</div>
+                </td>
               {% endif %}
-              <td>{{ block.start_datetime|date:"d/m/Y H:i" }}</td>
-              <td>{{ block.end_datetime|date:"d/m/Y H:i" }}</td>
-              <td>{{ block.reason|default:"-" }}</td>
-              <td>{{ block.created_by.username|default:"-" }}</td>
+
+              <td data-label="Desde">
+                <div class="nyx-block-date">
+                  {{ block.start_datetime|date:"d/m/Y" }}
+                </div>
+                <div class="nyx-block-time">
+                  {{ block.start_datetime|date:"H:i" }}
+                </div>
+              </td>
+
+              <td data-label="Hasta">
+                <div class="nyx-block-date">
+                  {{ block.end_datetime|date:"d/m/Y" }}
+                </div>
+                <div class="nyx-block-time">
+                  {{ block.end_datetime|date:"H:i" }}
+                </div>
+              </td>
+
+              <td data-label="Motivo">
+                {{ block.reason|default:"-" }}
+              </td>
+
+              <td data-label="Creado por">
+                {{ block.created_by.username|default:"-" }}
+              </td>
+
+              <td data-label="Acciones" class="text-end">
+                <div class="d-flex justify-content-end gap-2 flex-wrap">
+                  <button
+                    type="button"
+                    class="nyx-danger-btn nyx-delete-block-btn"
+                    data-delete-url="{% url 'panel_bloqueo_delete' block.id %}"
+                    data-block-label="{{ block.employee.name }} · {{ block.start_datetime|date:'d/m/Y H:i' }} - {{ block.end_datetime|date:'H:i' }}"
+                  >
+                    <i class="bi bi-trash3"></i>
+                    Eliminar
+                  </button>
+                </div>
+              </td>
             </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
   {% else %}
-    <div class="nyx-empty">
+    <div class="nyx-empty mt-3">
       No hay bloqueos cargados.
     </div>
   {% endif %}
 </div>
+
+<div class="nyx-confirm-backdrop" id="nyxDeleteBlockModal" hidden>
+  <div class="nyx-confirm-modal">
+    <div class="nyx-confirm-icon">
+      <i class="bi bi-trash3"></i>
+    </div>
+
+    <div class="nyx-confirm-content">
+      <h3>Eliminar bloqueo</h3>
+      <p>
+        ¿Seguro que querés eliminar este bloqueo? Ese horario volverá a estar disponible para reservas.
+      </p>
+
+      <div class="nyx-confirm-detail" id="nyxDeleteBlockDetail"></div>
+
+      <form method="post" id="nyxDeleteBlockForm">
+        {% csrf_token %}
+
+        <div class="nyx-confirm-actions">
+          <button type="button" class="nyx-confirm-cancel" id="nyxDeleteBlockCancel">
+            Cancelar
+          </button>
+
+          <button type="submit" class="nyx-confirm-delete">
+            Sí, eliminar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<style>
+  .nyx-block-form-card{
+    position: relative;
+    overflow: hidden;
+    background:
+      radial-gradient(circle at top right, rgba(140, 220, 223, .24), transparent 34%),
+      linear-gradient(135deg, #ffffff 0%, #f8ffff 100%);
+  }
+
+  .nyx-block-form-card::before{
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 5px;
+    background: linear-gradient(180deg, var(--nyx-primary), var(--nyx-soft));
+  }
+
+  .nyx-block-form-head,
+  .nyx-block-list-head{
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .nyx-block-icon{
+    width: 46px;
+    height: 46px;
+    flex: 0 0 46px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, var(--nyx-primary), var(--nyx-primary-strong));
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 22px rgba(118, 207, 210, .22);
+    font-size: 1.2rem;
+  }
+
+  .nyx-block-kicker{
+    color: var(--nyx-primary-dark);
+    font-size: .76rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    margin-bottom: .25rem;
+  }
+
+  .nyx-block-date{
+    color: var(--nyx-text);
+    font-weight: 850;
+  }
+
+  .nyx-block-time{
+    color: var(--nyx-text-muted);
+    font-size: .9rem;
+    font-weight: 700;
+    margin-top: .1rem;
+  }
+
+  .nyx-block-submit-btn{
+    min-height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .65rem;
+    border: 0;
+    border-radius: 999px;
+    padding: .78rem 1.25rem;
+    background: linear-gradient(135deg, var(--nyx-primary), var(--nyx-primary-strong));
+    color: #ffffff;
+    font-weight: 900;
+    box-shadow: 0 14px 28px rgba(118, 207, 210, .24);
+    transition: .2s ease;
+  }
+
+  .nyx-block-submit-btn:hover{
+    transform: translateY(-1px);
+    box-shadow: 0 18px 34px rgba(118, 207, 210, .32);
+  }
+
+  .nyx-block-submit-icon{
+    width: 26px;
+    height: 26px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: rgba(255,255,255,.22);
+  }
+
+  .nyx-danger-btn{
+    min-height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .45rem;
+    border: 1px solid #f1caca;
+    background: #fff3f3;
+    color: #b54747;
+    border-radius: 999px;
+    padding: .55rem .9rem;
+    font-weight: 850;
+    font-size: .88rem;
+    transition: .2s ease;
+  }
+
+  .nyx-danger-btn:hover{
+    background: #ffe7e7;
+    color: #9f3333;
+    transform: translateY(-1px);
+  }
+
+  .nyx-confirm-backdrop{
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: rgba(24, 49, 49, .42);
+    backdrop-filter: blur(6px);
+  }
+
+  .nyx-confirm-backdrop[hidden]{
+    display: none;
+  }
+
+  .nyx-confirm-modal{
+    width: min(100%, 460px);
+    display: flex;
+    gap: 1rem;
+    background: #ffffff;
+    border: 1px solid var(--nyx-border);
+    border-radius: 1.35rem;
+    box-shadow: 0 24px 70px rgba(24, 49, 49, .25);
+    padding: 1.25rem;
+  }
+
+  .nyx-confirm-icon{
+    width: 46px;
+    height: 46px;
+    flex: 0 0 46px;
+    border-radius: 16px;
+    background: #fff3f3;
+    color: #b54747;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    border: 1px solid #f1caca;
+  }
+
+  .nyx-confirm-content{
+    flex: 1;
+    min-width: 0;
+  }
+
+  .nyx-confirm-content h3{
+    color: var(--nyx-text);
+    font-size: 1.15rem;
+    font-weight: 900;
+    margin: 0 0 .35rem;
+  }
+
+  .nyx-confirm-content p{
+    color: var(--nyx-text-muted);
+    margin: 0;
+    line-height: 1.45;
+  }
+
+  .nyx-confirm-detail{
+    margin-top: .85rem;
+    padding: .75rem .85rem;
+    border-radius: 1rem;
+    background: #f8fbfb;
+    border: 1px solid var(--nyx-border);
+    color: var(--nyx-text);
+    font-weight: 750;
+    font-size: .9rem;
+  }
+
+  .nyx-confirm-actions{
+    display: flex;
+    justify-content: flex-end;
+    gap: .65rem;
+    flex-wrap: wrap;
+    margin-top: 1.1rem;
+  }
+
+  .nyx-confirm-cancel,
+  .nyx-confirm-delete{
+    min-height: 42px;
+    border-radius: 999px;
+    padding: .65rem 1rem;
+    font-weight: 850;
+    border: 1px solid transparent;
+  }
+
+  .nyx-confirm-cancel{
+    background: #ffffff;
+    border-color: var(--nyx-border);
+    color: var(--nyx-primary-dark);
+  }
+
+  .nyx-confirm-delete{
+    background: #fff3f3;
+    border-color: #f1caca;
+    color: #b54747;
+  }
+
+  .nyx-confirm-delete:hover{
+    background: #ffe7e7;
+  }
+
+  @media (max-width: 767.98px){
+    .nyx-card.p-4{
+      padding: 1rem !important;
+    }
+
+    .nyx-block-form-head,
+    .nyx-block-list-head{
+      gap: .8rem;
+    }
+
+    .nyx-block-icon{
+      width: 42px;
+      height: 42px;
+      flex-basis: 42px;
+      border-radius: 15px;
+    }
+
+    .nyx-block-submit-wrap{
+      justify-content: stretch !important;
+    }
+
+    .nyx-block-submit-btn{
+      width: 100%;
+      min-height: 48px;
+    }
+
+    .nyx-table-responsive{
+      overflow: visible !important;
+    }
+
+    .nyx-blocks-table{
+      border-collapse: separate;
+      border-spacing: 0 1.8rem;
+    }
+
+    .nyx-blocks-table thead{
+      display: none;
+    }
+
+    .nyx-blocks-table tbody,
+    .nyx-blocks-table tr,
+    .nyx-blocks-table td{
+      display: block;
+      width: 100%;
+    }
+
+    .nyx-blocks-table tr{
+      position: relative;
+      background:
+        radial-gradient(circle at top right, rgba(140, 220, 223, .16), transparent 34%),
+        #ffffff;
+      border: 1px solid var(--nyx-border);
+      border-radius: 1.35rem;
+      box-shadow: 0 14px 34px rgba(34, 83, 83, .09);
+      padding: 1.05rem;
+      overflow: hidden;
+    }
+
+    .nyx-blocks-table tr::before{
+      content: "";
+      position: absolute;
+      inset: 0 0 auto 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--nyx-primary), var(--nyx-soft));
+    }
+
+    .nyx-blocks-table td{
+      border: 0 !important;
+      padding: .65rem 0 !important;
+      text-align: left !important;
+    }
+
+    .nyx-blocks-table td:not(:last-child){
+      border-bottom: 1px solid var(--nyx-border) !important;
+    }
+
+    .nyx-blocks-table td::before{
+      content: attr(data-label);
+      display: block;
+      color: var(--nyx-text-muted);
+      font-size: .74rem;
+      font-weight: 850;
+      text-transform: uppercase;
+      letter-spacing: .045em;
+      margin-bottom: .35rem;
+    }
+
+    .nyx-blocks-table td[data-label="Profesional"]::before{
+      display: none;
+    }
+
+    .nyx-blocks-table td[data-label="Profesional"]{
+      padding-top: 0 !important;
+    }
+
+    .nyx-blocks-table td[data-label="Profesional"] .fw-semibold{
+      color: var(--nyx-text);
+      font-size: 1.08rem;
+      font-weight: 900;
+    }
+
+    .nyx-blocks-table td[data-label="Desde"],
+    .nyx-blocks-table td[data-label="Hasta"],
+    .nyx-blocks-table td[data-label="Creado por"]{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: .75rem;
+    }
+
+    .nyx-blocks-table td[data-label="Desde"]::before,
+    .nyx-blocks-table td[data-label="Hasta"]::before,
+    .nyx-blocks-table td[data-label="Creado por"]::before{
+      margin-bottom: 0;
+    }
+
+    .nyx-blocks-table td[data-label="Desde"] > div,
+    .nyx-blocks-table td[data-label="Hasta"] > div{
+      text-align: right;
+    }
+
+    .nyx-blocks-table td[data-label="Motivo"]{
+      color: var(--nyx-text);
+      font-weight: 700;
+      line-height: 1.4;
+    }
+
+    .nyx-blocks-table td[data-label="Acciones"]{
+      border-bottom: 0 !important;
+      padding-bottom: 0 !important;
+    }
+
+    .nyx-blocks-table td[data-label="Acciones"] .d-flex{
+      width: 100%;
+    }
+
+    .nyx-danger-btn{
+      width: 100%;
+      min-height: 44px;
+    }
+
+    .nyx-confirm-modal{
+      flex-direction: column;
+      border-radius: 1.2rem;
+    }
+
+    .nyx-confirm-actions{
+      flex-direction: column-reverse;
+    }
+
+    .nyx-confirm-cancel,
+    .nyx-confirm-delete{
+      width: 100%;
+    }
+  }
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const modal = document.getElementById("nyxDeleteBlockModal");
+  const form = document.getElementById("nyxDeleteBlockForm");
+  const detail = document.getElementById("nyxDeleteBlockDetail");
+  const cancel = document.getElementById("nyxDeleteBlockCancel");
+  const buttons = document.querySelectorAll(".nyx-delete-block-btn");
+
+  if (!modal || !form || !cancel) return;
+
+  buttons.forEach(function (button) {
+    button.addEventListener("click", function () {
+      const deleteUrl = button.dataset.deleteUrl;
+      const blockLabel = button.dataset.blockLabel || "Bloqueo seleccionado";
+
+      form.action = deleteUrl;
+
+      if (detail) {
+        detail.textContent = blockLabel;
+      }
+
+      modal.hidden = false;
+    });
+  });
+
+  function closeModal() {
+    modal.hidden = true;
+    form.removeAttribute("action");
+
+    if (detail) {
+      detail.textContent = "";
+    }
+  }
+
+  cancel.addEventListener("click", closeModal);
+
+  modal.addEventListener("click", function (event) {
+    if (event.target === modal) {
+      closeModal();
+    }
+  });
+
+  document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape" && !modal.hidden) {
+      closeModal();
+    }
+  });
+});
+</script>
 
 {% endblock %}

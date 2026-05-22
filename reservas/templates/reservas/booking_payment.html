@@ -3,166 +3,462 @@
 
 {% block title %}Pago de reserva | NYX{% endblock %}
 
+{% block extra_css %}
+<style>
+  .nyx-payment-page{
+    padding-block: 2.5rem;
+  }
+
+  .nyx-payment-shell{
+    max-width: 760px;
+    margin-inline: auto;
+  }
+
+  .nyx-payment-card{
+    border: 1px solid var(--nyx-border);
+    border-radius: 1.6rem;
+    box-shadow: var(--nyx-shadow);
+    overflow: hidden;
+    background:
+      radial-gradient(circle at top right, rgba(140, 220, 223, .18), transparent 34%),
+      #ffffff;
+  }
+
+  .nyx-payment-card::before{
+    content: "";
+    display: block;
+    height: 5px;
+    background: linear-gradient(90deg, var(--nyx-primary), var(--nyx-soft));
+  }
+
+  .nyx-payment-title{
+    color: var(--nyx-text);
+    font-weight: 950;
+    letter-spacing: -.045em;
+    line-height: 1.05;
+  }
+
+  .nyx-payment-summary,
+  .nyx-transfer-box{
+    background: #f8fbfb;
+    border: 1px solid var(--nyx-border);
+    border-radius: 1.25rem;
+  }
+
+  .nyx-payment-row{
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-block: .35rem;
+  }
+
+  .nyx-payment-row span:first-child{
+    color: var(--nyx-text-muted);
+  }
+
+  .nyx-payment-row strong,
+  .nyx-payment-row span:last-child{
+    color: var(--nyx-text);
+    font-weight: 850;
+    text-align: right;
+  }
+
+  .nyx-transfer-panel{
+    background: #ffffff;
+    border: 1px solid var(--nyx-border);
+    border-radius: 1.25rem;
+  }
+
+  .nyx-transfer-item{
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: .75rem;
+    align-items: center;
+    padding: .8rem 0;
+    border-bottom: 1px solid var(--nyx-border);
+  }
+
+  .nyx-transfer-item:last-child{
+    border-bottom: 0;
+  }
+
+  .nyx-transfer-label{
+    color: var(--nyx-text-muted);
+    font-size: .88rem;
+    font-weight: 750;
+  }
+
+  .nyx-transfer-value{
+    color: var(--nyx-text);
+    font-weight: 900;
+    word-break: break-word;
+    text-align: right;
+  }
+
+  .nyx-copy-btn{
+    border: 1px solid var(--nyx-border);
+    background: #ffffff;
+    color: var(--nyx-primary-dark);
+    border-radius: 999px;
+    padding: .48rem .75rem;
+    font-weight: 850;
+    font-size: .84rem;
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    transition: .2s ease;
+  }
+
+  .nyx-copy-btn:hover{
+    background: var(--nyx-surface-soft);
+    transform: translateY(-1px);
+  }
+
+  .nyx-payment-actions{
+    display: flex;
+    gap: .65rem;
+    flex-wrap: wrap;
+  }
+
+  .nyx-payment-main-btn,
+  .nyx-payment-secondary-btn,
+  .nyx-whatsapp-btn{
+    min-height: 46px;
+    border-radius: 999px;
+    padding: .72rem 1rem;
+    font-weight: 900;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .45rem;
+    text-decoration: none;
+  }
+
+  .nyx-payment-main-btn{
+    border: 0;
+    background: linear-gradient(135deg, var(--nyx-primary), var(--nyx-primary-hover, #326d6d));
+    color: #123;
+    box-shadow: 0 14px 28px rgba(64, 136, 136, .18);
+  }
+
+  .nyx-payment-secondary-btn{
+    border: 1px solid var(--nyx-border);
+    background: #ffffff;
+    color: var(--nyx-primary-dark);
+  }
+
+  .nyx-whatsapp-btn{
+    border: 1px solid #bfe8d2;
+    background: #ecfff4;
+    color: #18794e;
+  }
+
+  .nyx-disabled-pill{
+    min-height: 46px;
+    border-radius: 999px;
+    padding: .72rem 1rem;
+    font-weight: 900;
+    border: 1px solid var(--nyx-border);
+    background: #f8fbfb;
+    color: var(--nyx-text-muted);
+  }
+
+  .nyx-copy-feedback{
+    position: fixed;
+    left: 50%;
+    bottom: 1.2rem;
+    transform: translateX(-50%);
+    z-index: 3000;
+    background: rgba(24, 49, 49, .94);
+    color: #ffffff;
+    border-radius: 999px;
+    padding: .65rem 1rem;
+    font-weight: 850;
+    box-shadow: 0 18px 40px rgba(24, 49, 49, .24);
+  }
+
+  .nyx-copy-feedback[hidden]{
+    display: none;
+  }
+
+  @media (max-width: 575.98px){
+    .nyx-payment-page{
+      padding-block: 1.25rem;
+    }
+
+    .nyx-payment-card .card-body{
+      padding: 1.25rem !important;
+    }
+
+    .nyx-payment-title{
+      font-size: 2rem;
+    }
+
+    .nyx-payment-row{
+      align-items: flex-start;
+    }
+
+    .nyx-transfer-item{
+      grid-template-columns: 1fr;
+      gap: .3rem;
+    }
+
+    .nyx-transfer-value{
+      text-align: left;
+    }
+
+    .nyx-payment-actions{
+      flex-direction: column;
+    }
+
+    .nyx-payment-main-btn,
+    .nyx-payment-secondary-btn,
+    .nyx-whatsapp-btn,
+    .nyx-disabled-pill{
+      width: 100%;
+    }
+  }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container py-5">
-  <div class="row g-4 justify-content-center">
-    <div class="col-lg-7">
-      <div class="card border-0 shadow-sm rounded-4">
-        <div class="card-body p-4 p-md-5">
-          <h1 class="fw-bold mb-2">Pago de reserva</h1>
-          <p class="text-muted mb-4">
-            Completá el pago para avanzar con la confirmación de tu turno.
-          </p>
+<div class="container nyx-payment-page">
+  <div class="nyx-payment-shell">
+    <div class="card border-0 nyx-payment-card">
+      <div class="card-body p-4 p-md-5">
+        <h1 class="nyx-payment-title mb-2">Pago de reserva</h1>
+        <p class="text-muted mb-4">
+          Completá el pago para avanzar con la confirmación de tu turno.
+        </p>
 
-          <div class="rounded-4 p-4 mb-4" style="background:#f8fbfb; border:1px solid #d7ecec;">
-            <div class="d-flex justify-content-between mb-2">
-              <span class="text-muted">Reserva</span>
-              <span class="fw-semibold">#{{ booking.id }}</span>
-            </div>
-
-            <div class="d-flex justify-content-between mb-2">
-              <span class="text-muted">Cliente</span>
-              <span class="fw-semibold">{{ booking.customer_name }}</span>
-            </div>
-
-            <div class="d-flex justify-content-between mb-2">
-              <span class="text-muted">Tipo de pago</span>
-              <span class="fw-semibold">
-                {% if booking.payment_choice == 'deposit' %}
-                  Seña
-                {% elif booking.payment_choice == 'full' %}
-                  Pago total
-                {% else %}
-                  Sin pago
-                {% endif %}
-              </span>
-            </div>
-
-            <div class="d-flex justify-content-between mb-2">
-              <span class="text-muted">Estado</span>
-              <span class="fw-semibold">{{ booking.get_payment_status_display }}</span>
-            </div>
-
-            <div class="d-flex justify-content-between mb-2">
-              <span class="text-muted">Medio</span>
-              <span class="fw-semibold">
-                {% if booking.selected_payment_method == 'transfer' %}
-                  Transferencia
-                {% elif booking.selected_payment_method == 'integrated' %}
-                  Pago integrado
-                {% else %}
-                  -
-                {% endif %}
-              </span>
-            </div>
-
-            <div class="d-flex justify-content-between">
-              <span class="text-muted">Monto a pagar</span>
-              <span class="fw-bold fs-5">${{ booking.payment_required_amount|miles_punto }}</span>
-            </div>
+        <div class="nyx-payment-summary p-4 mb-4">
+          <div class="nyx-payment-row">
+            <span>Reserva</span>
+            <strong>#{{ booking.id }}</strong>
           </div>
 
-          {% if booking.selected_payment_method == 'transfer' %}
-            <div class="rounded-4 p-4 mb-4" style="background:#fff; border:1px solid #d7ecec;">
-              <h5 class="fw-bold mb-2">Pago por transferencia</h5>
+          <div class="nyx-payment-row">
+            <span>Cliente</span>
+            <strong>{{ booking.customer_name }}</strong>
+          </div>
 
+          <div class="nyx-payment-row">
+            <span>Tipo de pago</span>
+            <strong>
+              {% if booking.payment_choice == 'deposit' %}
+                Seña
+              {% elif booking.payment_choice == 'full' %}
+                Pago total
+              {% else %}
+                Sin pago
+              {% endif %}
+            </strong>
+          </div>
+
+          <div class="nyx-payment-row">
+            <span>Estado</span>
+            <strong>{{ booking.get_payment_status_display }}</strong>
+          </div>
+
+          <div class="nyx-payment-row">
+            <span>Medio</span>
+            <strong>
+              {% if booking.selected_payment_method == 'transfer' %}
+                Transferencia
+              {% elif booking.selected_payment_method == 'integrated' %}
+                Pago integrado
+              {% else %}
+                -
+              {% endif %}
+            </strong>
+          </div>
+
+          <hr class="nyx-divider my-3">
+
+          <div class="nyx-payment-row">
+            <span>Monto a pagar</span>
+            <strong class="fs-4">${{ booking.payment_required_amount|miles_punto }}</strong>
+          </div>
+        </div>
+
+        {% if booking.selected_payment_method == 'transfer' %}
+          <div class="nyx-transfer-panel p-4 mb-4">
+            <h2 class="h4 fw-bold mb-2">Pago por transferencia</h2>
+
+            <div class="text-muted mb-3">
+              Transferí el monto indicado y enviá el comprobante al salón para que validen tu reserva.
+            </div>
+
+            <div class="nyx-transfer-box p-3 mb-3">
+              {% if booking.salon.transfer_account_holder %}
+                <div class="nyx-transfer-item">
+                  <div>
+                    <div class="nyx-transfer-label">Titular</div>
+                    <div class="nyx-transfer-value">{{ booking.salon.transfer_account_holder }}</div>
+                  </div>
+                </div>
+              {% endif %}
+
+              {% if booking.salon.transfer_bank_name %}
+                <div class="nyx-transfer-item">
+                  <div>
+                    <div class="nyx-transfer-label">Banco/Billetera</div>
+                    <div class="nyx-transfer-value">{{ booking.salon.transfer_bank_name }}</div>
+                  </div>
+                </div>
+              {% endif %}
+
+              {% if booking.salon.transfer_alias %}
+                <div class="nyx-transfer-item">
+                  <div>
+                    <div class="nyx-transfer-label">Alias</div>
+                    <div class="nyx-transfer-value">{{ booking.salon.transfer_alias }}</div>
+                  </div>
+
+                  <button
+                    type="button"
+                    class="nyx-copy-btn"
+                    data-copy-value="{{ booking.salon.transfer_alias }}"
+                  >
+                    <i class="bi bi-copy"></i>
+                    Copiar
+                  </button>
+                </div>
+              {% endif %}
+
+              {% if booking.salon.transfer_cbu %}
+                <div class="nyx-transfer-item">
+                  <div>
+                    <div class="nyx-transfer-label">CBU/CVU</div>
+                    <div class="nyx-transfer-value">{{ booking.salon.transfer_cbu }}</div>
+                  </div>
+
+                  <button
+                    type="button"
+                    class="nyx-copy-btn"
+                    data-copy-value="{{ booking.salon.transfer_cbu }}"
+                  >
+                    <i class="bi bi-copy"></i>
+                    Copiar
+                  </button>
+                </div>
+              {% endif %}
+
+              {% if booking.salon.transfer_tax_id %}
+                <div class="nyx-transfer-item">
+                  <div>
+                    <div class="nyx-transfer-label">CUIT/CUIL</div>
+                    <div class="nyx-transfer-value">{{ booking.salon.transfer_tax_id }}</div>
+                  </div>
+                </div>
+              {% endif %}
+            </div>
+
+            {% if booking.salon.transfer_extra_instructions %}
               <div class="text-muted mb-3">
-                Para confirmar tu turno necesitás realizar la transferencia y esperar la validación del salón.
+                {{ booking.salon.transfer_extra_instructions|linebreaksbr }}
               </div>
-
-              <div class="rounded-4 p-3 mb-3" style="background:#f8fbfb; border:1px solid #d7ecec;">
-                {% if booking.salon.transfer_account_holder %}
-                  <div class="d-flex justify-content-between gap-3 mb-2">
-                    <span class="text-muted">Titular</span>
-                    <strong class="text-end">{{ booking.salon.transfer_account_holder }}</strong>
-                  </div>
-                {% endif %}
-
-                {% if booking.salon.transfer_bank_name %}
-                  <div class="d-flex justify-content-between gap-3 mb-2">
-                    <span class="text-muted">Banco/Billetera</span>
-                    <strong class="text-end">{{ booking.salon.transfer_bank_name }}</strong>
-                  </div>
-                {% endif %}
-
-                {% if booking.salon.transfer_alias %}
-                  <div class="d-flex justify-content-between gap-3 mb-2">
-                    <span class="text-muted">Alias</span>
-                    <strong class="text-end">{{ booking.salon.transfer_alias }}</strong>
-                  </div>
-                {% endif %}
-
-                {% if booking.salon.transfer_cbu %}
-                  <div class="d-flex justify-content-between gap-3 mb-2">
-                    <span class="text-muted">CBU/CVU</span>
-                    <strong class="text-end">{{ booking.salon.transfer_cbu }}</strong>
-                  </div>
-                {% endif %}
-
-                {% if booking.salon.transfer_tax_id %}
-                  <div class="d-flex justify-content-between gap-3">
-                    <span class="text-muted">CUIT/CUIL</span>
-                    <strong class="text-end">{{ booking.salon.transfer_tax_id }}</strong>
-                  </div>
-                {% endif %}
+            {% elif booking.salon.payment_instructions %}
+              <div class="text-muted mb-3">
+                {{ booking.salon.payment_instructions|linebreaksbr }}
               </div>
+            {% endif %}
 
-              {% if booking.salon.transfer_extra_instructions %}
-                <div class="text-muted mb-3">
-                  {{ booking.salon.transfer_extra_instructions|linebreaksbr }}
-                </div>
-              {% elif booking.salon.payment_instructions %}
-                <div class="text-muted mb-3">
-                  {{ booking.salon.payment_instructions|linebreaksbr }}
-                </div>
-              {% endif %}
-
-              {% if booking.payment_reference %}
-                <div class="small text-muted">
-                  Referencia de pago: <strong>{{ booking.payment_reference }}</strong>
-                </div>
-              {% endif %}
-
-              {% if booking.payment_expires_at %}
-                <div class="small text-muted mt-2">
-                  Este pago vence el {{ booking.payment_expires_at|date:"d/m/Y H:i" }}.
-                </div>
-              {% endif %}
-            </div>
-
-          {% elif booking.selected_payment_method == 'integrated' %}
-            <div class="rounded-4 p-4 mb-4" style="background:#fefaf2; border:1px solid #f2dfb6;">
-              <div class="fw-semibold mb-2">Pago integrado</div>
-              <div class="text-muted">
-                Vas a continuar al checkout para completar el pago online.
+            {% if booking.payment_reference %}
+              <div class="small text-muted">
+                Referencia de pago: <strong>{{ booking.payment_reference }}</strong>
               </div>
+            {% endif %}
 
-              {% if booking.payment_expires_at %}
-                <div class="small text-muted mt-2">
-                  Este pago vence el {{ booking.payment_expires_at|date:"d/m/Y H:i" }}.
-                </div>
-              {% endif %}
-            </div>
-          {% endif %}
-
-          <div class="d-flex gap-2 flex-wrap">
-            <a href="{% url 'booking_success_booking' booking.id %}" class="btn btn-outline-dark rounded-pill px-4">
-              Volver
-            </a>
-
-            {% if booking.selected_payment_method == 'integrated' %}
-              <a href="{{ booking.payment_checkout_url|default:'#' }}" class="btn rounded-pill px-4" style="background:#7ad0d4; color:#123; font-weight:700;">
-                Pagar ahora
-              </a>
-            {% else %}
-              <button type="button" class="btn rounded-pill px-4" style="background:#7ad0d4; color:#123; font-weight:700;" disabled>
-                Esperando validación del salón
-              </button>
+            {% if booking.payment_expires_at %}
+              <div class="small text-muted mt-2">
+                Este pago vence el {{ booking.payment_expires_at|date:"d/m/Y H:i" }}.
+              </div>
             {% endif %}
           </div>
+
+        {% elif booking.selected_payment_method == 'integrated' %}
+          <div class="rounded-4 p-4 mb-4" style="background:#fefaf2; border:1px solid #f2dfb6;">
+            <div class="fw-semibold mb-2">Pago integrado</div>
+            <div class="text-muted">
+              Vas a continuar al checkout para completar el pago online.
+            </div>
+
+            {% if booking.payment_expires_at %}
+              <div class="small text-muted mt-2">
+                Este pago vence el {{ booking.payment_expires_at|date:"d/m/Y H:i" }}.
+              </div>
+            {% endif %}
+          </div>
+        {% endif %}
+
+        <div class="nyx-payment-actions">
+          <a href="{% url 'booking_success_booking' booking.id %}" class="nyx-payment-secondary-btn">
+            Volver al resumen
+          </a>
+
+          {% if booking.selected_payment_method == 'integrated' %}
+            <a href="{{ booking.payment_checkout_url|default:'#' }}" class="nyx-payment-main-btn">
+              <i class="bi bi-credit-card"></i>
+              Pagar ahora
+            </a>
+          {% else %}
+            {% if booking.salon.phone %}
+              <a
+                href="https://api.whatsapp.com/send?phone={{ booking.salon.phone|cut:' '|cut:'+'|cut:'-' }}&text=Hola%2C%20ya%20realic%C3%A9%20la%20transferencia%20de%20la%20reserva%20%23{{ booking.id }}.%20Adjunto%20el%20comprobante."
+                target="_blank"
+                rel="noopener"
+                class="nyx-whatsapp-btn"
+              >
+                <i class="bi bi-whatsapp"></i>
+                Enviar comprobante
+              </a>
+            {% endif %}
+
+            <button type="button" class="nyx-disabled-pill" disabled>
+              Esperando validación del salón
+            </button>
+          {% endif %}
         </div>
       </div>
     </div>
   </div>
 </div>
+
+<div class="nyx-copy-feedback" id="nyxCopyFeedback" hidden>
+  Copiado
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const buttons = document.querySelectorAll("[data-copy-value]");
+  const feedback = document.getElementById("nyxCopyFeedback");
+
+  function showFeedback(message) {
+    if (!feedback) return;
+
+    feedback.textContent = message || "Copiado";
+    feedback.hidden = false;
+
+    setTimeout(function () {
+      feedback.hidden = true;
+    }, 1600);
+  }
+
+  buttons.forEach(function (button) {
+    button.addEventListener("click", async function () {
+      const value = button.dataset.copyValue || "";
+
+      try {
+        await navigator.clipboard.writeText(value);
+        showFeedback("Copiado al portapapeles");
+      } catch (error) {
+        window.prompt("Copiá este dato:", value);
+      }
+    });
+  });
+});
+</script>
 {% endblock %}

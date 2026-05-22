@@ -32,6 +32,56 @@
       color: var(--nyx-text);
     }
 
+    .nyx-owner-work-card{
+      border: 1px solid var(--nyx-border);
+      background: linear-gradient(135deg, #f7ffff 0%, #ffffff 100%);
+      border-radius: 1.1rem;
+      padding: 1rem;
+      box-shadow: 0 10px 24px rgba(34, 83, 83, .06);
+    }
+
+    .nyx-owner-work-check{
+      display: flex;
+      align-items: flex-start;
+      gap: .75rem;
+      padding: 0;
+      margin: 0;
+    }
+
+    .nyx-owner-work-check .form-check-input{
+      width: 1.15rem;
+      height: 1.15rem;
+      margin: .18rem 0 0;
+      flex: 0 0 auto;
+      border-color: var(--nyx-border-strong);
+      cursor: pointer;
+    }
+
+    .nyx-owner-work-check .form-check-input:checked{
+      background-color: var(--nyx-primary);
+      border-color: var(--nyx-primary);
+    }
+
+    .nyx-owner-work-check .form-check-label{
+      cursor: pointer;
+      margin: 0;
+    }
+
+    .nyx-owner-work-title{
+      display: block;
+      color: var(--nyx-text);
+      font-weight: 850;
+      line-height: 1.25;
+      margin-bottom: .3rem;
+    }
+
+    .nyx-owner-work-text{
+      display: block;
+      color: var(--nyx-text-muted);
+      font-size: .92rem;
+      line-height: 1.45;
+    }
+
     .nyx-signup-card{
       width: 100%;
       max-width: 760px;
@@ -129,7 +179,7 @@
   <div class="nyx-signup-card">
     <div class="nyx-signup-header">
       <div class="nyx-brand">NYX<span class="nyx-logo-dot"></span></div>
-      <p class="nyx-subtitle">Comenzá tu prueba gratuita de 7 días</p>
+      <p class="nyx-subtitle">Comenzá tu prueba gratuita de 15 días</p>
     </div>
 
     <div class="nyx-signup-body">
@@ -171,6 +221,28 @@
             {% for error in form.phone.errors %}
               <div class="nyx-error">{{ error }}</div>
             {% endfor %}
+          </div>
+
+          <div class="nyx-owner-work-card mb-4">
+            <div class="form-check nyx-owner-work-check">
+              {{ form.owner_works }}
+
+              <label class="form-check-label" for="{{ form.owner_works.id_for_label }}">
+                <span class="nyx-owner-work-title">
+                  Voy a atender turnos personalmente
+                </span>
+
+                <span class="nyx-owner-work-text">
+                  Marcá esta opción si vos también prestás servicios en el negocio. NYX te creará como profesional para que puedas recibir reservas y cargar bloqueos.
+                </span>
+              </label>
+            </div>
+
+            {% if form.owner_works.errors %}
+              <div class="text-danger small mt-2">
+                {{ form.owner_works.errors.0 }}
+              </div>
+            {% endif %}
           </div>
 
           <div class="col-md-6">
