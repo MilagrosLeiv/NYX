@@ -55,13 +55,13 @@
     </div>
 
     <div class="nyx-empty-dashboard-actions">
-      <a href="{% url 'panel_onboarding' %}" class="nyx-empty-dashboard-primary">
+      <a href="{% url 'panel_onboarding' %}" class="nyx-empty-dashboard-primary" data-no-scroll-restore>
         <i class="bi bi-rocket-takeoff-fill"></i>
         Ver primeros pasos
       </a>
 
       {% if salon %}
-        <a href="{% url 'service_list' salon.slug %}" target="_blank" class="nyx-empty-dashboard-secondary">
+        <a href="{% url 'service_list' salon.slug %}" target="_blank" class="nyx-empty-dashboard-secondary" data-no-scroll-restore>
           <i class="bi bi-box-arrow-up-right"></i>
           Ver link público
         </a>
@@ -75,8 +75,8 @@
     <div class="nyx-card p-4 h-100">
       <h5 class="fw-bold mb-3">Atajos</h5>
       <div class="d-flex flex-wrap gap-2">
-        <a href="{% url 'panel_agenda' %}?quick=today" class="nyx-filter-btn active">Ver agenda</a>
-        <a href="{% url 'panel_bloqueos' %}" class="nyx-filter-btn">Ver bloqueos</a>
+        <a href="{% url 'panel_agenda' %}?quick=today" class="nyx-filter-btn active" data-no-scroll-restore>Ver agenda</a>
+        <a href="{% url 'panel_bloqueos' %}" class="nyx-filter-btn" data-no-scroll-restore>Ver bloqueos</a>
       </div>
     </div>
   </div>

@@ -40,6 +40,7 @@ from .panel_forms import (
     AcceptStaffInvitationForm,
     TrialSignupForm,
     PanelServiceCategoryForm,
+    
 )
 from .booking_utils import (
     mark_completed_bookings,
@@ -208,6 +209,12 @@ def panel_onboarding(request):
     if not salon or not is_owner_user(request.user):
         raise PermissionDenied("Solo la dueña puede ver la bienvenida del salón.")
 
+    service_categories_count = ServiceCategory.objects.filter(
+        salon=salon,
+        is_active=True,
+    ).count()
+
+    has_service_categories = service_categories_count > 0
     services_count = Service.objects.filter(salon=salon).count()
     active_services_count = Service.objects.filter(salon=salon, is_active=True).count()
 
@@ -229,6 +236,7 @@ def panel_onboarding(request):
         "panel_role": "owner",
         "salon": salon,
         "services_count": services_count,
+        "service_categories_count": service_categories_count,
         "active_services_count": active_services_count,
         "business_hours_count": business_hours_count,
         "employees_count": employees_count,
@@ -236,6 +244,7 @@ def panel_onboarding(request):
         "has_services": active_services_count > 0,
         "has_business_hours": business_hours_count > 0,
         "has_employees": employees_count > 0,
+        "has_service_categories": has_service_categories,
     }
 
     return render(request, "reservas/panel/onboarding.html", context)
@@ -1265,6 +1274,19 @@ def panel_settings(request):
         raise PermissionDenied("Solo la dueña puede editar la configuración.")
 
     payment_settings, _ = SalonPaymentSettings.objects.get_or_create(salon=salon)
+
+    settings_saved = False
+
+    if request.method == 'POST':
+        form = PanelSalonSettingsForm(request.POST, request.FILES, instance=salon)
+
+        if form.is_valid():
+            form.save()
+            settings_saved = True
+    else:
+        form = PanelSalonSettingsForm(instance=salon)
+
+    # Recalcular después del form.save(), porque estos valores dependen del salón actualizado.
     payment_policy_active = (
         salon.deposit_enabled
         or salon.allow_full_payment
@@ -1274,14 +1296,6 @@ def panel_settings(request):
     accepts_integrated = salon.payment_method in ["integrated", "both"]
     mercadopago_ready = payment_settings.has_valid_mercadopago_connection()
     mercadopago_visible_to_clients = accepts_integrated and mercadopago_ready
-    if request.method == 'POST':
-        form = PanelSalonSettingsForm(request.POST,request.FILES, instance=salon)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Configuración actualizada correctamente.')
-            return redirect('panel_settings')
-    else:
-        form = PanelSalonSettingsForm(instance=salon)
 
     context = {
         'payment_policy_active': payment_policy_active,
@@ -1291,9 +1305,11 @@ def panel_settings(request):
         'payment_settings': payment_settings,
         'accepts_transfer': accepts_transfer,
         'accepts_integrated': accepts_integrated,
+        'settings_saved': settings_saved,
         'mercadopago_ready': mercadopago_ready,
         'mercadopago_visible_to_clients': mercadopago_visible_to_clients,
     }
+
     return render(request, 'reservas/panel/settings.html', context)
 
 
@@ -1420,6 +1436,8 @@ def panel_login(request):
     if request.method == 'POST':
         username = request.POST.get('username', '').strip()
         password = request.POST.get('password', '')
+
+        
 
         user = authenticate(request, username=username, password=password)
 

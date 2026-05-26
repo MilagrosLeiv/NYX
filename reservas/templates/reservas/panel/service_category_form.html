@@ -64,13 +64,25 @@
                     Se muestra en la tarjeta desplegable de la categoría. Si no cargás una imagen, NYX usa un ícono por defecto.
                 </p>
 
-                <input
+                <div class="nyx-file-picker">
+                  <input
                     type="file"
                     name="{{ form.image.html_name }}"
                     id="{{ form.image.id_for_label }}"
-                    class="form-control nyx-form-input"
+                    class="nyx-file-input"
                     accept="image/*"
-                >
+                    data-file-label="category-image-file-label"
+                  >
+
+                  <label for="{{ form.image.id_for_label }}" class="nyx-file-button">
+                    <i class="bi bi-upload"></i>
+                    Elegir archivo
+                  </label>
+
+                  <span class="nyx-file-name" id="category-image-file-label">
+                    Ningún archivo seleccionado
+                  </span>
+                </div>
 
                 {% if form.image.errors %}
                     <div class="text-danger small mt-1">{{ form.image.errors }}</div>
@@ -117,6 +129,27 @@
     </div>
   </form>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  document.querySelectorAll(".nyx-file-input").forEach(function (input) {
+    input.addEventListener("change", function () {
+      const labelId = input.dataset.fileLabel;
+      const label = document.getElementById(labelId);
+
+      if (!label) return;
+
+      if (input.files && input.files.length > 0) {
+        label.textContent = input.files[0].name;
+      } else {
+        label.textContent = "Ningún archivo seleccionado";
+      }
+    });
+  });
+});
+</script>
 {% endblock %}
 
 
@@ -220,6 +253,80 @@
     .nyx-clear-image-check{
       width:100%;
       justify-content:center;
+    }
+  }
+
+  .nyx-file-picker{
+    display:flex;
+    align-items:center;
+    gap:.75rem;
+    width:100%;
+    padding:.55rem;
+    border:1px solid var(--nyx-border);
+    border-radius:999px;
+    background:#ffffff;
+  }
+
+  .nyx-file-input{
+    position:absolute;
+    width:1px;
+    height:1px;
+    padding:0;
+    margin:-1px;
+    overflow:hidden;
+    clip:rect(0, 0, 0, 0);
+    white-space:nowrap;
+    border:0;
+  }
+
+  .nyx-file-button{
+    min-height:40px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:.45rem;
+    flex:0 0 auto;
+    padding:.55rem .95rem;
+    border-radius:999px;
+    background:linear-gradient(135deg, var(--nyx-primary), var(--nyx-primary-strong));
+    color:#ffffff;
+    font-weight:850;
+    font-size:.88rem;
+    cursor:pointer;
+    transition:.2s ease;
+    margin:0;
+  }
+
+  .nyx-file-button:hover{
+    transform:translateY(-1px);
+    opacity:.96;
+  }
+
+  .nyx-file-name{
+    flex:1;
+    min-width:0;
+    color:var(--nyx-muted);
+    font-size:.9rem;
+    font-weight:700;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+
+  @media (max-width:575.98px){
+    .nyx-file-picker{
+      align-items:stretch;
+      flex-direction:column;
+      border-radius:1rem;
+    }
+
+    .nyx-file-button{
+      width:100%;
+    }
+
+    .nyx-file-name{
+      text-align:center;
+      white-space:normal;
     }
   }
 </style>

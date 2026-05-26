@@ -15,17 +15,17 @@
     <h1>Dejá tu agenda online lista en pocos minutos.</h1>
 
     <p>
-      Para que tus clientes puedan reservar turnos, primero cargá tus servicios,
-        configurá tu equipo, definí tus horarios y compartí tu link público.
+      Para que tus clientes puedan reservar turnos, primero organizá tus categorías
+        cargá tus servicios, configurá tu equipo, definí tus horarios y compartí tu link público.
     </p>
 
     <div class="nyx-onboarding-actions">
-      <a href="{% url 'panel_services' %}" class="nyx-onboarding-primary">
+      <a href="{% url 'panel_service_categories' %}" class="nyx-onboarding-primary" data-no-scroll-restore>
         <i class="bi bi-scissors"></i>
         Empezar configuración
       </a>
 
-      <a href="{% url 'panel_dashboard' %}" class="nyx-onboarding-secondary">
+      <a href="{% url 'panel_dashboard' %}" class="nyx-onboarding-secondary" data-no-scroll-restore>
         Ir al dashboard
       </a>
     </div>
@@ -46,7 +46,7 @@
     </button>
 
     <a
-      href="{% url 'service_list' salon.slug %}"
+      href="{% url 'service_list' salon.slug %}" data-no-scroll-restore
       target="_blank"
       class="nyx-onboarding-preview"
     >
@@ -57,6 +57,35 @@
 </section>
 
 <section class="nyx-onboarding-steps">
+  <article class="nyx-step-card {% if has_service_categories %}is-complete{% endif %}">
+    <div class="nyx-step-icon">
+      {% if has_service_categories %}
+        <i class="bi bi-check2"></i>
+      {% else %}
+        <i class="bi bi-grid-3x3-gap-fill"></i>
+      {% endif %}
+    </div>
+
+    <div class="nyx-step-body">
+      <div class="nyx-step-kicker">Paso 1</div>
+      <h2>Creá categorías</h2>
+      <p>
+        Organizá tu catálogo en secciones como Cabello, Manos, Pestañas o Barbería.
+      </p>
+
+      <div class="nyx-step-footer">
+        <div class="nyx-step-meta">
+          {{ service_categories_count }} categoría{% if service_categories_count != 1 %}s{% endif %} activa{% if service_categories_count != 1 %}s{% endif %}
+        </div>
+
+        <a href="{% url 'panel_service_categories' %}" class="nyx-step-link" data-no-scroll-restore>
+          {% if has_service_categories %}Editar categorías{% else %}Crear categorías{% endif %}
+          <i class="bi bi-arrow-right"></i>
+        </a>
+      </div>
+    </div>
+  </article>
+
   <article class="nyx-step-card {% if has_services %}is-complete{% endif %}">
     <div class="nyx-step-icon">
       {% if has_services %}
@@ -67,22 +96,22 @@
     </div>
 
     <div class="nyx-step-body">
-      <div class="nyx-step-kicker">Paso 1</div>
+      <div class="nyx-step-kicker">Paso 2</div>
       <h2>Cargá tus servicios</h2>
       <p>
-        Agregá los servicios que ofrezcas en tu negocio, para que tus clientes puedan elegir qué reservar.
+        Agregá los servicios que ofrezcas y asignales una categoría para ordenar mejor tu página pública.
       </p>
 
-        <div class="nyx-step-footer">
-            <div class="nyx-step-meta">
-                {{ active_services_count }} servicio{% if active_services_count != 1 %}s{% endif %} activo{% if active_services_count != 1 %}s{% endif %}
-            </div>
-
-            <a href="{% url 'panel_services' %}" class="nyx-step-link">
-                {% if has_services %}Editar servicios{% else %}Agregar servicios{% endif %}
-                <i class="bi bi-arrow-right"></i>
-            </a>
+      <div class="nyx-step-footer">
+        <div class="nyx-step-meta">
+          {{ active_services_count }} servicio{% if active_services_count != 1 %}s{% endif %} activo{% if active_services_count != 1 %}s{% endif %}
         </div>
+
+        <a href="{% url 'panel_services' %}" class="nyx-step-link" data-no-scroll-restore>
+          {% if has_services %}Editar servicios{% else %}Agregar servicios{% endif %}
+          <i class="bi bi-arrow-right"></i>
+        </a>
+      </div>
     </div>
   </article>
 
@@ -96,22 +125,22 @@
     </div>
 
     <div class="nyx-step-body">
-      <div class="nyx-step-kicker">Paso 2</div>
+      <div class="nyx-step-kicker">Paso 3</div>
       <h2>Agregá tu equipo</h2>
       <p>
-        Cargá quiénes atienden  y qué servicios puede realizar cada persona.
+        Cargá quiénes atienden y qué servicios puede realizar cada persona.
       </p>
 
-        <div class="nyx-step-footer">
-            <div class="nyx-step-meta">
-                {{ employees_count }} profesional{% if employees_count != 1 %}es{% endif %} activo{% if employees_count != 1 %}s{% endif %}
-            </div>
-
-            <a href="{% url 'panel_employees' %}" class="nyx-step-link">
-                {% if has_employees %}Editar equipo{% else %}Agregar equipo{% endif %}
-                <i class="bi bi-arrow-right"></i>
-            </a>
+      <div class="nyx-step-footer">
+        <div class="nyx-step-meta">
+          {{ employees_count }} profesional{% if employees_count != 1 %}es{% endif %} activo{% if employees_count != 1 %}s{% endif %}
         </div>
+
+        <a href="{% url 'panel_employees' %}" class="nyx-step-link" data-no-scroll-restore>
+          {% if has_employees %}Editar equipo{% else %}Agregar equipo{% endif %}
+          <i class="bi bi-arrow-right"></i>
+        </a>
+      </div>
     </div>
   </article>
 
@@ -125,22 +154,22 @@
     </div>
 
     <div class="nyx-step-body">
-      <div class="nyx-step-kicker">Paso 3</div>
+      <div class="nyx-step-kicker">Paso 4</div>
       <h2>Configurá tus horarios</h2>
       <p>
         Definí los días y franjas horarias en las que tu negocio acepta reservas.
       </p>
 
-        <div class="nyx-step-footer">
-            <div class="nyx-step-meta">
-                {{ business_hours_count }} franja{% if business_hours_count != 1 %}s{% endif %} activa{% if business_hours_count != 1 %}s{% endif %}
-            </div>
-
-            <a href="{% url 'panel_business_hours' %}" class="nyx-step-link">
-                {% if has_business_hours %}Editar horarios{% else %}Configurar horarios{% endif %}
-                <i class="bi bi-arrow-right"></i>
-            </a>
+      <div class="nyx-step-footer">
+        <div class="nyx-step-meta">
+          {{ business_hours_count }} franja{% if business_hours_count != 1 %}s{% endif %} activa{% if business_hours_count != 1 %}s{% endif %}
         </div>
+
+        <a href="{% url 'panel_business_hours' %}" class="nyx-step-link" data-no-scroll-restore>
+          {% if has_business_hours %}Editar horarios{% else %}Configurar horarios{% endif %}
+          <i class="bi bi-arrow-right"></i>
+        </a>
+      </div>
     </div>
   </article>
 </section>
@@ -164,7 +193,7 @@
       Copiar link
     </button>
 
-    <a href="{% url 'service_list' salon.slug %}" target="_blank" class="nyx-onboarding-primary">
+    <a href="{% url 'service_list' salon.slug %}" target="_blank" class="nyx-onboarding-primary" data-no-scroll-restore>
       <i class="bi bi-box-arrow-up-right"></i>
       Ver sitio público
     </a>
@@ -319,10 +348,16 @@
 
   .nyx-onboarding-steps {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 1rem;
     margin-bottom: 1.5rem;
     align-items: stretch;
+  }
+
+  @media (max-width: 1199.98px) {
+    .nyx-onboarding-steps {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
   }
 
   .nyx-step-card {

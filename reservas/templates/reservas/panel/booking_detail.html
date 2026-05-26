@@ -191,9 +191,9 @@
   </div>
 
   <div class="d-flex gap-2 flex-wrap mt-4">
-    <a href="{% url 'panel_bookings' %}" class="nyx-filter-btn">Volver</a>
+    <a href="{% url 'panel_bookings' %}" class="nyx-filter-btn" data-no-scroll-restore>Volver</a>
     {% if booking.status != 'cancelled' %}
-      <a href="{% url 'panel_booking_cancel' booking.id %}" class="nyx-primary-btn">Cancelar reserva</a>
+      <a href="{% url 'panel_booking_cancel' booking.id %}" class="nyx-primary-btn" data-no-scroll-restore>Cancelar reserva</a>
     {% endif %}
   </div>
 </div>

@@ -4,7 +4,7 @@
 {% block title %}Elegir profesional | NYX{% endblock %}
 
 {% block content %}
-<div class="booking-page py-4">
+<div class="booking-page py-4" data-no-scroll-restore>
   <div class="container">
     <div class="row g-4">
       <div class="col-lg-7">
@@ -238,4 +238,12 @@
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+sessionStorage.removeItem("nyxScrollRestore");
+window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+</script>
+
 {% endblock %}

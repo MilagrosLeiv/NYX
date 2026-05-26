@@ -432,6 +432,9 @@
 
 {% block scripts %}
 <script>
+sessionStorage.removeItem("nyxScrollRestore");
+window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+
 document.addEventListener("DOMContentLoaded", function () {
   const buttons = document.querySelectorAll("[data-copy-value]");
   const feedback = document.getElementById("nyxCopyFeedback");

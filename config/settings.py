@@ -195,6 +195,15 @@ NYX_MERCADOPAGO_SUBSCRIPTION_URL = os.getenv("NYX_MERCADOPAGO_SUBSCRIPTION_URL",
 MERCADOPAGO_CLIENT_ID = os.getenv("MERCADOPAGO_CLIENT_ID", "")
 MERCADOPAGO_CLIENT_SECRET = os.getenv("MERCADOPAGO_CLIENT_SECRET", "")
 
+# Sesión persistente: mantiene al usuario iniciado por 30 días.
+SESSION_COOKIE_AGE = 60 * 60 * 24 * 30
+
+# Si está en False, la sesión NO se borra al cerrar el navegador.
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+
+# Guarda la sesión en cada request y renueva el vencimiento.
+SESSION_SAVE_EVERY_REQUEST = True
+
 CLOUDINARY_STORAGE = {
     "CLOUD_NAME": os.getenv("CLOUDINARY_CLOUD_NAME"),
     "API_KEY": os.getenv("CLOUDINARY_API_KEY"),

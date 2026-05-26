@@ -31,6 +31,97 @@
     font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   }
 
+  .nyx-messages{
+    display:grid;
+    gap:.75rem;
+  }
+
+  .nyx-message{
+    display:flex;
+    align-items:flex-start;
+    gap:.8rem;
+    border-radius:1.15rem;
+    padding:.95rem 1rem;
+    border:1px solid var(--nyx-border);
+    background:#ffffff;
+    box-shadow:0 12px 30px rgba(31,55,58,.075);
+    color:var(--nyx-text);
+    font-weight:750;
+    line-height:1.45;
+  }
+
+  .nyx-message-icon{
+    width:34px;
+    height:34px;
+    flex:0 0 34px;
+    border-radius:999px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:1rem;
+  }
+
+  .nyx-message-content{
+    flex:1;
+    min-width:0;
+    padding-top:.25rem;
+  }
+
+  .nyx-message-success{
+    background:linear-gradient(135deg, #f4fbf8 0%, #ffffff 100%);
+    border-color:#cfeadf;
+  }
+
+  .nyx-message-success .nyx-message-icon{
+    background:#def7ea;
+    color:#23855a;
+  }
+
+  .nyx-message-error{
+    background:linear-gradient(135deg, #fff6f6 0%, #ffffff 100%);
+    border-color:#f0c6c6;
+  }
+
+  .nyx-message-error .nyx-message-icon{
+    background:#fde4e4;
+    color:#b54747;
+  }
+
+  .nyx-message-warning{
+    background:linear-gradient(135deg, #fffaf0 0%, #ffffff 100%);
+    border-color:#f3dfaa;
+  }
+
+  .nyx-message-warning .nyx-message-icon{
+    background:#fff1c9;
+    color:#a46a14;
+  }
+
+  .nyx-message-info{
+    background:linear-gradient(135deg, #f2fbfb 0%, #ffffff 100%);
+    border-color:var(--nyx-border);
+  }
+
+  .nyx-message-info .nyx-message-icon{
+    background:rgba(118,207,210,.18);
+    color:var(--nyx-primary-dark);
+  }
+
+  @media (max-width:575.98px){
+    .nyx-message{
+      border-radius:1rem;
+      padding:.85rem;
+      gap:.7rem;
+      font-size:.92rem;
+    }
+
+    .nyx-message-icon{
+      width:32px;
+      height:32px;
+      flex-basis:32px;
+    }
+  }
+
   .nyx-mobile-topbar{
     display: none;
   }
@@ -547,6 +638,66 @@
     font-size: .88rem;
   }
 }
+
+.nyx-mobile-topbar-actions{
+  display:flex;
+  align-items:center;
+  gap:.55rem;
+  flex:0 0 auto;
+}
+
+.nyx-mobile-logout-btn{
+  width:42px;
+  height:42px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.08);
+  color:#ffffff;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-size:1.2rem;
+  text-decoration:none;
+  transition:.2s ease;
+}
+
+.nyx-mobile-logout-btn:hover{
+  color:#ffffff;
+  background:rgba(255,255,255,.14);
+  transform:translateY(-1px);
+}
+
+.nyx-mobile-logout-btn:focus{
+  outline:none;
+  box-shadow:0 0 0 .2rem rgba(118,207,210,.22);
+}
+
+.nyx-panel-logout-btn{
+  width:42px;
+  height:42px;
+  border-radius:999px;
+  border:1px solid var(--nyx-border);
+  background:#ffffff;
+  color:#315558;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-size:1.15rem;
+  text-decoration:none;
+  transition:.2s ease;
+}
+
+.nyx-panel-logout-btn:hover{
+  background:#fff6f6;
+  border-color:#f0c6c6;
+  color:#b54747;
+  transform:translateY(-1px);
+}
+
+.nyx-panel-logout-btn:focus{
+  outline:none;
+  box-shadow:0 0 0 .2rem rgba(181,71,71,.13);
+}
 </style>
   {% block extra_css %}{% endblock %}
 </head>
@@ -588,16 +739,27 @@ document.addEventListener('DOMContentLoaded', function () {
         </div>
       </div>
 
-      <button
-        class="nyx-mobile-menu-btn"
-        type="button"
-        data-bs-toggle="offcanvas"
-        data-bs-target="#nyxMobileMenu"
-        aria-controls="nyxMobileMenu"
-        aria-label="Abrir menú"
-      >
-        <i class="bi bi-list"></i>
-      </button>
+      <div class="nyx-mobile-topbar-actions">
+        <a
+          href="{% url 'panel_logout' %}"
+          class="nyx-mobile-logout-btn"
+          aria-label="Cerrar sesión"
+          title="Cerrar sesión"
+        >
+          <i class="bi bi-box-arrow-right"></i>
+        </a>
+
+        <button
+          class="nyx-mobile-menu-btn"
+          type="button"
+          data-bs-toggle="offcanvas"
+          data-bs-target="#nyxMobileMenu"
+          aria-controls="nyxMobileMenu"
+          aria-label="Abrir menú"
+        >
+          <i class="bi bi-list"></i>
+        </button>
+      </div>
     </div>
 
     <div
@@ -647,7 +809,7 @@ document.addEventListener('DOMContentLoaded', function () {
           </a>
 
           {% if panel_role == 'owner' %}
-            <a href="{% url 'panel_services' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_services' or request.resolver_match.url_name == 'panel_service_create' or request.resolver_match.url_name == 'panel_service_edit' %}active{% endif %}">
+            <a href="{% url 'panel_services' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_services' or request.resolver_match.url_name == 'panel_service_create' or request.resolver_match.url_name == 'panel_service_edit' or request.resolver_match.url_name == 'panel_service_categories' or request.resolver_match.url_name == 'panel_service_category_create' or request.resolver_match.url_name == 'panel_service_category_edit' %}active{% endif %}">
               <i class="bi bi-scissors"></i>
               <span>Servicios</span>
             </a>
@@ -657,7 +819,7 @@ document.addEventListener('DOMContentLoaded', function () {
               <span>Profesionales</span>
             </a>
 
-            <a href="{% url 'panel_business_hours' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_business_hours' or request.resolver_match.url_name == 'panel_business_hours_create' or request.resolver_match.url_name == 'panel_business_hours_edit' %}active{% endif %}">
+            <a href="{% url 'panel_business_hours' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_business_hours' or request.resolver_match.url_name == 'panel_business_hours_create' or request.resolver_match.url_name == 'panel_business_hour_block_create' or request.resolver_match.url_name == 'panel_business_hour_block_edit' or request.resolver_match.url_name == 'panel_business_hours_edit' %}active{% endif %}">
               <i class="bi bi-clock-history"></i>
               <span>Horarios</span>
             </a>
@@ -694,11 +856,6 @@ document.addEventListener('DOMContentLoaded', function () {
             <i class="bi bi-key-fill"></i>
             <span>Cambiar contraseña</span>
           </a>
-
-          <a href="{% url 'panel_logout' %}" class="nyx-nav-link">
-            <i class="bi bi-box-arrow-right"></i>
-            <span>Salir</span>
-          </a>
         </nav>
 
         <div class="nyx-mobile-session">
@@ -709,6 +866,7 @@ document.addEventListener('DOMContentLoaded', function () {
       </div>
     </div>
   {% endif %}
+
   <div class="container-fluid px-0">
     <div class="row g-0">
       <div class="col-lg-auto">
@@ -717,6 +875,7 @@ document.addEventListener('DOMContentLoaded', function () {
             <div class="nyx-brand">NYX<span class="nyx-logo-dot"></span></div>
             <div class="small nyx-session-label mt-2">{{ salon.name }}</div>
           </div>
+
           {% if not hide_panel_nav %}
             <nav class="d-flex flex-column gap-2">
               <a href="{% url 'panel_dashboard' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_dashboard' %}active{% endif %}">
@@ -725,8 +884,12 @@ document.addEventListener('DOMContentLoaded', function () {
               </a>
 
               {% if panel_role == 'owner' %}
-                <a href="{% url 'panel_onboarding' %}" class="nyx-filter-btn">Primeros pasos</a>
+                <a href="{% url 'panel_onboarding' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_onboarding' %}active{% endif %}">
+                  <i class="bi bi-rocket-takeoff-fill"></i>
+                  <span>Primeros pasos</span>
+                </a>
               {% endif %}
+
               <a href="{% url 'panel_agenda' %}?quick=today" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_agenda' %}active{% endif %}">
                 <i class="bi bi-calendar-week-fill"></i>
                 <span>Agenda</span>
@@ -738,7 +901,7 @@ document.addEventListener('DOMContentLoaded', function () {
               </a>
 
               {% if panel_role == 'owner' %}
-                <a href="{% url 'panel_services' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_services' or request.resolver_match.url_name == 'panel_service_create' or request.resolver_match.url_name == 'panel_service_edit' %}active{% endif %}">
+                <a href="{% url 'panel_services' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_services' or request.resolver_match.url_name == 'panel_service_create' or request.resolver_match.url_name == 'panel_service_edit' or request.resolver_match.url_name == 'panel_service_categories' or request.resolver_match.url_name == 'panel_service_category_create' or request.resolver_match.url_name == 'panel_service_category_edit' %}active{% endif %}">
                   <i class="bi bi-scissors"></i>
                   <span>Servicios</span>
                 </a>
@@ -748,7 +911,7 @@ document.addEventListener('DOMContentLoaded', function () {
                   <span>Profesionales</span>
                 </a>
 
-                <a href="{% url 'panel_business_hours' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_business_hours' or request.resolver_match.url_name == 'panel_business_hours_create' or request.resolver_match.url_name == 'panel_business_hours_edit' %}active{% endif %}">
+                <a href="{% url 'panel_business_hours' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_business_hours' or request.resolver_match.url_name == 'panel_business_hours_create' or request.resolver_match.url_name == 'panel_business_hour_block_create' or request.resolver_match.url_name == 'panel_business_hour_block_edit' or request.resolver_match.url_name == 'panel_business_hours_edit' %}active{% endif %}">
                   <i class="bi bi-clock-history"></i>
                   <span>Horarios</span>
                 </a>
@@ -762,6 +925,7 @@ document.addEventListener('DOMContentLoaded', function () {
                   <i class="bi bi-gear-fill"></i>
                   <span>Configuración</span>
                 </a>
+
                 <a href="{% url 'panel_plan' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_plan' %}active{% endif %}">
                   <i class="bi bi-credit-card-2-front-fill"></i>
                   <span>Mi plan</span>
@@ -793,6 +957,11 @@ document.addEventListener('DOMContentLoaded', function () {
               <a href="{% url 'password_change' %}" style="color:#d7f4f4; font-size:.9rem; font-weight:700; text-decoration:none;">
                 Cambiar contraseña
               </a>
+
+              <a href="{% url 'panel_logout' %}" style="color:#d7f4f4; font-size:.9rem; font-weight:700; text-decoration:none;">
+                <i class="bi bi-box-arrow-right me-1"></i>
+                Cerrar sesión
+              </a>
             </div>
           {% endif %}
         </aside>
@@ -806,10 +975,11 @@ document.addEventListener('DOMContentLoaded', function () {
               <p class="nyx-panel-subtitle">{% block panel_subtitle %}Gestión interna NYX{% endblock %}</p>
             </div>
 
-            <div class="d-flex align-items-center gap-2">
+            <div class="d-flex align-items-center gap-2 flex-wrap">
               {% if request.user.is_superuser %}
                 <a href="/admin/" class="nyx-outline-light">Admin</a>
               {% endif %}
+
               {% if salon %}
                 <button
                   type="button"
@@ -819,9 +989,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 >
                   Copiar link
                 </button>
-              {% endif %}
 
-              {% if salon %}
                 <a
                   href="https://wa.me/5493416959852?text=Hola%2C%20necesito%20ayuda%20con%20NYX.%20Mi%20sal%C3%B3n%20es%3A%20{{ salon.name|urlencode }}"
                   target="_blank"
@@ -841,7 +1009,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 </a>
               {% endif %}
 
-              <a href="{% url 'panel_logout' %}" class="nyx-outline-light">Salir</a>
+              <a
+                href="{% url 'panel_logout' %}"
+                class="nyx-panel-logout-btn d-none d-lg-inline-flex"
+                aria-label="Cerrar sesión"
+                title="Cerrar sesión"
+              >
+                <i class="bi bi-box-arrow-right"></i>
+              </a>
             </div>
           </div>
 
@@ -898,10 +1073,24 @@ document.addEventListener('DOMContentLoaded', function () {
           {% endif %}
 
           {% if messages %}
-            <div class="mb-4">
+            <div class="nyx-messages mb-4">
               {% for message in messages %}
-                <div class="alert alert-success rounded-4 border-0 shadow-sm mb-2" role="alert">
-                  {{ message }}
+                <div class="nyx-message nyx-message-{{ message.tags|default:'info' }}" role="alert">
+                  <div class="nyx-message-icon">
+                    {% if 'error' in message.tags %}
+                      <i class="bi bi-x-circle-fill"></i>
+                    {% elif 'warning' in message.tags %}
+                      <i class="bi bi-exclamation-triangle-fill"></i>
+                    {% elif 'success' in message.tags %}
+                      <i class="bi bi-check-circle-fill"></i>
+                    {% else %}
+                      <i class="bi bi-info-circle-fill"></i>
+                    {% endif %}
+                  </div>
+
+                  <div class="nyx-message-content">
+                    {{ message }}
+                  </div>
                 </div>
               {% endfor %}
             </div>
