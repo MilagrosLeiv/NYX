@@ -1,0 +1,226 @@
+{% extends "reservas/panel/base_panel.html" %}
+
+{% block title %}{{ form_title }} | NYX{% endblock %}
+{% block panel_title %}{{ form_title }}{% endblock %}
+{% block panel_subtitle %}Organizá visualmente los servicios de {{ salon.name }}{% endblock %}
+
+{% block panel_content %}
+<div class="nyx-card p-4">
+  <form method="post" enctype="multipart/form-data" novalidate>
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+      <div class="alert alert-danger rounded-4">
+        {{ form.non_field_errors }}
+      </div>
+    {% endif %}
+
+    <div class="mb-3">
+      <label for="{{ form.name.id_for_label }}" class="form-label fw-semibold">
+        Nombre de la categoría
+      </label>
+      {{ form.name }}
+      {% if form.name.errors %}
+        <div class="text-danger small mt-1">{{ form.name.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="mb-3">
+      <label for="{{ form.description.id_for_label }}" class="form-label fw-semibold">
+        Descripción
+      </label>
+      {{ form.description }}
+      {% if form.description.errors %}
+        <div class="text-danger small mt-1">{{ form.description.errors }}</div>
+      {% endif %}
+      <div class="form-text">
+        Opcional. Se muestra debajo del nombre de la categoría en la página pública.
+      </div>
+    </div>
+
+    <div class="mb-4">
+        <label class="form-label fw-semibold">
+            Imagen de la categoría
+        </label>
+
+        <div class="nyx-category-image-panel">
+            <div class="nyx-category-image-preview">
+            {% if category and category.image %}
+                <img src="{{ category.image.url }}" alt="Imagen actual de {{ category.name }}">
+            {% else %}
+                <div class="nyx-category-image-placeholder">
+                <i class="bi bi-image"></i>
+                <span>Sin imagen</span>
+                </div>
+            {% endif %}
+            </div>
+
+            <div class="nyx-category-image-content">
+                <div class="fw-bold mb-1">
+                    Foto opcional para la página pública
+                </div>
+
+                <p class="text-secondary small mb-3">
+                    Se muestra en la tarjeta desplegable de la categoría. Si no cargás una imagen, NYX usa un ícono por defecto.
+                </p>
+
+                <input
+                    type="file"
+                    name="{{ form.image.html_name }}"
+                    id="{{ form.image.id_for_label }}"
+                    class="form-control nyx-form-input"
+                    accept="image/*"
+                >
+
+                {% if form.image.errors %}
+                    <div class="text-danger small mt-1">{{ form.image.errors }}</div>
+                {% endif %}
+
+                {% if category and category.image %}
+                    <label class="nyx-clear-image-check mt-3">
+                    <input type="checkbox" name="image-clear" id="image-clear_id">
+                    <span>Eliminar imagen actual</span>
+                    </label>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="mb-3">
+      <label for="{{ form.order.id_for_label }}" class="form-label fw-semibold">
+        Orden
+      </label>
+      {{ form.order }}
+      {% if form.order.errors %}
+        <div class="text-danger small mt-1">{{ form.order.errors }}</div>
+      {% endif %}
+      <div class="form-text">
+        Las categorías con menor número aparecen primero.
+      </div>
+    </div>
+
+    <div class="form-check form-switch mb-4">
+      {{ form.is_active }}
+      <label for="{{ form.is_active.id_for_label }}" class="form-check-label fw-semibold">
+        Categoría activa
+      </label>
+    </div>
+
+    <div class="d-flex justify-content-between gap-2 flex-wrap">
+      <a href="{% url 'panel_service_categories' %}" class="nyx-outline-light">
+        Cancelar
+      </a>
+
+      <button type="submit" class="nyx-primary-btn">
+        {{ submit_label }}
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+
+{% block extra_css %}
+<style>
+  .nyx-category-image-panel{
+    display:grid;
+    grid-template-columns:150px 1fr;
+    gap:1rem;
+    align-items:stretch;
+    border:1px solid var(--nyx-border);
+    border-radius:1.25rem;
+    background:
+      radial-gradient(circle at top left, rgba(118,207,210,.16), transparent 34%),
+      #ffffff;
+    padding:1rem;
+    box-shadow:0 10px 26px rgba(31,55,58,.06);
+  }
+
+  .nyx-category-image-preview{
+    width:150px;
+    height:150px;
+    border-radius:1rem;
+    overflow:hidden;
+    border:1px solid var(--nyx-border);
+    background:linear-gradient(135deg, var(--nyx-primary), var(--nyx-primary-strong));
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  .nyx-category-image-preview img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+  }
+
+  .nyx-category-image-placeholder{
+    width:100%;
+    height:100%;
+    color:#ffffff;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:.45rem;
+    font-weight:850;
+  }
+
+  .nyx-category-image-placeholder i{
+    font-size:2rem;
+  }
+
+  .nyx-category-image-content{
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+  }
+
+  .nyx-category-image-content input[type="file"]{
+    border-radius:999px;
+    border:1px solid var(--nyx-border);
+    padding:.65rem .85rem;
+    background:#ffffff;
+    width:100%;
+  }
+
+  .nyx-clear-image-check{
+    display:inline-flex;
+    align-items:center;
+    gap:.5rem;
+    width:fit-content;
+    border:1px solid #f1caca;
+    background:#fff7f7;
+    color:#b54747;
+    border-radius:999px;
+    padding:.55rem .85rem;
+    font-size:.9rem;
+    font-weight:800;
+    cursor:pointer;
+  }
+
+  .nyx-clear-image-check input{
+    accent-color:#b54747;
+  }
+
+  @media (max-width: 575.98px){
+    .nyx-category-image-panel{
+      grid-template-columns:1fr;
+      border-radius:1rem;
+      padding:.9rem;
+    }
+
+    .nyx-category-image-preview{
+      width:100%;
+      height:180px;
+    }
+
+    .nyx-clear-image-check{
+      width:100%;
+      justify-content:center;
+    }
+  }
+</style>
+{% endblock %}

@@ -17,7 +17,7 @@ from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.core.mail import send_mail
-from django.db.models import Count,Q
+from django.db.models import Count,Q, Prefetch
 from django.core.exceptions import ValidationError, PermissionDenied
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -29,7 +29,7 @@ from .forms import AppointmentForm, PublicAppointmentForm, AppointmentConfirmFor
 from .models import (Appointment, Employee,
     Salon, Service, Booking,
     SalonPaymentSettings, SalonMembership,
-    Employee,BusinessHourBlock)
+    Employee,BusinessHourBlock, ServiceCategory)
 from .utils import get_available_slots
 from .booking_utils import (
     expire_unpaid_bookings,
@@ -93,14 +93,44 @@ def service_list(request, salon_slug):
         is_active=True
     )
 
+    service_categories = (
+        ServiceCategory.objects
+        .filter(
+            salon=salon,
+            is_active=True,
+        )
+        .prefetch_related(
+            Prefetch(
+                "services",
+                queryset=Service.objects.filter(
+                    salon=salon,
+                    is_active=True,
+                ).order_by("name"),
+                to_attr="active_services",
+            )
+        )
+        .order_by("order", "name")
+    )
+
+    uncategorized_services = (
+        Service.objects
+        .filter(
+            salon=salon,
+            is_active=True,
+            category__isnull=True,
+        )
+        .select_related("salon")
+        .order_by("name")
+    )
+
     services = (
         Service.objects
         .filter(
             salon=salon,
             is_active=True
         )
-        .select_related('salon')
-        .order_by('name')
+        .select_related("salon", "category")
+        .order_by("category__order", "category__name", "name")
     )
 
     employees = (
@@ -124,6 +154,8 @@ def service_list(request, salon_slug):
 
     context = {
         'services': services,
+        'service_categories': service_categories,
+        'uncategorized_services': uncategorized_services,
         'employees': employees,
         'active_blocks': active_blocks,
         'salon': salon,
@@ -1910,3 +1942,10 @@ def mercadopago_oauth_disconnect(request, salon_id):
 
     messages.success(request, "Mercado Pago fue desconectado correctamente.")
     return redirect("panel_settings")
+
+def terms_view(request):
+    return render(request, "reservas/legal/terms.html")
+
+
+def privacy_view(request):
+    return render(request, "reservas/legal/privacy.html")

@@ -8,7 +8,7 @@ from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.auth import get_user_model
 
 
-from .models import Service, Employee, BusinessHours,BusinessHourBlock, Salon,EmployeeTimeOff
+from .models import Service, Employee, BusinessHours,BusinessHourBlock, Salon,EmployeeTimeOff,ServiceCategory
 
 def build_time_choices(start_hour=6, end_hour=23, step_minutes=30):
     choices = [("", "Seleccionar hora")]
@@ -56,8 +56,11 @@ class PanelServiceForm(forms.ModelForm):
 
     class Meta:
         model = Service
-        fields = ['name', 'price', 'duration_minutes', 'description', 'is_active']
+        fields = ['category', 'name', 'price', 'duration_minutes', 'description', 'is_active']
         widgets = {
+            'category': forms.Select(attrs={
+                'class': 'form-select nyx-form-input',
+            }),
             'name': forms.TextInput(attrs={
                 'class': 'form-control nyx-form-input',
                 'placeholder': 'Ej. Corte premium',
@@ -78,7 +81,19 @@ class PanelServiceForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        salon = kwargs.pop('salon', None)
         super().__init__(*args, **kwargs)
+
+        self.fields['category'].required = False
+        self.fields['category'].empty_label = "Sin categoría"
+
+        if salon:
+            self.fields['category'].queryset = ServiceCategory.objects.filter(
+                salon=salon,
+                is_active=True,
+            ).order_by('order', 'name')
+        else:
+            self.fields['category'].queryset = ServiceCategory.objects.none()
 
         if self.instance and self.instance.pk and self.instance.price is not None:
             price_int = int(self.instance.price)
@@ -98,9 +113,33 @@ class PanelServiceForm(forms.ModelForm):
             raise forms.ValidationError('El precio no puede ser negativo.')
 
         return value
-    
-from .models import Service, Employee
 
+class PanelServiceCategoryForm(forms.ModelForm):
+    class Meta:
+        model = ServiceCategory
+        fields = ["name", "description", "image", "order", "is_active"]
+        widgets = {
+            "name": forms.TextInput(attrs={
+                "class": "form-control nyx-form-input",
+                "placeholder": "Ej. Cabello, Manos, Pestañas",
+            }),
+            "description": forms.Textarea(attrs={
+                "class": "form-control nyx-form-input",
+                "rows": 3,
+                "placeholder": "Descripción opcional para mostrar en la página pública",
+            }),
+            "image": forms.ClearableFileInput(attrs={
+                "class": "form-control nyx-form-input",
+            }),
+            "order": forms.NumberInput(attrs={
+                "class": "form-control nyx-form-input",
+                "min": "0",
+                "placeholder": "Ej. 1",
+            }),
+            "is_active": forms.CheckboxInput(attrs={
+                "class": "form-check-input",
+            }),
+        }
 
 class PanelEmployeeForm(forms.ModelForm):
     services = forms.ModelMultipleChoiceField(

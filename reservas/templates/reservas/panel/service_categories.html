@@ -1,0 +1,141 @@
+{% extends "reservas/panel/base_panel.html" %}
+
+{% block title %}Categorías de servicios | NYX{% endblock %}
+{% block panel_title %}Categorías de servicios{% endblock %}
+{% block panel_subtitle %}Organizá los servicios de {{ salon.name }} por secciones{% endblock %}
+
+{% block panel_content %}
+<div class="nyx-card p-4 mb-4">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+      <h5 class="fw-bold mb-1">Secciones del catálogo</h5>
+      <div class="text-secondary">
+        Creá categorías como Cabello, Manos, Pestañas o Barbería.
+      </div>
+    </div>
+
+    <div class="d-flex gap-2 flex-wrap">
+      <a href="{% url 'panel_services' %}" class="nyx-outline-light">
+        Volver a servicios
+      </a>
+
+      <a href="{% url 'panel_service_category_create' %}" class="nyx-primary-btn">
+        <span>+</span>
+        <span>Nueva categoría</span>
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="nyx-card p-4">
+  {% if categories %}
+    <div class="table-responsive">
+      <table class="table nyx-table align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Categoría</th>
+            <th>Orden</th>
+            <th>Estado</th>
+            <th class="text-end">Acciones</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% for category in categories %}
+            <tr>
+              <td>
+                <div class="d-flex align-items-center gap-3">
+                  <div class="nyx-category-thumb">
+                    {% if category.image %}
+                      <img src="{{ category.image.url }}" alt="Imagen de {{ category.name }}">
+                    {% else %}
+                      <i class="bi bi-stars"></i>
+                    {% endif %}
+                  </div>
+
+                  <div>
+                    <div class="fw-semibold">{{ category.name }}</div>
+
+                    {% if category.description %}
+                      <div class="text-secondary small mt-1">
+                        {{ category.description|truncatechars:100 }}
+                      </div>
+                    {% else %}
+                      <div class="text-secondary small mt-1">
+                        Sin descripción.
+                      </div>
+                    {% endif %}
+                  </div>
+                </div>
+              </td>
+
+              <td class="fw-semibold">
+                {{ category.order }}
+              </td>
+
+              <td>
+                {% if category.is_active %}
+                  <span class="nyx-badge">Activa</span>
+                {% else %}
+                  <span class="nyx-badge" style="background:#fff3f3;color:#b54747;border-color:#f1caca;">
+                    Inactiva
+                  </span>
+                {% endif %}
+              </td>
+
+              <td class="text-end">
+                <div class="d-flex justify-content-end gap-2 flex-wrap">
+                  <a href="{% url 'panel_service_category_edit' category.id %}" class="nyx-filter-btn">
+                    Editar
+                  </a>
+
+                  <a href="{% url 'panel_service_category_toggle_active' category.id %}" class="nyx-filter-btn">
+                    {% if category.is_active %}Desactivar{% else %}Activar{% endif %}
+                  </a>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="nyx-empty">
+      <h5 class="fw-bold mb-2">Todavía no hay categorías</h5>
+      <p class="text-secondary mb-3">
+        Creá secciones para ordenar los servicios en la página pública.
+      </p>
+
+      <a href="{% url 'panel_service_category_create' %}" class="nyx-primary-btn">
+        Crear primera categoría
+      </a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .nyx-category-thumb{
+    width:56px;
+    height:56px;
+    flex:0 0 56px;
+    border-radius:1rem;
+    overflow:hidden;
+    border:1px solid var(--nyx-border);
+    background:linear-gradient(135deg, var(--nyx-primary), var(--nyx-primary-strong));
+    color:#ffffff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:1.35rem;
+  }
+
+  .nyx-category-thumb img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+  }
+</style>
+{% endblock %}

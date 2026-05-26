@@ -13,17 +13,21 @@
       <div class="text-secondary">Editá precios, duración y disponibilidad.</div>
     </div>
 
-    <div class="ms-auto nyx-services-main-action">
-      <a href="{% url 'panel_service_create' %}" class="nyx-primary-btn">
-        <span>+</span>
-        <span>Nuevo servicio</span>
-      </a>
-    </div>
+    <div class="ms-auto nyx-services-main-action d-flex gap-2 flex-wrap">
+    <a href="{% url 'panel_service_categories' %}" class="nyx-category-manage-btn">
+      <i class="bi bi-grid-3x3-gap-fill"></i>
+      <span>Ver categorías</span>
+    </a>
+
+    <a href="{% url 'panel_service_create' %}" class="nyx-primary-btn">
+      <span>+</span>
+      <span>Nuevo servicio</span>
+    </a>
   </div>
 </div>
 
 {% if services %}
-  <div class="nyx-card p-3 mb-4">
+  <div class="nyx-card p-3 mb-4 mt-4">
     <label for="service-search-input" class="nyx-service-search-label">
       Buscar servicio
     </label>
@@ -374,6 +378,50 @@ document.addEventListener("DOMContentLoaded", function () {
       max-width: 100%;
       white-space: normal;
       line-height: 1.2;
+    }
+  }
+
+  .nyx-category-manage-btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:.5rem;
+    border-radius:999px;
+    padding:.85rem 1.15rem;
+    background:#ffffff;
+    color:var(--nyx-primary-dark);
+    border:1px solid var(--nyx-border);
+    text-decoration:none;
+    font-weight:850;
+    transition:.2s ease;
+    box-shadow:0 8px 22px rgba(31,55,58,.06);
+  }
+
+  .nyx-category-manage-btn:hover{
+    color:#ffffff;
+    background:linear-gradient(135deg, var(--nyx-primary-dark), #3f7073);
+    border-color:transparent;
+    transform:translateY(-1px);
+  }
+
+  .nyx-category-manage-btn i{
+    color:var(--nyx-primary-strong);
+  }
+
+  .nyx-category-manage-btn:hover i{
+    color:#ffffff;
+  }
+
+  @media (max-width: 767.98px){
+    .nyx-services-main-action{
+      width:100%;
+      flex-direction:column;
+    }
+
+    .nyx-services-main-action .nyx-category-manage-btn,
+    .nyx-services-main-action .nyx-primary-btn{
+      width:100%;
+      min-height:48px;
     }
   }
 </style>

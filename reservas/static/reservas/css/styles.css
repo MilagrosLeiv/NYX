@@ -819,3 +819,22 @@ select.form-select:focus {
         width: 100%;
     }
 }
+
+.nyx-footer {
+  background: var(--nyx-surface, #ffffff);
+  border-color: var(--nyx-border, #dceeee) !important;
+}
+
+.nyx-footer-copy {
+  color: var(--nyx-text-muted, #6b8484);
+}
+
+.nyx-footer-link {
+  color: var(--nyx-text-muted, #6b8484);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.nyx-footer-link:hover {
+  color: var(--nyx-primary, #408888);
+}

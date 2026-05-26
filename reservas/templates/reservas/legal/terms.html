@@ -1,0 +1,70 @@
+{% extends "reservas/base.html" %}
+
+{% block title %}Términos y condiciones | NYX{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="mx-auto" style="max-width: 900px;">
+    <div class="card border-0 shadow-sm rounded-4">
+      <div class="card-body p-4 p-md-5">
+        <p class="text-muted small mb-2">Última actualización: {% now "d/m/Y" %}</p>
+
+        <h1 class="fw-bold mb-4">Términos y condiciones</h1>
+
+        <p class="text-muted">
+          Estos términos regulan el uso de NYX, una plataforma digital para la gestión de turnos,
+          servicios, profesionales y reservas de salones de belleza, peluquerías y negocios similares.
+        </p>
+
+        <h2 class="h5 fw-bold mt-4">1. Uso de la plataforma</h2>
+        <p>
+          El usuario se compromete a utilizar NYX de manera responsable, cargando información verdadera
+          sobre su negocio, servicios, precios, horarios y disponibilidad.
+        </p>
+
+        <h2 class="h5 fw-bold mt-4">2. Responsabilidad del salón</h2>
+        <p>
+          Cada salón es responsable por la información publicada en su página de reservas, incluyendo
+          precios, duración de servicios, disponibilidad, políticas de cancelación y atención a sus clientes.
+        </p>
+
+        <h2 class="h5 fw-bold mt-4">3. Reservas y clientes finales</h2>
+        <p>
+          NYX facilita la gestión de reservas, pero no interviene directamente en la prestación de los
+          servicios ofrecidos por cada salón ni garantiza la asistencia de los clientes finales.
+        </p>
+
+        <h2 class="h5 fw-bold mt-4">4. Pagos</h2>
+        <p>
+          Cuando existan pagos integrados, estos podrán ser procesados mediante proveedores externos como
+          Mercado Pago. NYX no almacena datos sensibles de tarjetas ni credenciales bancarias.
+        </p>
+
+        <h2 class="h5 fw-bold mt-4">5. Prueba gratuita y suscripción</h2>
+        <p>
+          NYX puede ofrecer un período de prueba gratuito. Finalizado dicho período, el acceso a la plataforma
+          podrá requerir la activación de un plan pago.
+        </p>
+
+        <h2 class="h5 fw-bold mt-4">6. Suspensión del servicio</h2>
+        <p>
+          El acceso podrá suspenderse ante vencimiento de prueba, falta de pago, uso indebido de la plataforma
+          o incumplimiento de estos términos.
+        </p>
+
+        <h2 class="h5 fw-bold mt-4">7. Cambios en el servicio</h2>
+        <p>
+          NYX podrá incorporar, modificar o eliminar funcionalidades para mejorar el producto, corregir errores
+          o adaptar el servicio a nuevas necesidades.
+        </p>
+
+        <h2 class="h5 fw-bold mt-4">8. Contacto</h2>
+        <p class="mb-0">
+          Para consultas o soporte, podés comunicarte con el equipo de NYX mediante los canales de contacto
+          informados en la plataforma.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

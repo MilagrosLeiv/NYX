@@ -15,6 +15,7 @@ from .models import (
     Employee,
     BusinessHours,
     Salon,
+    ServiceCategory,
     Booking,
     BookingItem,
     SalonMembership,
@@ -157,6 +158,14 @@ class ServiceAdmin(admin.ModelAdmin):
         if not request.user.is_superuser and is_owner_user(request.user):
             obj.salon = get_user_salon(request.user)
         super().save_model(request, obj, form, change)
+
+@admin.register(ServiceCategory)
+class ServiceCategoryAdmin(admin.ModelAdmin):
+    list_display = ("name", "salon", "order", "is_active")
+    list_filter = ("salon", "is_active")
+    search_fields = ("name", "salon__name")
+    ordering = ("salon", "order", "name")
+    fields = ("salon", "name", "description", "image", "order", "is_active")
 
 class EmployeeAdminForm(forms.ModelForm):
     class Meta:

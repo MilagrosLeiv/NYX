@@ -293,6 +293,251 @@
     letter-spacing:-0.035em;
   }
 
+  .service-category-block{
+    margin-bottom:1.75rem;
+  }
+
+  .service-category-header{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:1rem;
+    margin-bottom:.9rem;
+    padding:.95rem 1.1rem;
+    border:1px solid var(--nyx-border);
+    border-radius:1.1rem;
+    background:
+      radial-gradient(circle at top left, rgba(140,220,223,.18), transparent 32%),
+      #ffffff;
+    box-shadow:0 10px 26px rgba(24,49,49,.055);
+  }
+
+  .service-category-kicker{
+    display:inline-flex;
+    align-items:center;
+    gap:.35rem;
+    color:var(--nyx-primary);
+    font-size:.74rem;
+    font-weight:850;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    margin-bottom:.25rem;
+  }
+
+  .service-category-title{
+    margin:0;
+    font-size:1.25rem;
+    font-weight:900;
+    color:var(--nyx-text);
+    letter-spacing:-.025em;
+  }
+
+  .service-category-description{
+    margin:.25rem 0 0;
+    color:var(--nyx-text-muted);
+    font-size:.92rem;
+  }
+
+  .service-category-count{
+    flex:0 0 auto;
+    border-radius:999px;
+    padding:.42rem .7rem;
+    background:var(--nyx-surface-soft);
+    border:1px solid var(--nyx-border);
+    color:var(--nyx-primary);
+    font-size:.78rem;
+    font-weight:850;
+  }
+
+  @media (max-width: 575.98px){
+    .service-category-header{
+      align-items:flex-start;
+      flex-direction:column;
+      border-radius:1rem;
+      padding:.85rem;
+    }
+
+    .service-category-title{
+      font-size:1.12rem;
+    }
+  }
+
+  .service-category-list{
+    display:grid;
+    gap:1rem;
+  }
+
+  .service-category-accordion{
+    border:1px solid var(--nyx-border);
+    border-radius:1.35rem;
+    background:#ffffff;
+    box-shadow:0 14px 38px rgba(24,49,49,.07);
+    overflow:hidden;
+  }
+
+  .service-category-accordion summary{
+    list-style:none;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:1rem;
+    padding:1rem 1.15rem;
+    background:
+      radial-gradient(circle at top left, rgba(140,220,223,.22), transparent 34%),
+      linear-gradient(135deg, #ffffff 0%, #f7fcfc 100%);
+  }
+
+  .service-category-accordion summary::-webkit-details-marker{
+    display:none;
+  }
+
+  .service-category-main{
+    display:flex;
+    align-items:center;
+    gap:.9rem;
+    min-width:0;
+  }
+
+  .service-category-visual{
+    width:62px;
+    height:62px;
+    flex:0 0 62px;
+    border-radius:1rem;
+    overflow:hidden;
+    border:1px solid var(--nyx-border);
+    background:linear-gradient(135deg, var(--nyx-primary), var(--nyx-soft));
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#ffffff;
+    font-size:1.5rem;
+    box-shadow:0 10px 24px rgba(64,136,136,.12);
+  }
+
+  .service-category-visual img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+  }
+
+  .service-category-info{
+    min-width:0;
+  }
+
+  .service-category-kicker{
+    display:inline-flex;
+    align-items:center;
+    gap:.35rem;
+    color:var(--nyx-primary);
+    font-size:.72rem;
+    font-weight:850;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    margin-bottom:.2rem;
+  }
+
+  .service-category-title{
+    margin:0;
+    color:var(--nyx-text);
+    font-size:1.2rem;
+    font-weight:900;
+    letter-spacing:-.025em;
+  }
+
+  .service-category-description{
+    margin:.18rem 0 0;
+    color:var(--nyx-text-muted);
+    font-size:.9rem;
+    line-height:1.4;
+  }
+
+  .service-category-side{
+    display:flex;
+    align-items:center;
+    gap:.7rem;
+    flex:0 0 auto;
+  }
+
+  .service-category-count{
+    border-radius:999px;
+    padding:.42rem .72rem;
+    background:var(--nyx-surface-soft);
+    border:1px solid var(--nyx-border);
+    color:var(--nyx-primary);
+    font-size:.78rem;
+    font-weight:850;
+    white-space:nowrap;
+  }
+
+  .service-category-chevron{
+    width:36px;
+    height:36px;
+    border-radius:999px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--nyx-primary);
+    background:#ffffff;
+    border:1px solid var(--nyx-border);
+    transition:.2s ease;
+  }
+
+  .service-category-accordion[open] .service-category-chevron{
+    transform:rotate(180deg);
+    background:var(--nyx-primary);
+    color:#ffffff;
+  }
+
+  .service-category-body{
+    padding:1rem;
+    border-top:1px solid var(--nyx-border);
+    background:#fbfefe;
+  }
+
+  @media (max-width: 575.98px){
+    .service-category-accordion summary{
+      align-items:flex-start;
+      padding:.9rem;
+    }
+
+    .service-category-main{
+      align-items:flex-start;
+    }
+
+    .service-category-visual{
+      width:52px;
+      height:52px;
+      flex-basis:52px;
+      border-radius:.9rem;
+      font-size:1.25rem;
+    }
+
+    .service-category-side{
+      flex-direction:column;
+      align-items:flex-end;
+      gap:.45rem;
+    }
+
+    .service-category-count{
+      font-size:.72rem;
+      padding:.34rem .58rem;
+    }
+
+    .service-category-title{
+      font-size:1.05rem;
+    }
+
+    .service-category-description{
+      font-size:.84rem;
+    }
+
+    .service-category-body{
+      padding:.85rem;
+    }
+  }
+
   @media (max-width: 767.98px){
     .salon-public-profile{
       border-radius:1.1rem;
@@ -542,50 +787,186 @@
 <div class="row g-4 align-items-start">
   <div class="col-12 col-lg-8">
     {% if services %}
-      <div class="row g-4">
-        {% for service in services %}
-          <div class="col-12 col-md-6 col-xl-4">
-            <div class="card h-100 border-0 shadow-sm service-card">
-              <div class="card-body d-flex flex-column">
-                <div class="service-card-header mb-3">
-                  <div>
-                    <h2 class="h5 card-title mb-2">{{ service.name }}</h2>
-                    <span class="badge nyx-badge-soft">
-                      {{ service.duration_minutes }} min
-                    </span>
+      <div class="service-category-list">
+
+        {% for category in service_categories %}
+          {% if category.active_services %}
+            <details class="service-category-accordion" {% if  service_categories|length <= 3 %}open{% endif %}>
+              <summary>
+                <div class="service-category-main">
+                  <div class="service-category-visual">
+                    {% if category.image %}
+                      <img src="{{ category.image.url }}" alt="Imagen de {{ category.name }}">
+                    {% else %}
+                      <i class="bi bi-stars"></i>
+                    {% endif %}
                   </div>
 
-                  <div class="service-price-pill">
-                    ${{ service.price|miles_punto }}
+                  <div class="service-category-info">
+                    <div class="service-category-kicker">
+                      Categoría
+                    </div>
+
+                    <h3 class="service-category-title">
+                      {{ category.name }}
+                    </h3>
+
+                    {% if category.description %}
+                      <p class="service-category-description">
+                        {{ category.description }}
+                      </p>
+                    {% endif %}
                   </div>
                 </div>
 
-                {% if service.description %}
-                  <p class="card-text nyx-text-muted mb-4">
-                    {{ service.description }}
-                  </p>
-                {% else %}
-                  <p class="card-text nyx-text-muted mb-4">
-                    Sin descripción.
-                  </p>
-                {% endif %}
+                <div class="service-category-side">
+                  <div class="service-category-count">
+                    {{ category.active_services|length }}
+                    {% if category.active_services|length == 1 %}servicio{% else %}servicios{% endif %}
+                  </div>
 
-                <div class="mt-auto">
-                  <button
-                    type="button"
-                    class="btn nyx-btn-outline w-100 add-service-btn"
-                    data-id="{{ service.id }}"
-                    data-name="{{ service.name }}"
-                    data-price="{{ service.price }}"
-                    data-duration="{{ service.duration_minutes }}"
-                  >
-                    Agregar
-                  </button>
+                  <div class="service-category-chevron">
+                    <i class="bi bi-chevron-down"></i>
+                  </div>
+                </div>
+              </summary>
+
+              <div class="service-category-body">
+                <div class="row g-4">
+                  {% for service in category.active_services %}
+                    <div class="col-12 col-md-6 col-xl-4">
+                      <div class="card h-100 border-0 shadow-sm service-card">
+                        <div class="card-body d-flex flex-column">
+                          <div class="service-card-header mb-3">
+                            <div>
+                              <h2 class="h5 card-title mb-2">{{ service.name }}</h2>
+                              <span class="badge nyx-badge-soft">
+                                {{ service.duration_minutes }} min
+                              </span>
+                            </div>
+
+                            <div class="service-price-pill">
+                              ${{ service.price|miles_punto }}
+                            </div>
+                          </div>
+
+                          {% if service.description %}
+                            <p class="card-text nyx-text-muted mb-4">
+                              {{ service.description }}
+                            </p>
+                          {% else %}
+                            <p class="card-text nyx-text-muted mb-4">
+                              Sin descripción.
+                            </p>
+                          {% endif %}
+
+                          <div class="mt-auto">
+                            <button
+                              type="button"
+                              class="btn nyx-btn-outline w-100 add-service-btn"
+                              data-id="{{ service.id }}"
+                              data-name="{{ service.name }}"
+                              data-price="{{ service.price }}"
+                              data-duration="{{ service.duration_minutes }}"
+                            >
+                              Agregar
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  {% endfor %}
                 </div>
               </div>
-            </div>
-          </div>
+            </details>
+          {% endif %}
         {% endfor %}
+
+        {% if uncategorized_services %}
+          <details class="service-category-accordion" {% if service_categories|length <= 3 %}open{% endif %}></3>
+            <summary>
+              <div class="service-category-main">
+                <div class="service-category-visual">
+                  <i class="bi bi-grid"></i>
+                </div>
+
+                <div class="service-category-info">
+                  <div class="service-category-kicker">
+                    Categoría
+                  </div>
+
+                  <h3 class="service-category-title">
+                    Otros servicios
+                  </h3>
+
+                  <p class="service-category-description">
+                    Servicios disponibles sin categoría asignada.
+                  </p>
+                </div>
+              </div>
+
+              <div class="service-category-side">
+                <div class="service-category-count">
+                  {{ uncategorized_services|length }}
+                  {% if uncategorized_services|length == 1 %}servicio{% else %}servicios{% endif %}
+                </div>
+
+                <div class="service-category-chevron">
+                  <i class="bi bi-chevron-down"></i>
+                </div>
+              </div>
+            </summary>
+
+            <div class="service-category-body">
+              <div class="row g-4">
+                {% for service in uncategorized_services %}
+                  <div class="col-12 col-md-6 col-xl-4">
+                    <div class="card h-100 border-0 shadow-sm service-card">
+                      <div class="card-body d-flex flex-column">
+                        <div class="service-card-header mb-3">
+                          <div>
+                            <h2 class="h5 card-title mb-2">{{ service.name }}</h2>
+                            <span class="badge nyx-badge-soft">
+                              {{ service.duration_minutes }} min
+                            </span>
+                          </div>
+
+                          <div class="service-price-pill">
+                            ${{ service.price|miles_punto }}
+                          </div>
+                        </div>
+
+                        {% if service.description %}
+                          <p class="card-text nyx-text-muted mb-4">
+                            {{ service.description }}
+                          </p>
+                        {% else %}
+                          <p class="card-text nyx-text-muted mb-4">
+                            Sin descripción.
+                          </p>
+                        {% endif %}
+
+                        <div class="mt-auto">
+                          <button
+                            type="button"
+                            class="btn nyx-btn-outline w-100 add-service-btn"
+                            data-id="{{ service.id }}"
+                            data-name="{{ service.name }}"
+                            data-price="{{ service.price }}"
+                            data-duration="{{ service.duration_minutes }}"
+                          >
+                            Agregar
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          </details>
+        {% endif %}
+
       </div>
     {% else %}
       <div class="card border-0 shadow-sm service-card">

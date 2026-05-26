@@ -1,0 +1,76 @@
+<footer class="nyx-landing-footer">
+  <div class="container">
+    <div class="nyx-landing-footer-grid">
+
+      <div>
+        <a href="{% url 'landing_nyx' %}" class="nyx-landing-footer-brand">
+          NYX
+        </a>
+
+        <p class="nyx-landing-footer-text mt-3">
+          Sistema de turnos online para peluquerías, salones de belleza y profesionales que quieren organizar su agenda sin depender de mensajes eternos.
+        </p>
+
+        <div class="nyx-landing-footer-socials">
+          <a href="https://www.instagram.com/TU_USUARIO_DE_INSTAGRAM/" target="_blank" rel="noopener" aria-label="Instagram">
+            Instagram
+          </a>
+
+          <a href="https://wa.me/5493416959852?text=Hola%2C%20quiero%20consultar%20por%20NYX" target="_blank" rel="noopener" aria-label="WhatsApp">
+            WhatsApp
+          </a>
+        </div>
+      </div>
+
+      <div>
+        <h3>Producto</h3>
+        <ul>
+          <li><a href="/#caracteristicas">Funciones</a></li>
+          <li><a href="/#como-funciona">Cómo funciona</a></li>
+          <li><a href="/#precios">Planes</a></li>
+          <li><a href="{% url 'trial_signup' %}">Prueba gratis</a></li>
+          <li><a href="{% url 'panel_login' %}">Ingresar al panel</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h3>Información legal</h3>
+        <ul>
+          <li><a href="{% url 'privacy' %}">Política de privacidad</a></li>
+          <li><a href="{% url 'terms' %}">Términos y condiciones</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h3>Contacto</h3>
+        <ul>
+          <li>
+            <a href="mailto:nyxsoftware.ml@gmail.com">
+              nyxsoftware.ml@gmail.com
+            </a>
+          </li>
+
+          <li>
+            <a href="https://wa.me/5493416959852?text=Hola%2C%20quiero%20consultar%20por%20NYX" target="_blank" rel="noopener">
+              WhatsApp soporte
+            </a>
+          </li>
+
+          <li>
+            <a href="https://www.instagram.com/nyx.turnos/" target="_blank" rel="noopener">
+              Instagram
+            </a>
+          </li>
+
+          <li><span>Argentina</span></li>
+        </ul>
+      </div>
+
+    </div>
+
+    <div class="nyx-landing-footer-bottom">
+      <span>© {% now "Y" %} NYX. Todos los derechos reservados.</span>
+      <span>Hecho para salones que quieren vender más y organizarse mejor.</span>
+    </div>
+  </div>
+</footer>

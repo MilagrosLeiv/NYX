@@ -1,0 +1,64 @@
+{% extends "reservas/base.html" %}
+
+{% block title %}Política de privacidad | NYX{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="mx-auto" style="max-width: 900px;">
+    <div class="card border-0 shadow-sm rounded-4">
+      <div class="card-body p-4 p-md-5">
+        <p class="text-muted small mb-2">Última actualización: {% now "d/m/Y" %}</p>
+
+        <h1 class="fw-bold mb-4">Política de privacidad</h1>
+
+        <p class="text-muted">
+          Esta política explica cómo NYX puede recopilar, utilizar y proteger la información cargada
+          por los salones y sus usuarios al utilizar la plataforma.
+        </p>
+
+        <h2 class="h5 fw-bold mt-4">1. Información que recopilamos</h2>
+        <p>
+          Podemos recopilar datos como nombre del salón, nombre de usuarios, correo electrónico, servicios,
+          horarios, profesionales, reservas y datos necesarios para el funcionamiento del sistema.
+        </p>
+
+        <h2 class="h5 fw-bold mt-4">2. Uso de la información</h2>
+        <p>
+          Utilizamos la información para permitir la gestión de turnos, administración de servicios,
+          organización de profesionales, notificaciones internas y funcionamiento general de la plataforma.
+        </p>
+
+        <h2 class="h5 fw-bold mt-4">3. Datos de clientes finales</h2>
+        <p>
+          Los datos cargados por los clientes al reservar turnos son utilizados para gestionar dichas reservas
+          y permitir que el salón pueda brindar el servicio correspondiente.
+        </p>
+
+        <h2 class="h5 fw-bold mt-4">4. Pagos y proveedores externos</h2>
+        <p>
+          En caso de utilizar pagos integrados, estos podrán ser procesados por proveedores externos como
+          Mercado Pago. NYX no almacena datos sensibles de tarjetas de crédito o débito.
+        </p>
+
+        <h2 class="h5 fw-bold mt-4">5. Seguridad</h2>
+        <p>
+          Aplicamos medidas razonables para proteger la información almacenada. Sin embargo, ningún sistema
+          informático puede garantizar seguridad absoluta.
+        </p>
+
+        <h2 class="h5 fw-bold mt-4">6. Acceso y eliminación de datos</h2>
+        <p>
+          Los salones pueden solicitar la modificación o eliminación de información asociada a su cuenta,
+          sujeto a requerimientos técnicos, legales u operativos.
+        </p>
+
+        <h2 class="h5 fw-bold mt-4">7. Contacto</h2>
+        <p class="mb-0">
+          Para consultas sobre privacidad o uso de datos, podés comunicarte con el equipo de NYX mediante
+          los canales de contacto disponibles en la plataforma.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

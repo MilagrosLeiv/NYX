@@ -18,6 +18,7 @@ from .models import (
     BookingItem,
     EmployeeTimeOff,
     Service,
+    ServiceCategory,
     Employee,
     BusinessHours,
     BusinessHourBlock,
@@ -38,6 +39,7 @@ from .panel_forms import (
     PanelEmployeeAccessForm,
     AcceptStaffInvitationForm,
     TrialSignupForm,
+    PanelServiceCategoryForm,
 )
 from .booking_utils import (
     mark_completed_bookings,
@@ -404,7 +406,7 @@ def panel_service_create(request):
         raise PermissionDenied("Solo la dueña puede crear servicios.")
 
     if request.method == 'POST':
-        form = PanelServiceForm(request.POST)
+        form = PanelServiceForm(request.POST, salon=salon)
         if form.is_valid():
             service = form.save(commit=False)
             service.salon = salon
@@ -426,7 +428,7 @@ def panel_service_create(request):
                 messages.success(request, "Servicio creado correctamente.")
             return redirect('panel_services')
     else:
-        form = PanelServiceForm()
+        form = PanelServiceForm(salon=salon)
 
     context = {
         'panel_role': 'owner',
@@ -452,13 +454,13 @@ def panel_service_edit(request, service_id):
     service = get_object_or_404(Service, pk=service_id, salon=salon)
 
     if request.method == 'POST':
-        form = PanelServiceForm(request.POST, instance=service)
+        form = PanelServiceForm(request.POST, instance=service, salon=salon)
         if form.is_valid():
             form.save()
             messages.success(request, 'Servicio actualizado correctamente.')
             return redirect('panel_services')
     else:
-        form = PanelServiceForm(instance=service)
+        form = PanelServiceForm(instance=service, salon=salon)
 
     context = {
         'panel_role': 'owner',
@@ -492,6 +494,134 @@ def panel_service_toggle_active(request, service_id):
         messages.success(request, f'“{service.name}” fue desactivado.')
 
     return redirect('panel_services')
+
+
+@login_required
+@subscription_required
+def panel_service_categories(request):
+    if request.user.is_superuser:
+        return redirect('/admin/')
+
+    salon = get_user_salon(request.user)
+
+    if not salon or not is_owner_user(request.user):
+        raise PermissionDenied("Solo la dueña puede gestionar categorías.")
+
+    categories = (
+        ServiceCategory.objects
+        .filter(salon=salon)
+        .order_by("order", "name")
+    )
+
+    context = {
+        "panel_role": "owner",
+        "salon": salon,
+        "categories": categories,
+    }
+
+    return render(request, "reservas/panel/service_categories.html", context)
+
+
+@login_required
+@subscription_required
+def panel_service_category_create(request):
+    if request.user.is_superuser:
+        return redirect('/admin/')
+
+    salon = get_user_salon(request.user)
+
+    if not salon or not is_owner_user(request.user):
+        raise PermissionDenied("Solo la dueña puede crear categorías.")
+
+    if request.method == "POST":
+        form = PanelServiceCategoryForm(request.POST, request.FILES)
+
+        if form.is_valid():
+            category = form.save(commit=False)
+            category.salon = salon
+            category.save()
+
+            messages.success(request, "Categoría creada correctamente.")
+            return redirect("panel_service_categories")
+    else:
+        form = PanelServiceCategoryForm()
+
+    context = {
+        "panel_role": "owner",
+        "salon": salon,
+        "form": form,
+        "form_title": "Nueva categoría",
+        "submit_label": "Crear categoría",
+    }
+
+    return render(request, "reservas/panel/service_category_form.html", context)
+
+
+@login_required
+@subscription_required
+def panel_service_category_edit(request, category_id):
+    if request.user.is_superuser:
+        return redirect('/admin/')
+
+    salon = get_user_salon(request.user)
+
+    if not salon or not is_owner_user(request.user):
+        raise PermissionDenied("Solo la dueña puede editar categorías.")
+
+    category = get_object_or_404(
+        ServiceCategory,
+        pk=category_id,
+        salon=salon,
+    )
+
+    if request.method == "POST":
+        form = PanelServiceCategoryForm(request.POST, request.FILES, instance=category)
+
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Categoría actualizada correctamente.")
+            return redirect("panel_service_categories")
+    else:
+        form = PanelServiceCategoryForm(instance=category)
+
+    context = {
+        "panel_role": "owner",
+        "salon": salon,
+        "form": form,
+        "form_title": f"Editar categoría: {category.name}",
+        "submit_label": "Guardar cambios",
+        "category": category,
+    }
+
+    return render(request, "reservas/panel/service_category_form.html", context)
+
+
+@login_required
+@subscription_required
+def panel_service_category_toggle_active(request, category_id):
+    if request.user.is_superuser:
+        return redirect('/admin/')
+
+    salon = get_user_salon(request.user)
+
+    if not salon or not is_owner_user(request.user):
+        raise PermissionDenied("Solo la dueña puede modificar categorías.")
+
+    category = get_object_or_404(
+        ServiceCategory,
+        pk=category_id,
+        salon=salon,
+    )
+
+    category.is_active = not category.is_active
+    category.save(update_fields=["is_active"])
+
+    if category.is_active:
+        messages.success(request, f'La categoría “{category.name}” fue activada.')
+    else:
+        messages.success(request, f'La categoría “{category.name}” fue desactivada.')
+
+    return redirect("panel_service_categories")
 
 
 @login_required
@@ -785,6 +915,37 @@ def panel_employee_toggle_active(request, employee_id):
 
     should_activate = not employee.is_active
 
+    # Protección: no permitir que una dueña se desactive a sí misma.
+    if not should_activate and employee.user_id == request.user.id:
+        messages.error(
+            request,
+            "No podés desactivar tu propio acceso al panel."
+        )
+        return redirect("panel_employees")
+
+    # Protección: no permitir desactivar a la única dueña activa del salón.
+    if not should_activate and employee.user:
+        target_membership = SalonMembership.objects.filter(
+            user=employee.user,
+            salon=salon,
+            role="owner",
+            is_active=True
+        ).first()
+
+        if target_membership:
+            active_owners_count = SalonMembership.objects.filter(
+                salon=salon,
+                role="owner",
+                is_active=True
+            ).count()
+
+            if active_owners_count <= 1:
+                messages.error(
+                    request,
+                    "No podés desactivar a la única dueña activa del salón."
+                )
+                return redirect("panel_employees")
+
     employee.is_active = should_activate
     employee.save(update_fields=["is_active"])
 
@@ -809,7 +970,6 @@ def panel_employee_toggle_active(request, employee_id):
         )
 
     return redirect('panel_employees')
-
 
 @login_required
 @subscription_required

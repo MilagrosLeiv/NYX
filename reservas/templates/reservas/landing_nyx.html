@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>NYX | Sistema de turnos para peluquerías</title>
+  <title>NYX | Sistema de turnos</title>
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -25,6 +25,117 @@
       radial-gradient(circle at top right, rgba(140,220,223,.28), transparent 28%),
       radial-gradient(circle at bottom left, rgba(64,136,136,.12), transparent 25%),
       var(--nyx-landing-bg);
+  }
+
+  .nyx-landing-footer {
+    background: #183131;
+    color: #f6fbfb;
+    padding: 72px 0 28px;
+  }
+
+  .nyx-landing-footer-grid {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr 1fr;
+    gap: 48px;
+  }
+
+  .nyx-landing-footer-brand {
+    font-family: 'Cinzel', serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #ffffff;
+    text-decoration: none;
+    letter-spacing: 0.04em;
+  }
+
+  .nyx-landing-footer-text {
+    max-width: 360px;
+    color: rgba(246, 251, 251, 0.76);
+    line-height: 1.7;
+  }
+
+  .nyx-landing-footer h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 18px;
+  }
+
+  .nyx-landing-footer ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .nyx-landing-footer li {
+    margin-bottom: 12px;
+  }
+
+  .nyx-landing-footer a,
+  .nyx-landing-footer span {
+    color: rgba(246, 251, 251, 0.78);
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+
+  .nyx-landing-footer a:hover {
+    color: #8cdcdf;
+  }
+
+  .nyx-landing-footer-socials {
+    display: flex;
+    gap: 14px;
+    margin-top: 24px;
+  }
+
+  .nyx-landing-footer-socials a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 42px;
+    height: 42px;
+    padding: 0 14px;
+    border: 1px solid rgba(140, 220, 223, 0.28);
+    border-radius: 999px;
+    color: #ffffff;
+    font-size: 0.9rem;
+  }
+
+  .nyx-landing-footer-socials a:hover {
+    border-color: #8cdcdf;
+    background: rgba(140, 220, 223, 0.08);
+  }
+
+  .nyx-landing-footer-bottom {
+    border-top: 1px solid rgba(140, 220, 223, 0.18);
+    margin-top: 52px;
+    padding-top: 24px;
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    color: rgba(246, 251, 251, 0.62);
+    font-size: 0.9rem;
+  }
+
+  @media (max-width: 992px) {
+    .nyx-landing-footer-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  @media (max-width: 576px) {
+    .nyx-landing-footer {
+      padding: 52px 0 24px;
+    }
+
+    .nyx-landing-footer-grid {
+      grid-template-columns: 1fr;
+      gap: 32px;
+    }
+
+    .nyx-landing-footer-bottom {
+      flex-direction: column;
+    }
   }
 
   .nyx-landing{
@@ -689,6 +800,8 @@
       grid-template-columns:1fr !important;
     }
   }
+
+  
 </style>
 </head>
 <body>
@@ -918,7 +1031,7 @@
         <div class="nyx-price-card featured">
           <h3>Inicial</h3>
           <p class="nyx-mock-muted">
-            Para salones que quieren empezar a ordenar sus reservas con una herramienta simple y profesional.
+            Para negocios que quieren empezar a ordenar sus reservas con una herramienta simple y profesional.
           </p>
 
           <div class="nyx-price">$25.000</div>
@@ -986,5 +1099,6 @@
     </section>
   </main>
 </div>
+  {% include "reservas/includes/footer_landing.html" %}
 </body>
 </html>

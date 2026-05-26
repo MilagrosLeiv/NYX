@@ -114,6 +114,26 @@ urlpatterns = [
     path('panel/servicios/nuevo/', panel_views.panel_service_create, name='panel_service_create'),
     path('panel/servicios/<int:service_id>/editar/', panel_views.panel_service_edit, name='panel_service_edit'),
     path('panel/servicios/<int:service_id>/toggle-activo/', panel_views.panel_service_toggle_active, name='panel_service_toggle_active'),
+    path(
+        'panel/servicios/categorias/',
+        panel_views.panel_service_categories,
+        name='panel_service_categories'
+    ),
+    path(
+        'panel/servicios/categorias/nueva/',
+        panel_views.panel_service_category_create,
+        name='panel_service_category_create'
+    ),
+    path(
+        'panel/servicios/categorias/<int:category_id>/editar/',
+        panel_views.panel_service_category_edit,
+        name='panel_service_category_edit'
+    ),
+    path(
+        'panel/servicios/categorias/<int:category_id>/toggle-activa/',
+        panel_views.panel_service_category_toggle_active,
+        name='panel_service_category_toggle_active'
+    ),
     path('panel/profesionales/', panel_views.panel_employees, name='panel_employees'),
     path('panel/mi-plan/', panel_views.panel_plan, name='panel_plan'),
     path('panel/profesionales/nuevo/', panel_views.panel_employee_create, name='panel_employee_create'),
@@ -173,4 +193,8 @@ urlpatterns = [
         views.mercadopago_oauth_disconnect,
         name="mercadopago_oauth_disconnect"
     ),
+
+    #footer
+    path("terminos/", views.terms_view, name="terms"),
+    path("privacidad/", views.privacy_view, name="privacy"),
 ]

@@ -343,7 +343,34 @@ class SalonPaymentSettings(models.Model):
 
     def __str__(self):
         return f"Configuración de pagos - {self.salon.name}"
-    
+
+
+class ServiceCategory(models.Model):
+    salon = models.ForeignKey(
+        Salon,
+        on_delete=models.CASCADE,
+        related_name='service_categories',
+        verbose_name='Peluquería',
+    )
+    name = models.CharField("Nombre", max_length=100)
+    description = models.TextField("Descripción", blank=True)
+    image = models.ImageField(
+        "Imagen",
+        upload_to="service_categories/",
+        null=True,
+        blank=True,
+    )
+    order = models.PositiveIntegerField("Orden", default=0)
+    is_active = models.BooleanField("Activa", default=True)
+
+    class Meta:
+        verbose_name = "Categoría de servicio"
+        verbose_name_plural = "Categorías de servicios"
+        ordering = ["order", "name"]
+        unique_together = ("salon", "name")
+
+    def __str__(self):
+        return f"{self.salon.name} - {self.name}"  
 
 class Service(models.Model):
     name = models.CharField(max_length=100)
@@ -356,6 +383,14 @@ class Service(models.Model):
         on_delete=models.CASCADE,
         related_name='services',
         verbose_name='Peluquería',
+    )
+    category = models.ForeignKey(
+        ServiceCategory,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='services',
+        verbose_name='Categoría',
     )
 
     def __str__(self):
