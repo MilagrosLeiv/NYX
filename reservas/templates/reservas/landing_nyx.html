@@ -800,7 +800,17 @@
       grid-template-columns:1fr !important;
     }
   }
+  .nyx-landing-logo{
+    height: 44px;
+    width: auto;
+    display: block;
+  }
 
+  @media (max-width: 575.98px){
+    .nyx-landing-logo{
+      height: 36px;
+    }
+  }
   
 </style>
 </head>
@@ -809,7 +819,7 @@
   <header class="nyx-landing-container">
     <nav class="nyx-landing-nav">
       <a href="{% url 'landing_nyx' %}" class="nyx-landing-brand">
-        NYX<span></span>
+       NYX<span></span>
       </a>
 
       <ul class="nyx-landing-menu">

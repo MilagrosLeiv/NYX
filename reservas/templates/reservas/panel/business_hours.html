@@ -89,11 +89,11 @@
 
                     <td data-label="Acciones" class="text-end">
                       <div class="d-flex justify-content-end gap-2 flex-wrap">
-                        <a href="{% url 'panel_business_hour_block_edit' block.id %}" class="nyx-filter-btn">
+                        <a href="{% url 'panel_business_hour_block_edit' block.id %}" class="nyx-filter-btn" data-no-scroll-restore>
                           Editar
                         </a>
 
-                        <a href="{% url 'panel_business_hour_block_toggle_active' block.id %}" class="nyx-filter-btn">
+                        <a href="{% url 'panel_business_hour_block_toggle_active' block.id %}" class="nyx-filter-btn" data-no-scroll-restore>
                           {% if block.is_active %}Desactivar{% else %}Activar{% endif %}
                         </a>
                       </div>

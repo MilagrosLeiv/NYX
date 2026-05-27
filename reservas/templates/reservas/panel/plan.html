@@ -1,4 +1,5 @@
 {% extends "reservas/panel/base_panel.html" %}
+{% load custom_filters %}
 
 {% block title %}Mi plan | NYX{% endblock %}
 {% block panel_title %}Mi plan{% endblock %}
@@ -45,7 +46,7 @@
 
         <div>
           <span>Precio mensual</span>
-          <strong>${{ subscription.monthly_price_ars }}</strong>
+          <strong>${{ subscription.monthly_price_ars|miles_punto }}</strong>
         </div>
 
         <div>

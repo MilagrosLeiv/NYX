@@ -33,6 +33,29 @@ body.nyx-body {
 /* =========================
    NAVBAR
 ========================= */
+.nyx-public-brand{
+  display:inline-flex !important;
+  align-items:center !important;
+  gap:.5rem;
+  font-weight:900;
+  letter-spacing:.08em;
+  color:var(--nyx-text) !important;
+  text-decoration:none !important;
+}
+
+.nyx-public-brand-img{
+  width:30px !important;
+  height:30px !important;
+  max-width:30px !important;
+  max-height:30px !important;
+  object-fit:contain !important;
+  display:block !important;
+  flex:0 0 30px !important;
+}
+
+.nyx-public-brand span{
+  line-height:1;
+}
 
 .nyx-navbar {
     background: rgba(24, 49, 49, 0.88);

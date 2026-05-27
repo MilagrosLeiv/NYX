@@ -63,7 +63,7 @@ def get_user_salon(user):
 def get_or_create_salon_subscription(salon):
     now = timezone.now()
     trial_days = getattr(settings, "NYX_TRIAL_DAYS", 15)
-    monthly_price = getattr(settings, "NYX_BASIC_MONTHLY_PRICE_ARS", 30000)
+    monthly_price = getattr(settings, "NYX_BASIC_MONTHLY_PRICE_ARS", 25000)
 
     subscription, created = SalonSubscription.objects.get_or_create(
         salon=salon,
@@ -1501,7 +1501,7 @@ def trial_signup(request):
 
             now = timezone.now()
             trial_days = getattr(settings, "NYX_TRIAL_DAYS", 15)
-            monthly_price = getattr(settings, "NYX_BASIC_MONTHLY_PRICE_ARS", 30000)
+            monthly_price = getattr(settings, "NYX_BASIC_MONTHLY_PRICE_ARS", 25000)
             notify_admin_new_trial_account(user=user, salon=salon)
             
             SalonSubscription.objects.create(
