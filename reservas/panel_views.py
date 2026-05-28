@@ -294,7 +294,12 @@ def panel_agenda(request):
     else:
         items = items.none()
 
-    items = items.filter(start_datetime__date=selected_date).order_by('start_datetime')
+    visible_agenda_statuses = ['confirmed', 'pending']
+
+    items = items.filter(
+        start_datetime__date=selected_date,
+        booking__status__in=visible_agenda_statuses,
+    ).order_by('start_datetime')
 
     context = {
         'panel_role': 'owner' if is_owner_user(request.user) else 'staff',

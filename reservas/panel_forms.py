@@ -51,6 +51,7 @@ class PanelServiceForm(forms.ModelForm):
             'class': 'form-control nyx-form-input nyx-price-input',
             'placeholder': 'Ej. 50.000',
             'inputmode': 'numeric',
+            'autocomplete': 'off',
         })
     )
 
@@ -97,15 +98,35 @@ class PanelServiceForm(forms.ModelForm):
 
         if self.instance and self.instance.pk and self.instance.price is not None:
             price_int = int(self.instance.price)
-            self.fields['price'].initial = f"{price_int:,}".replace(",", ".")
+            self.initial['price'] = f"{price_int:,}".replace(",", ".")
 
     def clean_price(self):
-        raw_price = self.cleaned_data['price'].strip()
+        raw_price = str(self.cleaned_data.get('price', '')).strip()
 
-        normalized = raw_price.replace('.', '').replace(',', '.')
+        if not raw_price:
+            raise forms.ValidationError('Ingresá un precio.')
+
+        raw_price = (
+            raw_price
+            .replace('$', '')
+            .replace(' ', '')
+        )
 
         try:
-            value = Decimal(normalized)
+            # Caso argentino con coma decimal: 10.000,50
+            if ',' in raw_price:
+                normalized = raw_price.replace('.', '').replace(',', '.')
+                value = Decimal(normalized)
+
+            # Caso decimal que puede venir del modelo/input: 10000.00
+            elif raw_price.count('.') == 1 and len(raw_price.split('.')[-1]) == 2:
+                value = Decimal(raw_price)
+
+            # Caso miles argentino: 10.000 / 100.000 / 1.000.000
+            else:
+                normalized = raw_price.replace('.', '')
+                value = Decimal(normalized)
+
         except (InvalidOperation, ValueError):
             raise forms.ValidationError('Ingresá un precio válido.')
 

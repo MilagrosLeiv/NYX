@@ -121,20 +121,50 @@
 </div>
 
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
-    const priceInput = document.querySelector('.nyx-price-input');
+  document.addEventListener("DOMContentLoaded", function () {
+    const priceInputs = document.querySelectorAll(".nyx-price-input");
 
-    if (!priceInput) return;
+    priceInputs.forEach(function (input) {
+      function formatPrice(value) {
+        const raw = String(value || "").trim();
 
-    const formatThousands = (value) => {
-      const digits = value.replace(/\D/g, '');
-      if (!digits) return '';
-      return Number(digits).toLocaleString('es-AR');
-    };
+        if (!raw) {
+          return "";
+        }
 
-    priceInput.addEventListener('input', function () {
-      const formatted = formatThousands(this.value);
-      this.value = formatted;
+        /*
+          Si viene desde Django como decimal del modelo, por ejemplo:
+          10000.00
+          primero sacamos los decimales para no convertirlo en 1.000.000.
+        */
+        let normalized = raw;
+
+        if (/^\d+\.\d{2}$/.test(normalized)) {
+          normalized = normalized.split(".")[0];
+        }
+
+        const digits = normalized.replace(/\D/g, "");
+
+        if (!digits) {
+          return "";
+        }
+
+        return new Intl.NumberFormat("es-AR").format(Number(digits));
+      }
+
+      input.value = formatPrice(input.value);
+
+      input.addEventListener("input", function () {
+        input.value = formatPrice(input.value);
+      });
+
+      const form = input.closest("form");
+
+      if (form) {
+        form.addEventListener("submit", function () {
+          input.value = input.value.replace(/\D/g, "");
+        });
+      }
     });
   });
 </script>

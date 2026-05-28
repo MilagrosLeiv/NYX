@@ -67,6 +67,51 @@
     font-weight: 850;
   }
 
+    .nyx-booking-row{
+      transition: background-color .18s ease, box-shadow .18s ease, opacity .18s ease;
+    }
+
+    .nyx-bookings-table tbody tr.nyx-booking-row--pending > td{
+      background: #fff8e6;
+    }
+
+    .nyx-bookings-table tbody tr.nyx-booking-row--confirmed > td{
+      background: #ffffff;
+    }
+
+    .nyx-bookings-table tbody tr.nyx-booking-row--completed > td{
+      background: #edf9f7;
+    }
+
+    .nyx-bookings-table tbody tr.nyx-booking-row--expired > td{
+      background: #fff0f0;
+    }
+
+    .nyx-bookings-table tbody tr.nyx-booking-row--cancelled > td{
+      background: #f7f1f1;
+    }
+
+    .nyx-bookings-table tbody tr.nyx-booking-row--expired,
+    .nyx-bookings-table tbody tr.nyx-booking-row--cancelled{
+      opacity: .88;
+    }
+
+    .nyx-bookings-table tbody tr.nyx-booking-row--pending > td:first-child{
+      border-left: 4px solid #f3d58a;
+    }
+
+    .nyx-bookings-table tbody tr.nyx-booking-row--expired > td:first-child{
+      border-left: 4px solid #efb5b5;
+    }
+
+    .nyx-bookings-table tbody tr.nyx-booking-row--cancelled > td:first-child{
+      border-left: 4px solid #d8b8b8;
+    }
+
+    .nyx-bookings-table tbody tr.nyx-booking-row--completed > td:first-child{
+      border-left: 4px solid #9edbd1;
+    }
+
   @media (max-width: 767.98px){
     .nyx-card.p-4{
       padding: 1rem !important;
@@ -128,6 +173,39 @@
       padding: 1.05rem;
       overflow: hidden;
       margin-bottom: 1.8rem;
+    }
+
+    .nyx-bookings-table tr.nyx-booking-row--pending{
+      background:
+        radial-gradient(circle at top right, rgba(243, 213, 138, .24), transparent 36%),
+        #fff8e6;
+      border-color: #f3d58a;
+    }
+
+    .nyx-bookings-table tr.nyx-booking-row--expired{
+      background:
+        radial-gradient(circle at top right, rgba(239, 181, 181, .28), transparent 36%),
+        #fff0f0;
+      border-color: #efb5b5;
+      opacity: .9;
+    }
+
+    .nyx-bookings-table tr.nyx-booking-row--cancelled{
+      background:
+        radial-gradient(circle at top right, rgba(216, 184, 184, .26), transparent 36%),
+        #f7f1f1;
+      border-color: #d8b8b8;
+      opacity: .86;
+    }
+
+    .nyx-bookings-table tr.nyx-booking-row--completed{
+      background:
+        radial-gradient(circle at top right, rgba(140, 220, 223, .22), transparent 36%),
+        #edf9f7;
+      border-color: #b9e3dd;
+    }
+    .nyx-bookings-table tr.nyx-booking-row > td{
+      background: transparent !important;
     }
 
     .nyx-bookings-table tr::before{
@@ -308,7 +386,7 @@
 
         <tbody>
           {% for booking in bookings %}
-            <tr>
+            <tr class="nyx-booking-row nyx-booking-row--{{ booking.status }}">
               <td data-label="Reserva">
                 <div class="fw-semibold">
                   #{{ booking.id }} · {{ booking.customer_name }}
@@ -349,7 +427,11 @@
               </td>
 
               <td data-label="Estado">
-                {% if booking.status == 'cancelled' %}
+                {% if booking.status == 'pending' %}
+                  <span class="nyx-badge" style="background:#fff1c7;color:#8a6200;border-color:#f3d58a;">
+                    {{ booking.get_status_display }}
+                  </span>
+                {% elif booking.status == 'cancelled' %}
                   <span class="nyx-badge" style="background:#fff3f3;color:#b54747;border-color:#f1caca;">
                     {{ booking.get_status_display }}
                   </span>
@@ -358,7 +440,7 @@
                     {{ booking.get_status_display }}
                   </span>
                 {% elif booking.status == 'expired' %}
-                  <span class="nyx-badge" style="background:#fff7ed;color:#b45309;border-color:#f3d3a1;">
+                  <span class="nyx-badge" style="background:#ffe1e1;color:#9b2c2c;border-color:#efb5b5;">
                     {{ booking.get_status_display }}
                   </span>
                 {% else %}
