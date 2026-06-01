@@ -230,6 +230,8 @@ def send_booking_payment_pending_email(booking, request=None):
         return False
 
     salon = booking.salon
+    is_transfer_payment = booking.selected_payment_method == "transfer"
+    is_integrated_payment = booking.selected_payment_method == "integrated"
 
     booking_items = booking.items.select_related('service', 'employee').all()
     if not booking_items:
@@ -445,8 +447,7 @@ def send_booking_payment_pending_email(booking, request=None):
         f'- {payment_label}: ${amount_formatted}\n'
         f'{expiration_text}\n'
         f'{manage_text_plain}'
-        f'Datos para transferencia:\n'
-        f'{transfer_instructions_plain}\n\n'
+        f'{("Datos para transferencia:\\n" + transfer_instructions_plain + "\\n\\n") if is_transfer_payment else ""}'
         f'{plain_footer}'
     )
 
@@ -482,28 +483,47 @@ def send_booking_payment_pending_email(booking, request=None):
                     </p>
                     '''}
 
+                    {f'''
                     <div style="margin:0 0 24px; padding:22px; background-color:#f6ffff; border:1px solid #d7f3f3; border-radius:18px;">
                         <div style="font-size:16px; font-weight:700; color:#0f2d3a; margin-bottom:12px;">
                             Datos para transferencia
                         </div>
 
-                        {f'''
+                        {f"""
                         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
                             {transfer_rows_html}
                         </table>
-                        ''' if transfer_rows_html else ''}
+                        """ if transfer_rows_html else ""}
 
-                        {f'''
+                        {f"""
                         <div style="font-size:14px; line-height:1.7; color:#315f5f; margin-top:14px;">
                             {extra_transfer_html}
                         </div>
-                        ''' if extra_transfer_html else ''}
+                        """ if extra_transfer_html else ""}
 
                         <div style="font-size:13px; line-height:1.6; color:#6b8484; margin-top:14px;">
                             Tu turno ya quedó reservado en la agenda. Para mantener la reserva, realizá el pago indicado.
                             Si el pago no se acredita, el salón puede cancelar el turno.
                         </div>
                     </div>
+                    ''' if booking.selected_payment_method == 'transfer' else f'''
+                    <div style="margin:0 0 24px; padding:22px; background-color:#fffaf0; border:1px solid #f3dfaa; border-radius:18px;">
+                        <div style="font-size:16px; font-weight:700; color:#8a5a12; margin-bottom:8px;">
+                            Pago online pendiente
+                        </div>
+
+                        <div style="font-size:14px; line-height:1.7; color:#6b7280;">
+                            Para confirmar tu turno, completá el pago online desde el checkout de Mercado Pago.
+                            Una vez aprobado el pago, te llegará la confirmación final de la reserva.
+                        </div>
+
+                        {f"""
+                        <div style="font-size:13px; line-height:1.6; color:#8a5a12; margin-top:14px;">
+                            Este pago vence el {booking.payment_expires_at.strftime("%d/%m/%Y %H:%M")}.
+                        </div>
+                        """ if booking.payment_expires_at else ""}
+                    </div>
+                    '''}
 
                     <div style="background-color:#f9fbfb; border:1px solid #e3ecec; border-radius:18px; padding:22px; margin-bottom:24px;">
                         <div style="font-size:16px; font-weight:700; color:#0f2d3a; margin-bottom:16px;">
@@ -1002,15 +1022,31 @@ def send_booking_rescheduled_email(booking, request=None):
 def send_salon_new_booking_email(booking):
     salon = booking.salon
 
+    salon = booking.salon
+
+    if not salon.notify_new_bookings_by_email:
+        return False
+
+    notification_recipients = []
+
+    if salon.notification_email:
+        notification_recipients.append(salon.notification_email.strip())
+    elif salon.email:
+        notification_recipients.append(salon.email.strip())
+
+    notification_recipients = list(dict.fromkeys(
+        email for email in notification_recipients if email
+    ))
+
     print("=== MAIL SALON DEBUG ===")
     print("Booking ID:", booking.id)
     print("Salon:", salon.name)
-    print("Notification email:", salon.notification_email)
+    print("Notification recipients:", notification_recipients)
 
-    if not salon.notification_email:
-        print("NO SE ENVIA: salon.notification_email está vacío")
-        return
-
+    if not notification_recipients:
+        print("NO SE ENVIA: no hay email de notificación ni email del salón")
+        return False
+    
     items = booking.items.select_related("service", "employee").order_by(
         "start_datetime"
     )
@@ -1073,11 +1109,12 @@ def send_salon_new_booking_email(booking):
         subject=subject,
         body=text_body,
         from_email=getattr(settings, "DEFAULT_FROM_EMAIL", None),
-        to=[salon.notification_email],
+        to=notification_recipients,
     )
 
     email.attach_alternative(html_body, "text/html")
     email.send(fail_silently=False)
+    return True
 
 
 def send_salon_booking_rescheduled_email(booking):
