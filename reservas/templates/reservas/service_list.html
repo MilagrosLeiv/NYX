@@ -349,19 +349,6 @@
     font-weight:850;
   }
 
-  @media (max-width: 575.98px){
-    .service-category-header{
-      align-items:flex-start;
-      flex-direction:column;
-      border-radius:1rem;
-      padding:.85rem;
-    }
-
-    .service-category-title{
-      font-size:1.12rem;
-    }
-  }
-
   .service-category-list{
     display:grid;
     gap:1rem;
@@ -426,49 +413,11 @@
     min-width:0;
   }
 
-  .service-category-kicker{
-    display:inline-flex;
-    align-items:center;
-    gap:.35rem;
-    color:var(--nyx-primary);
-    font-size:.72rem;
-    font-weight:850;
-    text-transform:uppercase;
-    letter-spacing:.04em;
-    margin-bottom:.2rem;
-  }
-
-  .service-category-title{
-    margin:0;
-    color:var(--nyx-text);
-    font-size:1.2rem;
-    font-weight:900;
-    letter-spacing:-.025em;
-  }
-
-  .service-category-description{
-    margin:.18rem 0 0;
-    color:var(--nyx-text-muted);
-    font-size:.9rem;
-    line-height:1.4;
-  }
-
   .service-category-side{
     display:flex;
     align-items:center;
     gap:.7rem;
     flex:0 0 auto;
-  }
-
-  .service-category-count{
-    border-radius:999px;
-    padding:.42rem .72rem;
-    background:var(--nyx-surface-soft);
-    border:1px solid var(--nyx-border);
-    color:var(--nyx-primary);
-    font-size:.78rem;
-    font-weight:850;
-    white-space:nowrap;
   }
 
   .service-category-chevron{
@@ -496,7 +445,22 @@
     background:#fbfefe;
   }
 
+  .nyx-mobile-selection-bar{
+    display:none;
+  }
+
   @media (max-width: 575.98px){
+    .service-category-header{
+      align-items:flex-start;
+      flex-direction:column;
+      border-radius:1rem;
+      padding:.85rem;
+    }
+
+    .service-category-title{
+      font-size:1.12rem;
+    }
+
     .service-category-accordion summary{
       align-items:flex-start;
       padding:.9rem;
@@ -539,6 +503,15 @@
   }
 
   @media (max-width: 767.98px){
+    body{
+      padding-bottom: 104px;
+    }
+
+    .sticky-summary{
+      position: static !important;
+      top: auto !important;
+    }
+
     .salon-public-profile{
       border-radius:1.1rem;
       margin-bottom:1.25rem;
@@ -645,6 +618,64 @@
 
     .services-heading .nyx-page-subtitle{
       font-size:.92rem;
+    }
+
+    .nyx-mobile-selection-bar{
+      position: fixed;
+      left: .85rem;
+      right: .85rem;
+      bottom: .85rem;
+      z-index: 1080;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: .85rem;
+      padding: .85rem;
+      border-radius: 1.2rem;
+      background: rgba(255, 255, 255, .96);
+      border: 1px solid var(--nyx-border);
+      box-shadow: 0 18px 45px rgba(24, 49, 49, .22);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .nyx-mobile-selection-bar[hidden]{
+      display: none !important;
+    }
+
+    .nyx-mobile-selection-info{
+      min-width: 0;
+    }
+
+    .nyx-mobile-selection-count{
+      color: var(--nyx-text);
+      font-size: .9rem;
+      font-weight: 900;
+      line-height: 1.15;
+    }
+
+    .nyx-mobile-selection-total{
+      color: var(--nyx-primary);
+      font-size: .92rem;
+      font-weight: 900;
+      margin-top: .12rem;
+    }
+
+    .nyx-mobile-selection-btn{
+      flex: 0 0 auto;
+      border: 0;
+      border-radius: 999px;
+      padding: .75rem 1.1rem;
+      background: linear-gradient(135deg, var(--nyx-primary), var(--nyx-primary-hover, #326d6d));
+      color: #ffffff;
+      font-weight: 900;
+      box-shadow: 0 12px 26px rgba(64, 136, 136, .24);
+    }
+
+    .nyx-mobile-selection-btn:disabled{
+      opacity: .55;
+      cursor: not-allowed;
+      box-shadow: none;
     }
   }
 </style>
@@ -791,7 +822,7 @@
 
         {% for category in service_categories %}
           {% if category.active_services %}
-            <details class="service-category-accordion" {% if  service_categories|length <= 3 %}open{% endif %}>
+            <details class="service-category-accordion" {% if service_categories|length <= 3 %}open{% endif %}>
               <summary>
                 <div class="service-category-main">
                   <div class="service-category-visual">
@@ -883,7 +914,7 @@
         {% endfor %}
 
         {% if uncategorized_services %}
-          <details class="service-category-accordion" {% if service_categories|length <= 3 %}open{% endif %}></3>
+          <details class="service-category-accordion" {% if service_categories|length <= 3 %}open{% endif %}>
             <summary>
               <div class="service-category-main">
                 <div class="service-category-visual">
@@ -1029,6 +1060,21 @@
     </div>
   </div>
 </div>
+
+<div class="nyx-mobile-selection-bar" id="nyxMobileSelectionBar" hidden>
+  <div class="nyx-mobile-selection-info">
+    <div class="nyx-mobile-selection-count" id="nyxMobileSelectionCount">
+      0 servicios
+    </div>
+    <div class="nyx-mobile-selection-total" id="nyxMobileSelectionTotal">
+      $0
+    </div>
+  </div>
+
+  <button type="button" class="nyx-mobile-selection-btn" id="nyxMobileContinueBtn" disabled>
+    Continuar
+  </button>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -1052,8 +1098,50 @@ document.addEventListener('DOMContentLoaded', function () {
   const selectedInputsContainer = document.getElementById('selected-services-inputs');
   const continueBtn = document.getElementById('continue-btn');
 
+  const mobileSelectionBar = document.getElementById('nyxMobileSelectionBar');
+  const mobileSelectionCount = document.getElementById('nyxMobileSelectionCount');
+  const mobileSelectionTotal = document.getElementById('nyxMobileSelectionTotal');
+  const mobileContinueBtn = document.getElementById('nyxMobileContinueBtn');
+
   function formatPrice(value) {
     return '$' + new Intl.NumberFormat('es-AR').format(Number(value || 0));
+  }
+
+  function updateMobileSelectionBar(totalAmount) {
+    if (!mobileSelectionBar) return;
+
+    if (selectedServices.length === 0) {
+      mobileSelectionBar.hidden = true;
+
+      if (mobileSelectionCount) {
+        mobileSelectionCount.textContent = '0 servicios';
+      }
+
+      if (mobileSelectionTotal) {
+        mobileSelectionTotal.textContent = '$0';
+      }
+
+      if (mobileContinueBtn) {
+        mobileContinueBtn.disabled = true;
+      }
+
+      return;
+    }
+
+    mobileSelectionBar.hidden = false;
+
+    if (mobileSelectionCount) {
+      mobileSelectionCount.textContent =
+        selectedServices.length + ' servicio' + (selectedServices.length === 1 ? '' : 's');
+    }
+
+    if (mobileSelectionTotal) {
+      mobileSelectionTotal.textContent = formatPrice(totalAmount);
+    }
+
+    if (mobileContinueBtn) {
+      mobileContinueBtn.disabled = false;
+    }
   }
 
   function renderPaymentSummary(totalAmount) {
@@ -1143,6 +1231,8 @@ document.addEventListener('DOMContentLoaded', function () {
       }
 
       if (continueBtn) continueBtn.disabled = true;
+
+      updateMobileSelectionBar(0);
       return;
     }
 
@@ -1183,9 +1273,12 @@ document.addEventListener('DOMContentLoaded', function () {
     servicesCount.textContent = selectedServices.length;
     totalDuration.textContent = `${totalMinutes} min`;
     summaryTotal.textContent = formatPrice(totalAmount);
+
     renderPaymentSummary(totalAmount);
+
     if (continueBtn) continueBtn.disabled = false;
 
+    updateMobileSelectionBar(totalAmount);
     bindRemoveButtons();
   }
 
@@ -1236,6 +1329,13 @@ document.addEventListener('DOMContentLoaded', function () {
       renderSelection();
     });
   });
+
+  if (mobileContinueBtn) {
+    mobileContinueBtn.addEventListener('click', function () {
+      if (!continueBtn || continueBtn.disabled) return;
+      continueBtn.click();
+    });
+  }
 
   renderSelection();
 });
