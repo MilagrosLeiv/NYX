@@ -1128,7 +1128,7 @@ document.addEventListener('DOMContentLoaded', function () {
       return;
     }
 
-    mobileSelectionBar.hidden = false;
+    mobileSelectionBar.hidden = !shouldShowMobileBar();
 
     if (mobileSelectionCount) {
       mobileSelectionCount.textContent =
@@ -1330,12 +1330,42 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
+  let isRealSummaryVisible = false;
+
+  const realSummary = document.querySelector('.selection-summary');
+
+  function shouldShowMobileBar() {
+    return selectedServices.length > 0 && !isRealSummaryVisible;
+  }
+
+  function refreshMobileBarVisibility() {
+    if (!mobileSelectionBar) return;
+
+    mobileSelectionBar.hidden = !shouldShowMobileBar();
+  }
+
+  if (realSummary && mobileSelectionBar) {
+    const observer = new IntersectionObserver(function (entries) {
+      const entry = entries[0];
+
+      isRealSummaryVisible = entry.isIntersecting && entry.intersectionRatio > 0.15;
+
+      refreshMobileBarVisibility();
+    }, {
+      threshold: [0, 0.15, 0.35],
+    });
+
+    observer.observe(realSummary);
+  }
+
   if (mobileContinueBtn) {
     mobileContinueBtn.addEventListener('click', function () {
       if (!continueBtn || continueBtn.disabled) return;
       continueBtn.click();
     });
   }
+
+  renderSelection();
 
   renderSelection();
 });
