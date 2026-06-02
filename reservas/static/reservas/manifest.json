@@ -1,0 +1,25 @@
+{
+  "name": "NYX Turnos",
+  "short_name": "NYX",
+  "description": "Sistema de reservas online para tu negocio.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f6fbfb",
+  "theme_color": "#408888",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/static/reservas/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/reservas/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
