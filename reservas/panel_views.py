@@ -163,9 +163,15 @@ def panel_dashboard(request):
         booking_items = booking_items.none()
         time_off_blocks = time_off_blocks.none()
 
-    future_items = booking_items.filter(start_datetime__gte=now)
-    today_items = booking_items.filter(start_datetime__date=today)
-    tomorrow_items = booking_items.filter(start_datetime__date=tomorrow)
+    visible_dashboard_statuses = ['pending', 'confirmed']
+
+    visible_booking_items = booking_items.filter(
+        booking__status__in=visible_dashboard_statuses
+    )
+
+    future_items = visible_booking_items.filter(start_datetime__gte=now)
+    today_items = visible_booking_items.filter(start_datetime__date=today)
+    tomorrow_items = visible_booking_items.filter(start_datetime__date=tomorrow)
 
     next_item = future_items.order_by('start_datetime').first()
 
@@ -188,11 +194,11 @@ def panel_dashboard(request):
         'panel_role': 'owner' if is_owner_user(request.user) else 'staff',
         'salon': salon,
         'subscription': subscription,
-        'today_count': today_items.count(),
-        'tomorrow_count': tomorrow_items.count(),
-        'pending_count': future_items.filter(booking__status='pending').count(),
-        'confirmed_count': future_items.filter(booking__status='confirmed').count(),
-        'time_off_count': time_off_blocks.filter(end_datetime__gte=now).count(),
+        'today_count': today_count,
+        'tomorrow_count': tomorrow_count,
+        'pending_count': pending_count,
+        'confirmed_count': confirmed_count,
+        'time_off_count': time_off_count,
         'next_item': next_item,
         'has_dashboard_activity': has_dashboard_activity,
     }
