@@ -27,181 +27,16 @@
       var(--nyx-landing-bg);
   }
 
-  .nyx-landing-footer {
-    background: #183131;
-    color: #f6fbfb;
-    padding: 72px 0 28px;
-  }
+  .nyx-landing{ color:var(--nyx-landing-primary-dark); font-weight:400; }
+  .nyx-landing-container{ width:min(1580px, calc(100% - 32px)); margin:0 auto; }
 
-  .nyx-landing-footer-grid {
-    display: grid;
-    grid-template-columns: 1.4fr 1fr 1fr 1fr;
-    gap: 48px;
-  }
-
-  .nyx-landing-footer-brand {
-    font-family: 'Cinzel', serif;
-    font-size: 2rem;
-    font-weight: 700;
-    color: #ffffff;
-    text-decoration: none;
-    letter-spacing: 0.04em;
-  }
-
-  .nyx-landing-footer-text {
-    max-width: 360px;
-    color: rgba(246, 251, 251, 0.76);
-    line-height: 1.7;
-  }
-
-  .nyx-landing-footer h3 {
-    font-size: 1rem;
-    font-weight: 700;
-    color: #ffffff;
-    margin-bottom: 18px;
-  }
-
-  .nyx-landing-footer ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-
-  .nyx-landing-footer li {
-    margin-bottom: 12px;
-  }
-
-  .nyx-landing-footer a,
-  .nyx-landing-footer span {
-    color: rgba(246, 251, 251, 0.78);
-    text-decoration: none;
-    transition: color 0.2s ease;
-  }
-
-  .nyx-landing-footer a:hover {
-    color: #8cdcdf;
-  }
-
-  .nyx-landing-footer-socials {
-    display: flex;
-    gap: 14px;
-    margin-top: 24px;
-  }
-
-  .nyx-landing-footer-socials a {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 42px;
-    height: 42px;
-    padding: 0 14px;
-    border: 1px solid rgba(140, 220, 223, 0.28);
-    border-radius: 999px;
-    color: #ffffff;
-    font-size: 0.9rem;
-  }
-
-  .nyx-landing-footer-socials a:hover {
-    border-color: #8cdcdf;
-    background: rgba(140, 220, 223, 0.08);
-  }
-
-  .nyx-landing-footer-bottom {
-    border-top: 1px solid rgba(140, 220, 223, 0.18);
-    margin-top: 52px;
-    padding-top: 24px;
-    display: flex;
-    justify-content: space-between;
-    gap: 16px;
-    color: rgba(246, 251, 251, 0.62);
-    font-size: 0.9rem;
-  }
-
-  @media (max-width: 992px) {
-    .nyx-landing-footer-grid {
-      grid-template-columns: 1fr 1fr;
-    }
-  }
-
-  @media (max-width: 576px) {
-    .nyx-landing-footer {
-      padding: 52px 0 24px;
-    }
-
-    .nyx-landing-footer-grid {
-      grid-template-columns: 1fr;
-      gap: 32px;
-    }
-
-    .nyx-landing-footer-bottom {
-      flex-direction: column;
-    }
-  }
-
-  .nyx-landing{
-    color:var(--nyx-landing-primary-dark);
-    font-weight:400;
-  }
-
-  .nyx-landing-container{
-    width:min(1580px, calc(100% - 32px));
-    margin:0 auto;
-  }
-
-  .nyx-landing-nav{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:1.5rem;
-    padding:1.35rem 0;
-  }
-
-  .nyx-landing-brand{
-    font-size:1.75rem;
-    font-weight:900;
-    letter-spacing:.13em;
-    color:var(--nyx-landing-primary-dark);
-    text-decoration:none;
-  }
-
-  .nyx-landing-brand span{
-    display:inline-block;
-    width:9px;
-    height:9px;
-    border-radius:999px;
-    background:var(--nyx-landing-soft);
-    margin-left:.25rem;
-  }
-
-  .nyx-landing-menu{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    gap:2rem;
-    margin:0;
-    padding:0;
-    list-style:none;
-  }
-
-  .nyx-landing-menu a{
-    color:var(--nyx-landing-primary-dark);
-    text-decoration:none;
-    font-weight:700;
-    font-size:.92rem;
-  }
-
-  .nyx-landing-actions{
-    display:flex;
-    align-items:center;
-    gap:.8rem;
-  }
-
-  .nyx-link-login{
-    color:var(--nyx-landing-primary-dark);
-    text-decoration:none;
-    font-weight:700;
-    font-size:.92rem;
-  }
+  .nyx-landing-nav{ display:flex; align-items:center; justify-content:space-between; gap:1.5rem; padding:1.35rem 0; }
+  .nyx-landing-brand{ font-size:1.75rem; font-weight:900; letter-spacing:.13em; color:var(--nyx-landing-primary-dark); text-decoration:none; }
+  .nyx-landing-brand span{ display:inline-block; width:9px; height:9px; border-radius:999px; background:var(--nyx-landing-soft); margin-left:.25rem; }
+  .nyx-landing-menu{ display:flex; align-items:center; justify-content:center; gap:2rem; margin:0; padding:0; list-style:none; }
+  .nyx-landing-menu a{ color:var(--nyx-landing-primary-dark); text-decoration:none; font-weight:700; font-size:.92rem; }
+  .nyx-landing-actions{ display:flex; align-items:center; gap:.8rem; }
+  .nyx-link-login{ color:var(--nyx-landing-primary-dark); text-decoration:none; font-weight:700; font-size:.92rem; }
 
   .nyx-btn-solid,
   .nyx-btn-outline{
@@ -215,616 +50,165 @@
     gap:.45rem;
     transition:.18s ease;
   }
+  .nyx-btn-solid{ background:linear-gradient(135deg, var(--nyx-landing-primary), #5bc6c7); color:#fff; border:1px solid transparent; box-shadow:0 12px 30px rgba(64,136,136,.20); }
+  .nyx-btn-solid:hover{ color:#fff; transform:translateY(-1px); box-shadow:0 16px 34px rgba(64,136,136,.26); }
+  .nyx-btn-outline{ background:#fff; color:var(--nyx-landing-primary); border:1px solid rgba(64,136,136,.38); }
+  .nyx-btn-outline:hover{ color:#fff; background:var(--nyx-landing-primary); border-color:var(--nyx-landing-primary); }
 
-  .nyx-btn-solid{
-    background:linear-gradient(135deg, var(--nyx-landing-primary), #5bc6c7);
-    color:#fff;
-    border:1px solid transparent;
-    box-shadow:0 12px 30px rgba(64,136,136,.20);
-  }
+  .nyx-hero{ display:grid; grid-template-columns:1fr 1.05fr; gap:4rem; align-items:center; padding:4rem 0 3rem; }
+  .nyx-pill{ display:inline-flex; align-items:center; gap:.5rem; padding:.5rem .85rem; border-radius:999px; background:rgba(140,220,223,.22); color:var(--nyx-landing-primary); font-size:.86rem; font-weight:800; margin-bottom:1.4rem; }
+  .nyx-hero h1{ font-size:clamp(2.6rem, 5vw, 4.6rem); line-height:1.08; letter-spacing:-.055em; font-weight:800; margin:0 0 1.4rem; }
+  .nyx-hero h1 span{ color:var(--nyx-landing-primary); }
+  .nyx-hero p{ color:var(--nyx-landing-muted); font-size:1.12rem; line-height:1.75; max-width:560px; margin-bottom:2rem; }
+  .nyx-hero-buttons{ display:flex; align-items:center; gap:1rem; flex-wrap:wrap; margin-bottom:1.8rem; }
+  .nyx-hero-points{ display:flex; gap:1.5rem; flex-wrap:wrap; color:#557171; font-size:.92rem; font-weight:700; }
+  .nyx-hero-point{ display:inline-flex; align-items:center; gap:.5rem; }
+  .nyx-hero-point i{ color:var(--nyx-landing-primary); }
 
-  .nyx-btn-solid:hover{
-    color:#fff;
-    transform:translateY(-1px);
-    box-shadow:0 16px 34px rgba(64,136,136,.26);
-  }
-
-  .nyx-btn-outline{
-    background:#fff;
-    color:var(--nyx-landing-primary);
-    border:1px solid rgba(64,136,136,.38);
-  }
-
-  .nyx-btn-outline:hover{
-    color:#fff;
-    background:var(--nyx-landing-primary);
-    border-color:var(--nyx-landing-primary);
-  }
-
-  .nyx-hero{
-    display:grid;
-    grid-template-columns:1fr 1.05fr;
-    gap:4rem;
-    align-items:center;
-    padding:4rem 0 3rem;
-  }
-
-  .nyx-pill{
-    display:inline-flex;
-    align-items:center;
-    gap:.5rem;
-    padding:.5rem .85rem;
-    border-radius:999px;
-    background:rgba(140,220,223,.22);
-    color:var(--nyx-landing-primary);
-    font-size:.86rem;
-    font-weight:800;
-    margin-bottom:1.4rem;
-  }
-
-  .nyx-hero h1{
-    font-size:clamp(2.6rem, 5vw, 4.6rem);
-    line-height:1.08;
-    letter-spacing:-.055em;
-    font-weight:800;
-    margin:0 0 1.4rem;
-  }
-
-  .nyx-hero h1 span{
-    color:var(--nyx-landing-primary);
-  }
-
-  .nyx-hero p{
-    color:var(--nyx-landing-muted);
-    font-size:1.12rem;
-    line-height:1.75;
-    max-width:560px;
-    margin-bottom:2rem;
-  }
-
-  .nyx-hero-buttons{
-    display:flex;
-    align-items:center;
-    gap:1rem;
-    flex-wrap:wrap;
-    margin-bottom:1.8rem;
-  }
-
-  .nyx-hero-points{
-    display:flex;
-    gap:1.5rem;
-    flex-wrap:wrap;
-    color:#557171;
-    font-size:.92rem;
-    font-weight:700;
-  }
-
-  .nyx-hero-point{
-    display:inline-flex;
-    align-items:center;
-    gap:.5rem;
-  }
-
-  .nyx-hero-point i{
-    color:var(--nyx-landing-primary);
-  }
-
-  .nyx-dashboard-mock{
-    background:#fff;
-    border:1px solid rgba(220,238,238,.95);
-    border-radius:18px;
-    box-shadow:var(--nyx-landing-shadow);
-    overflow:hidden;
-    display:grid;
-    grid-template-columns:150px 1fr;
-    min-height:410px;
-  }
-
-  .nyx-mock-sidebar{
-    background:#274b4d;
-    color:#eafafa;
-    padding:1.5rem;
-  }
-
-  .nyx-mock-brand{
-    font-size:1.35rem;
-    font-weight:900;
-    letter-spacing:.12em;
-    margin-bottom:2rem;
-  }
-
-  .nyx-mock-brand span{
-    color:var(--nyx-landing-soft);
-  }
-
-  .nyx-mock-nav{
-    display:grid;
-    gap:.65rem;
-  }
-
-  .nyx-mock-nav div{
-    padding:.65rem .7rem;
-    border-radius:10px;
-    font-size:.78rem;
-    font-weight:800;
-    color:rgba(255,255,255,.82);
-  }
-
-  .nyx-mock-nav div:first-child{
-    background:rgba(140,220,223,.18);
-    color:#fff;
-  }
-
-  .nyx-mock-content{
-    padding:1.55rem;
-  }
-
-  .nyx-mock-header{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    margin-bottom:1.2rem;
-  }
-
-  .nyx-mock-title{
-    font-size:1.25rem;
-    font-weight:900;
-    margin-bottom:.2rem;
-  }
-
-  .nyx-mock-muted{
-    color:#6d8789;
-    font-size:.76rem;
-  }
-
-  .nyx-mock-grid{
-    display:grid;
-    grid-template-columns:repeat(4, 1fr);
-    gap:.8rem;
-    margin-bottom:1rem;
-  }
-
+  .nyx-dashboard-mock{ background:#fff; border:1px solid rgba(220,238,238,.95); border-radius:18px; box-shadow:var(--nyx-landing-shadow); overflow:hidden; display:grid; grid-template-columns:150px 1fr; min-height:410px; }
+  .nyx-mock-sidebar{ background:#274b4d; color:#eafafa; padding:1.5rem; }
+  .nyx-mock-brand{ font-size:1.35rem; font-weight:900; letter-spacing:.12em; margin-bottom:2rem; }
+  .nyx-mock-brand span{ color:var(--nyx-landing-soft); }
+  .nyx-mock-nav{ display:grid; gap:.65rem; }
+  .nyx-mock-nav div{ padding:.65rem .7rem; border-radius:10px; font-size:.78rem; font-weight:800; color:rgba(255,255,255,.82); }
+  .nyx-mock-nav div:first-child{ background:rgba(140,220,223,.18); color:#fff; }
+  .nyx-mock-content{ padding:1.55rem; }
+  .nyx-mock-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:1.2rem; }
+  .nyx-mock-title{ font-size:1.25rem; font-weight:900; margin-bottom:.2rem; }
+  .nyx-mock-muted{ color:#6d8789; font-size:.76rem; }
+  .nyx-mock-grid{ display:grid; grid-template-columns:repeat(4, 1fr); gap:.8rem; margin-bottom:1rem; }
   .nyx-mock-stat,
-  .nyx-mock-card{
-    background:#fff;
-    border:1px solid #e6eeee;
-    border-radius:15px;
-    box-shadow:0 10px 30px rgba(24,49,49,.07);
-  }
+  .nyx-mock-card{ background:#fff; border:1px solid #e6eeee; border-radius:15px; box-shadow:0 10px 30px rgba(24,49,49,.07); }
+  .nyx-mock-stat{ padding:1rem; }
+  .nyx-mock-stat span{ display:block; color:#6d8789; font-size:.7rem; font-weight:700; margin-bottom:.55rem; }
+  .nyx-mock-stat strong{ font-size:1.35rem; font-weight:950; }
+  .nyx-mock-bottom{ display:grid; grid-template-columns:1fr 1.4fr; gap:1rem; }
+  .nyx-mock-card{ padding:1rem; min-height:160px; }
+  .nyx-bars{ display:flex; align-items:end; gap:.7rem; height:110px; padding-top:1rem; }
+  .nyx-bars span{ width:16px; border-radius:999px 999px 0 0; background:linear-gradient(180deg, #5bc6c7, var(--nyx-landing-primary)); }
 
-  .nyx-mock-stat{
-    padding:1rem;
-  }
+  .nyx-section{ padding:4rem 0; }
+  .nyx-section-title{ text-align:center; font-size:clamp(1.8rem, 3vw, 2.35rem); font-weight:750; letter-spacing:-.04em; margin-bottom:.7rem; }
+  .nyx-section-line{ width:42px; height:3px; border-radius:999px; background:var(--nyx-landing-primary); margin:0 auto 2rem; }
 
-  .nyx-mock-stat span{
-    display:block;
-    color:#6d8789;
-    font-size:.7rem;
-    font-weight:700;
-    margin-bottom:.55rem;
-  }
+  .nyx-feature-grid{ display:grid; grid-template-columns:repeat(5, 1fr); gap:1rem; }
+  .nyx-feature-card{ background:#fff; border:1px solid var(--nyx-landing-border); border-radius:18px; padding:1.7rem 1.25rem; box-shadow:0 14px 38px rgba(24,49,49,.07); text-align:center; min-height:205px; }
+  .nyx-feature-icon{ width:56px; height:56px; border-radius:999px; display:flex; align-items:center; justify-content:center; margin:0 auto 1rem; background:rgba(140,220,223,.22); color:var(--nyx-landing-primary); font-size:1.45rem; }
+  .nyx-feature-card h3{ font-size:1rem; font-weight:900; margin-bottom:.6rem; }
+  .nyx-feature-card p{ color:var(--nyx-landing-muted); font-size:.9rem; line-height:1.55; margin:0; }
 
-  .nyx-mock-stat strong{
-    font-size:1.35rem;
-    font-weight:950;
-  }
+  .nyx-showcase{ display:grid; grid-template-columns:.8fr 1.4fr; gap:3rem; align-items:center; padding:3rem 0; }
+  .nyx-showcase h2{ font-size:2rem; line-height:1.2; font-weight:750; letter-spacing:-.04em; margin-bottom:1rem; }
+  .nyx-showcase p{ color:var(--nyx-landing-muted); line-height:1.7; margin-bottom:1.4rem; }
 
-  .nyx-mock-bottom{
-    display:grid;
-    grid-template-columns:1fr 1.4fr;
-    gap:1rem;
-  }
+  .nyx-real-screenshots{ display:grid; grid-template-columns:1fr 1fr; gap:1.25rem; margin-top:2rem; }
+  .nyx-real-shot{ background:#fff; border:1px solid var(--nyx-landing-border); border-radius:22px; overflow:hidden; box-shadow:var(--nyx-landing-shadow); }
+  .nyx-real-shot img{ width:100%; display:block; }
+  .nyx-real-shot-caption{ padding:1rem 1.15rem; border-top:1px solid var(--nyx-landing-border); }
+  .nyx-real-shot-caption strong{ display:block; font-weight:800; color:var(--nyx-landing-primary-dark); }
+  .nyx-real-shot-caption span{ color:var(--nyx-landing-muted); font-size:.9rem; }
 
-  .nyx-mock-card{
-    padding:1rem;
-    min-height:160px;
-  }
+  .nyx-app-access{ display:grid; grid-template-columns:.95fr 1.05fr; gap:2rem; align-items:center; background:radial-gradient(circle at top right, rgba(140,220,223,.24), transparent 34%), #ffffff; border:1px solid var(--nyx-landing-border); border-radius:24px; padding:2rem; box-shadow:var(--nyx-landing-shadow); }
+  .nyx-app-access h2{ font-size:clamp(1.8rem, 3vw, 2.35rem); line-height:1.15; font-weight:800; letter-spacing:-.045em; margin:0 0 1rem; }
+  .nyx-app-access p{ color:var(--nyx-landing-muted); line-height:1.7; margin-bottom:1.25rem; }
+  .nyx-app-points{ display:grid; gap:.7rem; margin:0; padding:0; list-style:none; }
+  .nyx-app-points li{ display:flex; align-items:flex-start; gap:.65rem; color:#426464; font-weight:750; line-height:1.45; }
+  .nyx-app-points i{ color:var(--nyx-landing-primary); font-size:1.05rem; margin-top:.08rem; }
+  .nyx-app-phone-card{ position:relative; background:#f7fcfc; border:1px solid var(--nyx-landing-border); border-radius:22px; padding:1.25rem; overflow:hidden; }
+  .nyx-app-phone-card::before{ content:""; position:absolute; inset:0 0 auto 0; height:4px; background:linear-gradient(90deg, var(--nyx-landing-primary), var(--nyx-landing-soft)); }
+  .nyx-app-steps{ display:grid; gap:.85rem; }
+  .nyx-app-step{ display:grid; grid-template-columns:auto 1fr; gap:.75rem; align-items:flex-start; background:#ffffff; border:1px solid #e2eeee; border-radius:16px; padding:1rem; box-shadow:0 10px 26px rgba(24,49,49,.055); }
+  .nyx-app-step-number{ width:34px; height:34px; border-radius:999px; display:inline-flex; align-items:center; justify-content:center; background:rgba(140,220,223,.28); color:var(--nyx-landing-primary); font-weight:950; }
+  .nyx-app-step strong{ display:block; color:var(--nyx-landing-primary-dark); font-weight:900; margin-bottom:.18rem; }
+  .nyx-app-step span{ color:var(--nyx-landing-muted); font-size:.9rem; line-height:1.45; }
+  .nyx-app-note{ margin-top:1rem; padding:.85rem 1rem; border-radius:14px; background:rgba(140,220,223,.16); color:#315f5f; font-size:.9rem; font-weight:750; }
 
-  .nyx-bars{
-    display:flex;
-    align-items:end;
-    gap:.7rem;
-    height:110px;
-    padding-top:1rem;
-  }
+  .nyx-business-grid{ display:grid; grid-template-columns:repeat(7, 1fr); gap:.8rem; margin-bottom:1.4rem; }
+  .nyx-business-card{ background:#fff; border:1px solid var(--nyx-landing-border); border-radius:16px; padding:1rem; text-align:center; color:#3d7477; font-weight:800; box-shadow:0 12px 30px rgba(24,49,49,.055); }
+  .nyx-business-card i{ display:block; font-size:1.5rem; margin-bottom:.5rem; }
 
-  .nyx-bars span{
-    width:16px;
-    border-radius:999px 999px 0 0;
-    background:linear-gradient(180deg, #5bc6c7, var(--nyx-landing-primary));
-  }
+  .nyx-stats{ display:grid; grid-template-columns:repeat(4, 1fr); border:1px solid var(--nyx-landing-border); background:rgba(255,255,255,.75); border-radius:18px; overflow:hidden; box-shadow:0 14px 38px rgba(24,49,49,.055); }
+  .nyx-stat-item{ text-align:center; padding:1.7rem 1rem; border-right:1px solid var(--nyx-landing-border); }
+  .nyx-stat-item:last-child{ border-right:0; }
+  .nyx-stat-item strong{ display:block; color:var(--nyx-landing-primary); font-size:2rem; font-weight:950; margin-bottom:.25rem; }
+  .nyx-stat-item span{ color:var(--nyx-landing-muted); font-size:.92rem; }
 
-  .nyx-section{
-    padding:4rem 0;
-  }
+  .nyx-pricing-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:1rem; }
+  .nyx-price-card{ background:#fff; border:1px solid var(--nyx-landing-border); border-radius:20px; padding:1.7rem; box-shadow:0 14px 38px rgba(24,49,49,.07); }
+  .nyx-price-card.featured{ border-color:rgba(64,136,136,.55); transform:translateY(-8px); box-shadow:0 22px 60px rgba(64,136,136,.16); }
+  .nyx-price-card h3{ font-weight:950; margin-bottom:.5rem; }
+  .nyx-price{ font-size:2rem; font-weight:950; color:var(--nyx-landing-primary); margin:1rem 0; }
+  .nyx-price-card ul{ list-style:none; padding:0; margin:1rem 0 1.5rem; display:grid; gap:.55rem; color:var(--nyx-landing-muted); }
+  .nyx-price-card li::before{ content:"✓"; color:var(--nyx-landing-primary); font-weight:900; margin-right:.45rem; }
 
-  .nyx-section-title{
-    text-align:center;
-    font-size:clamp(1.8rem, 3vw, 2.35rem);
-    font-weight:750;
-    letter-spacing:-.04em;
-    margin-bottom:.7rem;
-  }
+  .nyx-final-cta{ text-align:center; padding:4rem 0 5rem; }
+  .nyx-final-cta h2{ font-weight:750; font-size:2.2rem; letter-spacing:-.04em; margin-bottom:.7rem; }
+  .nyx-final-cta p{ color:var(--nyx-landing-muted); margin-bottom:1.6rem; }
 
-  .nyx-section-line{
-    width:42px;
-    height:3px;
-    border-radius:999px;
-    background:var(--nyx-landing-primary);
-    margin:0 auto 2rem;
-  }
+  .nyx-landing-footer{ background:#183131; color:#f6fbfb; padding:72px 0 28px; }
+  .nyx-landing-footer-grid{ display:grid; grid-template-columns:1.4fr 1fr 1fr 1fr; gap:48px; }
+  .nyx-landing-footer-brand{ font-family:'Cinzel', serif; font-size:2rem; font-weight:700; color:#ffffff; text-decoration:none; letter-spacing:.04em; }
+  .nyx-landing-footer-text{ max-width:360px; color:rgba(246,251,251,.76); line-height:1.7; }
+  .nyx-landing-footer h3{ font-size:1rem; font-weight:700; color:#ffffff; margin-bottom:18px; }
+  .nyx-landing-footer ul{ list-style:none; padding:0; margin:0; }
+  .nyx-landing-footer li{ margin-bottom:12px; }
+  .nyx-landing-footer a,
+  .nyx-landing-footer span{ color:rgba(246,251,251,.78); text-decoration:none; transition:color .2s ease; }
+  .nyx-landing-footer a:hover{ color:#8cdcdf; }
+  .nyx-landing-footer-socials{ display:flex; gap:14px; margin-top:24px; }
+  .nyx-landing-footer-socials a{ display:inline-flex; align-items:center; justify-content:center; min-width:42px; height:42px; padding:0 14px; border:1px solid rgba(140,220,223,.28); border-radius:999px; color:#ffffff; font-size:.9rem; }
+  .nyx-landing-footer-socials a:hover{ border-color:#8cdcdf; background:rgba(140,220,223,.08); }
+  .nyx-landing-footer-bottom{ border-top:1px solid rgba(140,220,223,.18); margin-top:52px; padding-top:24px; display:flex; justify-content:space-between; gap:16px; color:rgba(246,251,251,.62); font-size:.9rem; }
 
-  .nyx-feature-grid{
-    display:grid;
-    grid-template-columns:repeat(5, 1fr);
-    gap:1rem;
-  }
-
-  .nyx-feature-card{
-    background:#fff;
-    border:1px solid var(--nyx-landing-border);
-    border-radius:18px;
-    padding:1.7rem 1.25rem;
-    box-shadow:0 14px 38px rgba(24,49,49,.07);
-    text-align:center;
-    min-height:205px;
-  }
-
-  .nyx-feature-icon{
-    width:56px;
-    height:56px;
-    border-radius:999px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    margin:0 auto 1rem;
-    background:rgba(140,220,223,.22);
-    color:var(--nyx-landing-primary);
-    font-size:1.45rem;
-  }
-
-  .nyx-feature-card h3{
-    font-size:1rem;
-    font-weight:900;
-    margin-bottom:.6rem;
-  }
-
-  .nyx-feature-card p{
-    color:var(--nyx-landing-muted);
-    font-size:.9rem;
-    line-height:1.55;
-    margin:0;
-  }
-
-  .nyx-showcase{
-    display:grid;
-    grid-template-columns:.8fr 1.4fr;
-    gap:3rem;
-    align-items:center;
-    padding:3rem 0;
-  }
-
-  .nyx-showcase h2{
-    font-size:2rem;
-    line-height:1.2;
-    font-weight:750;
-    letter-spacing:-.04em;
-    margin-bottom:1rem;
-  }
-
-  .nyx-showcase p{
-    color:var(--nyx-landing-muted);
-    line-height:1.7;
-    margin-bottom:1.4rem;
-  }
-
-  .nyx-showcase-img{
-    background:#fff;
-    border:1px solid var(--nyx-landing-border);
-    border-radius:20px;
-    box-shadow:var(--nyx-landing-shadow);
-    padding:1rem;
-  }
-
-  .nyx-showcase-panel{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:1rem;
-  }
-
-  .nyx-mini-screen{
-    background:#fff;
-    border:1px solid #e4eeee;
-    border-radius:16px;
-    padding:1rem;
-    min-height:250px;
-    box-shadow:0 12px 34px rgba(24,49,49,.06);
-  }
-
-  .nyx-mini-screen h3{
-    font-size:1.05rem;
-    font-weight:900;
-  }
-
-  .nyx-mini-row{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    gap:.75rem;
-    border:1px solid #edf3f3;
-    border-radius:12px;
-    padding:.8rem;
-    margin-top:.7rem;
-    font-size:.78rem;
-  }
-
-  .nyx-business-grid{
-    display:grid;
-    grid-template-columns:repeat(7, 1fr);
-    gap:.8rem;
-    margin-bottom:1.4rem;
-  }
-
-  .nyx-business-card{
-    background:#fff;
-    border:1px solid var(--nyx-landing-border);
-    border-radius:16px;
-    padding:1rem;
-    text-align:center;
-    color:#3d7477;
-    font-weight:800;
-    box-shadow:0 12px 30px rgba(24,49,49,.055);
-  }
-
-  .nyx-business-card i{
-    display:block;
-    font-size:1.5rem;
-    margin-bottom:.5rem;
-  }
-
-  .nyx-stats{
-    display:grid;
-    grid-template-columns:repeat(4, 1fr);
-    border:1px solid var(--nyx-landing-border);
-    background:rgba(255,255,255,.75);
-    border-radius:18px;
-    overflow:hidden;
-    box-shadow:0 14px 38px rgba(24,49,49,.055);
-  }
-
-  .nyx-stat-item{
-    text-align:center;
-    padding:1.7rem 1rem;
-    border-right:1px solid var(--nyx-landing-border);
-  }
-
-  .nyx-stat-item:last-child{
-    border-right:0;
-  }
-
-  .nyx-stat-item strong{
-    display:block;
-    color:var(--nyx-landing-primary);
-    font-size:2rem;
-    font-weight:950;
-    margin-bottom:.25rem;
-  }
-
-  .nyx-stat-item span{
-    color:var(--nyx-landing-muted);
-    font-size:.92rem;
-  }
-
-  .nyx-pricing-grid{
-    display:grid;
-    grid-template-columns:repeat(3, 1fr);
-    gap:1rem;
-  }
-
-  .nyx-price-card{
-    background:#fff;
-    border:1px solid var(--nyx-landing-border);
-    border-radius:20px;
-    padding:1.7rem;
-    box-shadow:0 14px 38px rgba(24,49,49,.07);
-  }
-
-  .nyx-price-card.featured{
-    border-color:rgba(64,136,136,.55);
-    transform:translateY(-8px);
-    box-shadow:0 22px 60px rgba(64,136,136,.16);
-  }
-
-  .nyx-price-card h3{
-    font-weight:950;
-    margin-bottom:.5rem;
-  }
-
-  .nyx-price{
-    font-size:2rem;
-    font-weight:950;
-    color:var(--nyx-landing-primary);
-    margin:1rem 0;
-  }
-
-  .nyx-price-card ul{
-    list-style:none;
-    padding:0;
-    margin:1rem 0 1.5rem;
-    display:grid;
-    gap:.55rem;
-    color:var(--nyx-landing-muted);
-  }
-
-  .nyx-price-card li::before{
-    content:"✓";
-    color:var(--nyx-landing-primary);
-    font-weight:900;
-    margin-right:.45rem;
-  }
-
-  .nyx-final-cta{
-    text-align:center;
-    padding:4rem 0 5rem;
-  }
-
-  .nyx-final-cta h2{
-    font-weight:750;
-    font-size:2.2rem;
-    letter-spacing:-.04em;
-    margin-bottom:.7rem;
-  }
-
-  .nyx-final-cta p{
-    color:var(--nyx-landing-muted);
-    margin-bottom:1.6rem;
-  }
-  .nyx-real-screenshots{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:1.25rem;
-  margin-top:2rem;
-}
-
-.nyx-real-shot{
-  background:#fff;
-  border:1px solid var(--nyx-landing-border);
-  border-radius:22px;
-  overflow:hidden;
-  box-shadow:var(--nyx-landing-shadow);
-}
-
-.nyx-real-shot img{
-  width:100%;
-  display:block;
-}
-
-.nyx-real-shot-caption{
-  padding:1rem 1.15rem;
-  border-top:1px solid var(--nyx-landing-border);
-}
-
-.nyx-real-shot-caption strong{
-  display:block;
-  font-weight:800;
-  color:var(--nyx-landing-primary-dark);
-}
-
-.nyx-real-shot-caption span{
-  color:var(--nyx-landing-muted);
-  font-size:.9rem;
-}
-
-@media (max-width: 991.98px){
-  .nyx-real-screenshots{
-    grid-template-columns:1fr;
-  }
-}
+  .nyx-landing-logo{ height:44px; width:auto; display:block; }
 
   @media (max-width: 991.98px){
-    .nyx-landing-menu{
-      display:none;
-    }
-
+    .nyx-landing-menu{ display:none; }
     .nyx-hero,
-    .nyx-showcase{
-      grid-template-columns:1fr;
-      gap:2.5rem;
-    }
-
-    .nyx-feature-grid{
-      grid-template-columns:repeat(2, 1fr);
-    }
-
-    .nyx-business-grid{
-      grid-template-columns:repeat(3, 1fr);
-    }
-
-    .nyx-pricing-grid{
-      grid-template-columns:1fr;
-    }
-
-    .nyx-price-card.featured{
-      transform:none;
-    }
+    .nyx-showcase,
+    .nyx-app-access{ grid-template-columns:1fr; gap:2.5rem; }
+    .nyx-feature-grid{ grid-template-columns:repeat(2, 1fr); }
+    .nyx-business-grid{ grid-template-columns:repeat(3, 1fr); }
+    .nyx-pricing-grid,
+    #precios .nyx-pricing-grid{ grid-template-columns:1fr !important; }
+    .nyx-price-card.featured{ transform:none; }
+    .nyx-real-screenshots{ grid-template-columns:1fr; }
+    .nyx-landing-footer-grid{ grid-template-columns:1fr 1fr; }
   }
 
   @media (max-width: 575.98px){
-    .nyx-landing-nav{
-      align-items:flex-start;
-    }
-
-    .nyx-landing-actions{
-      flex-direction:column;
-      align-items:flex-end;
-      gap:.5rem;
-    }
-
-    .nyx-hero{
-      padding-top:2.2rem;
-    }
-
-    .nyx-hero h1{
-      font-size:2.55rem;
-    }
-
-    .nyx-dashboard-mock{
-      grid-template-columns:1fr;
-    }
-
-    .nyx-mock-sidebar{
-      display:none;
-    }
-
+    .nyx-landing-nav{ align-items:flex-start; }
+    .nyx-landing-actions{ flex-direction:column; align-items:flex-end; gap:.5rem; }
+    .nyx-hero{ padding-top:2.2rem; }
+    .nyx-hero h1{ font-size:2.55rem; }
+    .nyx-dashboard-mock{ grid-template-columns:1fr; }
+    .nyx-mock-sidebar{ display:none; }
     .nyx-mock-grid,
     .nyx-mock-bottom,
-    .nyx-showcase-panel,
     .nyx-feature-grid,
     .nyx-business-grid,
-    .nyx-stats{
-      grid-template-columns:1fr;
-    }
-
-    .nyx-stat-item{
-      border-right:0;
-      border-bottom:1px solid var(--nyx-landing-border);
-    }
-
-    .nyx-stat-item:last-child{
-      border-bottom:0;
-    }
+    .nyx-stats{ grid-template-columns:1fr; }
+    .nyx-stat-item{ border-right:0; border-bottom:1px solid var(--nyx-landing-border); }
+    .nyx-stat-item:last-child{ border-bottom:0; }
+    .nyx-app-access{ padding:1.35rem; border-radius:20px; }
+    .nyx-app-step{ grid-template-columns:1fr; }
+    .nyx-landing-footer{ padding:52px 0 24px; }
+    .nyx-landing-footer-grid{ grid-template-columns:1fr; gap:32px; }
+    .nyx-landing-footer-bottom{ flex-direction:column; }
+    .nyx-landing-logo{ height:36px; }
   }
-
-  @media (max-width: 991.98px){
-    #precios .nyx-pricing-grid{
-      grid-template-columns:1fr !important;
-    }
-  }
-  .nyx-landing-logo{
-    height: 44px;
-    width: auto;
-    display: block;
-  }
-
-  @media (max-width: 575.98px){
-    .nyx-landing-logo{
-      height: 36px;
-    }
-  }
-  
 </style>
 </head>
 <body>
 <div class="nyx-landing">
   <header class="nyx-landing-container">
     <nav class="nyx-landing-nav">
-      <a href="{% url 'landing_nyx' %}" class="nyx-landing-brand">
-       NYX<span></span>
-      </a>
+      <a href="{% url 'landing_nyx' %}" class="nyx-landing-brand">NYX<span></span></a>
 
       <ul class="nyx-landing-menu">
         <li><a href="#caracteristicas">Características</a></li>
         <li><a href="#como-funciona">Cómo funciona</a></li>
+        <li><a href="#app">Como app</a></li>
         <li><a href="#para-quien">Para quién es</a></li>
         <li><a href="#precios">Precios</a></li>
         <li><a href="#demo">Demo</a></li>
@@ -840,27 +224,13 @@
   <main>
     <section class="nyx-landing-container nyx-hero">
       <div>
-        <div class="nyx-pill">
-          <i class="bi bi-stars"></i>
-          Prueba gratis 15 días · sin compromiso
-        </div>
-
-        <h1>
-          Gestioná reservas, equipos y pagos <span>en un solo lugar</span>
-        </h1>
-
-        <p>
-          NYX simplifica la administración de turnos y clientes para que puedas enfocarte
-          en lo que realmente importa: hacer crecer tu negocio.
-        </p>
-
+        <div class="nyx-pill"><i class="bi bi-stars"></i> Prueba gratis 15 días · sin compromiso</div>
+        <h1>Gestioná reservas, equipos y pagos <span>en un solo lugar</span></h1>
+        <p>NYX simplifica la administración de turnos y clientes para que puedas enfocarte en lo que realmente importa: hacer crecer tu negocio.</p>
         <div class="nyx-hero-buttons">
-          <a href="{% url 'trial_signup' %}" class="nyx-btn-solid">
-            Probar gratis 15 días
-          </a>
+          <a href="{% url 'trial_signup' %}" class="nyx-btn-solid">Probar gratis 15 días</a>
           <a href="#como-funciona" class="nyx-btn-outline">Ver cómo funciona</a>
         </div>
-
         <div class="nyx-hero-points">
           <div class="nyx-hero-point"><i class="bi bi-magic"></i> Fácil de usar</div>
           <div class="nyx-hero-point"><i class="bi bi-clock"></i> Ahorra tiempo</div>
@@ -881,7 +251,6 @@
             <div><i class="bi bi-gear"></i> Configuración</div>
           </div>
         </aside>
-
         <div class="nyx-mock-content">
           <div class="nyx-mock-header">
             <div>
@@ -890,14 +259,12 @@
             </div>
             <span class="nyx-badge-soft">Hoy</span>
           </div>
-
           <div class="nyx-mock-grid">
             <div class="nyx-mock-stat"><span>Turnos de hoy</span><strong>24</strong></div>
             <div class="nyx-mock-stat"><span>Pendientes</span><strong>6</strong></div>
             <div class="nyx-mock-stat"><span>Confirmados</span><strong>18</strong></div>
             <div class="nyx-mock-stat"><span>Ingresos</span><strong>$12.450</strong></div>
           </div>
-
           <div class="nyx-mock-bottom">
             <div class="nyx-mock-card">
               <h3 class="h6 fw-bold">Próximo turno</h3>
@@ -906,17 +273,10 @@
               <div class="nyx-mock-muted">Javier · Camila</div>
               <button class="btn btn-sm nyx-btn-outline mt-3">Ver agenda</button>
             </div>
-
             <div class="nyx-mock-card">
               <h3 class="h6 fw-bold">Turnos esta semana</h3>
               <div class="nyx-bars">
-                <span style="height:45%"></span>
-                <span style="height:30%"></span>
-                <span style="height:62%"></span>
-                <span style="height:85%"></span>
-                <span style="height:28%"></span>
-                <span style="height:55%"></span>
-                <span style="height:42%"></span>
+                <span style="height:45%"></span><span style="height:30%"></span><span style="height:62%"></span><span style="height:85%"></span><span style="height:28%"></span><span style="height:55%"></span><span style="height:42%"></span>
               </div>
             </div>
           </div>
@@ -927,37 +287,12 @@
     <section id="caracteristicas" class="nyx-landing-container nyx-section">
       <h2 class="nyx-section-title">Todo lo que necesitás para gestionar tu negocio</h2>
       <div class="nyx-section-line"></div>
-
       <div class="nyx-feature-grid">
-        <div class="nyx-feature-card">
-          <div class="nyx-feature-icon"><i class="bi bi-calendar2-check"></i></div>
-          <h3>Reservas online</h3>
-          <p>Tus clientes reservan desde cualquier dispositivo, las 24 horas.</p>
-        </div>
-
-        <div class="nyx-feature-card">
-          <div class="nyx-feature-icon"><i class="bi bi-people"></i></div>
-          <h3>Gestión de equipo</h3>
-          <p>Administrá profesionales, horarios, turnos y bloqueos fácilmente.</p>
-        </div>
-
-        <div class="nyx-feature-card">
-          <div class="nyx-feature-icon"><i class="bi bi-credit-card"></i></div>
-          <h3>Pagos y señas</h3>
-          <p>Cobrá anticipos, gestioná pagos y reducí cancelaciones.</p>
-        </div>
-
-        <div class="nyx-feature-card">
-          <div class="nyx-feature-icon"><i class="bi bi-bell"></i></div>
-          <h3>Notificaciones</h3>
-          <p>Avisos automáticos por email para clientes, salón y profesionales.</p>
-        </div>
-
-        <div class="nyx-feature-card">
-          <div class="nyx-feature-icon"><i class="bi bi-graph-up-arrow"></i></div>
-          <h3>Reportes</h3>
-          <p>Visualizá la actividad del negocio con datos claros y rápidos.</p>
-        </div>
+        <div class="nyx-feature-card"><div class="nyx-feature-icon"><i class="bi bi-calendar2-check"></i></div><h3>Reservas online</h3><p>Tus clientes reservan desde cualquier dispositivo, las 24 horas.</p></div>
+        <div class="nyx-feature-card"><div class="nyx-feature-icon"><i class="bi bi-people"></i></div><h3>Gestión de equipo</h3><p>Administrá profesionales, horarios, turnos y bloqueos fácilmente.</p></div>
+        <div class="nyx-feature-card"><div class="nyx-feature-icon"><i class="bi bi-credit-card"></i></div><h3>Pagos y señas</h3><p>Cobrá anticipos, gestioná pagos y reducí cancelaciones.</p></div>
+        <div class="nyx-feature-card"><div class="nyx-feature-icon"><i class="bi bi-bell"></i></div><h3>Notificaciones</h3><p>Avisos automáticos por email para clientes, salón y profesionales.</p></div>
+        <div class="nyx-feature-card"><div class="nyx-feature-icon"><i class="bi bi-graph-up-arrow"></i></div><h3>Reportes</h3><p>Visualizá la actividad del negocio con datos claros y rápidos.</p></div>
       </div>
     </section>
 
@@ -965,36 +300,45 @@
       <div>
         <div class="nyx-pill">Diseñado para ser simple</div>
         <h2>Un sistema intuitivo para vos y tus clientes</h2>
-        <p>
-          Interfaz limpia, rápida y pensada para que gestiones tu negocio sin complicaciones.
-          Tus clientes reservan fácil y tu equipo trabaja con una agenda clara.
-        </p>
-        <a href="{% url 'trial_signup' %}" class="nyx-btn-outline">
-          Crear cuenta gratis
-        </a>
+        <p>Interfaz limpia, rápida y pensada para que gestiones tu negocio sin complicaciones. Tus clientes reservan fácil y tu equipo trabaja con una agenda clara.</p>
+        <a href="{% url 'trial_signup' %}" class="nyx-btn-outline">Crear cuenta gratis</a>
       </div>
-
-  
     </section>
+
     <section class="nyx-landing-container nyx-section">
       <h2 class="nyx-section-title">Un panel claro, simple y profesional</h2>
       <div class="nyx-section-line"></div>
-
       <div class="nyx-real-screenshots">
         <div class="nyx-real-shot">
           <img src="{% static 'reservas/img/agenda.png' %}" alt="Panel de agenda de NYX">
-          <div class="nyx-real-shot-caption">
-            <strong>Agenda diaria</strong>
-            <span>Visualizá turnos, bloqueos, horarios y profesionales desde una vista clara.</span>
-          </div>
+          <div class="nyx-real-shot-caption"><strong>Agenda diaria</strong><span>Visualizá turnos, bloqueos, horarios y profesionales desde una vista clara.</span></div>
         </div>
-
         <div class="nyx-real-shot">
           <img src="{% static 'reservas/img/servicios.png' %}" alt="Panel de servicios de NYX">
-          <div class="nyx-real-shot-caption">
-            <strong>Gestión de servicios</strong>
-            <span>Editá precios, duración, estado y disponibilidad de cada servicio.</span>
+          <div class="nyx-real-shot-caption"><strong>Gestión de servicios</strong><span>Editá precios, duración, estado y disponibilidad de cada servicio.</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="app" class="nyx-landing-container nyx-section">
+      <div class="nyx-app-access">
+        <div>
+          <div class="nyx-pill"><i class="bi bi-phone"></i> Acceso rápido desde el celular</div>
+          <h2>Usalo como una app, sin descargar nada</h2>
+          <p>Tus clientas pueden abrir el link de reservas desde el celular y guardarlo en la pantalla de inicio para entrar más rápido cuando quieran sacar turno.</p>
+          <ul class="nyx-app-points">
+            <li><i class="bi bi-check-circle-fill"></i><span>No necesitan buscar mensajes viejos ni escribir por WhatsApp para reservar.</span></li>
+            <li><i class="bi bi-check-circle-fill"></i><span>El acceso queda en la pantalla principal del celular, junto a sus apps.</span></li>
+            <li><i class="bi bi-check-circle-fill"></i><span>Reservan servicio, profesional, día y horario desde el link del salón.</span></li>
+          </ul>
+        </div>
+        <div class="nyx-app-phone-card">
+          <div class="nyx-app-steps">
+            <div class="nyx-app-step"><div class="nyx-app-step-number">1</div><div><strong>Abrí el link del salón</strong><span>La clienta entra desde Instagram, WhatsApp o el link que le compartas.</span></div></div>
+            <div class="nyx-app-step"><div class="nyx-app-step-number">2</div><div><strong>Guardalo en pantalla de inicio</strong><span>En Android: Chrome → menú ⋮ → Agregar a pantalla principal.</span></div></div>
+            <div class="nyx-app-step"><div class="nyx-app-step-number">3</div><div><strong>En iPhone</strong><span>Safari → Compartir → Agregar a pantalla de inicio.</span></div></div>
           </div>
+          <div class="nyx-app-note">Ideal para clientas frecuentes: entran directo al sistema de turnos cuando quieren reservar.</div>
         </div>
       </div>
     </section>
@@ -1002,7 +346,6 @@
     <section id="para-quien" class="nyx-landing-container nyx-section">
       <h2 class="nyx-section-title">Para todo tipo de negocios</h2>
       <div class="nyx-section-line"></div>
-
       <div class="nyx-business-grid">
         <div class="nyx-business-card"><i class="bi bi-scissors"></i>Peluquerías</div>
         <div class="nyx-business-card"><i class="bi bi-rulers"></i>Barberías</div>
@@ -1012,41 +355,23 @@
         <div class="nyx-business-card"><i class="bi bi-building"></i>Estudios</div>
         <div class="nyx-business-card"><i class="bi bi-three-dots"></i>Y más...</div>
       </div>
-
       <div class="nyx-stats">
-        <div class="nyx-stat-item">
-          <strong>+1.000</strong>
-          <span>Turnos potenciales por mes</span>
-        </div>
-        <div class="nyx-stat-item">
-          <strong>24/7</strong>
-          <span>Reservas activas sin interrupciones</span>
-        </div>
-        <div class="nyx-stat-item">
-          <strong>-70%</strong>
-          <span>Menos coordinación manual</span>
-        </div>
-        <div class="nyx-stat-item">
-          <strong>1 panel</strong>
-          <span>Todo centralizado</span>
-        </div>
+        <div class="nyx-stat-item"><strong>+1.000</strong><span>Turnos potenciales por mes</span></div>
+        <div class="nyx-stat-item"><strong>24/7</strong><span>Reservas activas sin interrupciones</span></div>
+        <div class="nyx-stat-item"><strong>-70%</strong><span>Menos coordinación manual</span></div>
+        <div class="nyx-stat-item"><strong>1 panel</strong><span>Todo centralizado</span></div>
       </div>
     </section>
 
     <section id="precios" class="nyx-landing-container nyx-section">
       <h2 class="nyx-section-title">Planes simples para empezar</h2>
       <div class="nyx-section-line"></div>
-
       <div class="nyx-pricing-grid" style="grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 860px; margin: 0 auto;">
         <div class="nyx-price-card featured">
           <h3>Inicial</h3>
-          <p class="nyx-mock-muted">
-            Para negocios que quieren empezar a ordenar sus reservas con una herramienta simple y profesional.
-          </p>
-
+          <p class="nyx-mock-muted">Para negocios que quieren empezar a ordenar sus reservas con una herramienta simple y profesional.</p>
           <div class="nyx-price">$25.000</div>
-          <p class="nyx-mock-muted mb-3">por mes · probalo gratis 15 días </p>
-
+          <p class="nyx-mock-muted mb-3">por mes · probalo gratis 15 días</p>
           <ul>
             <li>Reservas online para clientes</li>
             <li>Panel de administración</li>
@@ -1065,18 +390,12 @@
             <li>Acceso staff para profesionales</li>
             <li>Página pública del salón</li>
           </ul>
-
           <a href="{% url 'trial_signup' %}" class="nyx-btn-solid w-100">Empezar prueba gratis</a>
         </div>
-
         <div class="nyx-price-card">
           <h3>Pro</h3>
-          <p class="nyx-mock-muted">
-            Para negocios que quieran estadísticas avanzadas, automatizaciones y herramientas de crecimiento.
-          </p>
-
+          <p class="nyx-mock-muted">Para negocios que quieran estadísticas avanzadas, automatizaciones y herramientas de crecimiento.</p>
           <div class="nyx-price">Próximamente</div>
-
           <ul>
             <li>Reportes avanzados</li>
             <li>Estadísticas de ingresos</li>
@@ -1085,7 +404,6 @@
             <li>Automatizaciones comerciales</li>
             <li>Funciones premium a medida</li>
           </ul>
-
           <a href="#demo" class="nyx-btn-outline w-100">Consultar disponibilidad</a>
         </div>
       </div>
@@ -1094,21 +412,13 @@
     <section id="demo" class="nyx-landing-container nyx-final-cta">
       <h2>¿Listo para llevar tu negocio al siguiente nivel?</h2>
       <p>Creá tu cuenta, probá el sistema gratis durante 15 días y activá tu suscripción mensual cuando quieras continuar.</p>
-
       <div class="d-flex justify-content-center gap-2 flex-wrap">
-        <a href="{% url 'trial_signup' %}" class="nyx-btn-solid">
-          Probar gratis 15 días
-        </a>
-
-        <a href="https://wa.me/5493416959852?text=Hola%2C%20quiero%20ver%20una%20demo%20de%20NYX"
-           class="nyx-btn-outline">
-          <i class="bi bi-whatsapp"></i>
-          Conversar por WhatsApp
-        </a>
+        <a href="{% url 'trial_signup' %}" class="nyx-btn-solid">Probar gratis 15 días</a>
+        <a href="https://wa.me/5493416959852?text=Hola%2C%20quiero%20ver%20una%20demo%20de%20NYX" class="nyx-btn-outline"><i class="bi bi-whatsapp"></i> Conversar por WhatsApp</a>
       </div>
     </section>
   </main>
 </div>
-  {% include "reservas/includes/footer_landing.html" %}
+{% include "reservas/includes/footer_landing.html" %}
 </body>
 </html>
