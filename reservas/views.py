@@ -1172,6 +1172,16 @@ def confirm_booking(request):
     payment_method = salon.payment_method
     payment_instructions = salon.payment_instructions
 
+    # Si el salón no tiene medios de pago activos, ignorar cualquier configuración
+    # de seña/pago total y cualquier valor viejo que venga por GET/POST.
+    payments_enabled = payment_method in ['transfer', 'integrated', 'both']
+
+    if not payments_enabled:
+        deposit_enabled = False
+        deposit_percentage = 0
+        allow_full_payment = False
+        full_payment_required = False
+
     deposit_amount = round((total_price * deposit_percentage / 100), 2) if deposit_percentage > 0 else 0
     full_amount = total_price
 
@@ -1233,42 +1243,48 @@ def confirm_booking(request):
                     payment_choice = 'none'
                     payment_status = 'not_required'
                     payment_required_amount = 0
+                    final_payment_method = ''
 
-                    final_payment_method = payment_method
-                    if payment_method == 'both':
-                        final_payment_method = selected_payment_method or 'transfer'
+                    if payments_enabled:
+                        final_payment_method = payment_method
 
-                    if full_payment_required:
-                        payment_choice = 'full'
-                        payment_status = 'pending'
-                        payment_required_amount = full_amount
+                        if payment_method == 'both':
+                            if selected_payment_method in ['transfer', 'integrated']:
+                                final_payment_method = selected_payment_method
+                            else:
+                                final_payment_method = 'transfer'
 
-                    elif deposit_enabled and allow_full_payment:
-                        chosen_payment = selected_payment_choice or 'deposit'
-
-                        if chosen_payment == 'full':
+                        if full_payment_required:
                             payment_choice = 'full'
                             payment_status = 'pending'
                             payment_required_amount = full_amount
-                        else:
+
+                        elif deposit_enabled and allow_full_payment:
+                            chosen_payment = selected_payment_choice or 'deposit'
+
+                            if chosen_payment == 'full':
+                                payment_choice = 'full'
+                                payment_status = 'pending'
+                                payment_required_amount = full_amount
+                            else:
+                                payment_choice = 'deposit'
+                                payment_status = 'pending'
+                                payment_required_amount = deposit_amount
+
+                        elif deposit_enabled:
                             payment_choice = 'deposit'
                             payment_status = 'pending'
                             payment_required_amount = deposit_amount
 
-                    elif deposit_enabled:
-                        payment_choice = 'deposit'
-                        payment_status = 'pending'
-                        payment_required_amount = deposit_amount
-
-                    elif allow_full_payment:
-                        if selected_payment_choice == 'full':
-                            payment_choice = 'full'
-                            payment_status = 'pending'
-                            payment_required_amount = full_amount
-                        else:
-                            payment_choice = 'none'
-                            payment_status = 'not_required'
-                            payment_required_amount = 0
+                        elif allow_full_payment:
+                            if selected_payment_choice == 'full':
+                                payment_choice = 'full'
+                                payment_status = 'pending'
+                                payment_required_amount = full_amount
+                            else:
+                                payment_choice = 'none'
+                                payment_status = 'not_required'
+                                payment_required_amount = 0
 
                     requires_manual_transfer_payment = (
                         payment_choice != 'none'
@@ -1399,8 +1415,8 @@ def confirm_booking(request):
         'deposit_amount': deposit_amount,
         'full_amount': full_amount,
         'payment_instructions': payment_instructions,
-        'selected_payment_method': selected_payment_method,
-        'selected_payment_choice': selected_payment_choice,
+        'selected_payment_method': selected_payment_method if payments_enabled else '',
+        'selected_payment_choice': selected_payment_choice if payments_enabled else '',
     }
     return render(request, 'reservas/confirm_booking.html', context)
 
