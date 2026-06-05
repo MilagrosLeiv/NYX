@@ -71,18 +71,26 @@ def filter_past_slots_for_today(slots, selected_date):
 
     now = timezone.localtime().replace(second=0, microsecond=0)
 
-    minutes = now.minute
-    remainder = minutes % 15
+    # Margen mínimo para reservar. Podés cambiarlo a 0, 10, 15, 30, etc.
+    minimum_start = now + timedelta(minutes=15)
 
-    if remainder != 0:
-        now += timedelta(minutes=(15 - remainder))
+    filtered_slots = []
 
-    current_time = now.time()
+    for slot in slots:
+        try:
+            slot_time = datetime.strptime(slot, "%H:%M").time()
+        except ValueError:
+            continue
 
-    return [
-        slot for slot in slots
-        if datetime.strptime(slot, "%H:%M").time() >= current_time
-    ]
+        slot_datetime = timezone.make_aware(
+            datetime.combine(selected_date, slot_time),
+            timezone.get_current_timezone()
+        )
+
+        if slot_datetime > minimum_start:
+            filtered_slots.append(slot)
+
+    return filtered_slots
 
 def service_list(request, salon_slug):
     expire_unpaid_bookings()
@@ -1203,6 +1211,23 @@ def confirm_booking(request):
 
         if form.is_valid():
             try:
+                selected_date_obj = datetime.strptime(selected_date_raw, "%Y-%m-%d").date()
+                start_time_obj = datetime.strptime(start_time, "%H:%M").time()
+
+                selected_start_datetime = timezone.make_aware(
+                    datetime.combine(selected_date_obj, start_time_obj),
+                    timezone.get_current_timezone()
+                )
+
+                minimum_start_datetime = timezone.localtime() + timedelta(minutes=15)
+
+                if selected_start_datetime <= minimum_start_datetime:
+                    messages.error(
+                        request,
+                        "Ese horario ya no está disponible. Elegí otro turno."
+                    )
+                    return redirect(build_select_time_redirect_url())
+
                 with transaction.atomic():
 
                     payment_choice = 'none'
@@ -1287,12 +1312,10 @@ def confirm_booking(request):
                         )
 
                     elif mode == 'auto':
-                        start_time_obj = datetime.strptime(start_time, "%H:%M").time()
-
                         auto_pairs = find_auto_assignment_for_start(
                             salon=salon,
                             services=services,
-                            selected_date=datetime.strptime(selected_date_raw, "%Y-%m-%d").date(),
+                            selected_date=selected_date_obj,
                             start_time=start_time_obj,
                         )
 
