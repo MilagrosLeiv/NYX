@@ -2,8 +2,14 @@ from datetime import datetime, timedelta
 
 from django.utils import timezone
 
-from .models import (Appointment, BusinessHours, BookingItem,
-EmployeeTimeOff,BusinessHourBlock)
+from .models import (
+    Appointment,
+    BookingItem,
+    BusinessHourBlock,
+    BusinessHours,
+    EmployeeTimeOff,
+    EmployeeWorkingHour,
+)
 
 
 SLOT_MINUTES = 30
@@ -59,10 +65,59 @@ def get_working_ranges_for_date(salon, selected_date):
 
     return working_ranges
 
-def get_available_slots(employee, services, selected_date):
-    working_ranges = get_working_ranges_for_date(
+
+def get_employee_working_ranges_for_date(employee, selected_date):
+    salon_ranges = get_working_ranges_for_date(
         salon=employee.salon,
-        selected_date=selected_date
+        selected_date=selected_date,
+    )
+
+    if not salon_ranges:
+        return []
+
+    employee_blocks = EmployeeWorkingHour.objects.filter(
+        employee=employee,
+        weekday=selected_date.weekday(),
+        is_active=True,
+    ).order_by("start_time")
+
+    if not employee_blocks.exists():
+        return salon_ranges
+
+    current_tz = timezone.get_current_timezone()
+    working_ranges = []
+
+    for employee_block in employee_blocks:
+        if (
+            not employee_block.start_time
+            or not employee_block.end_time
+            or employee_block.start_time >= employee_block.end_time
+        ):
+            continue
+
+        employee_start = timezone.make_aware(
+            datetime.combine(selected_date, employee_block.start_time),
+            current_tz,
+        )
+        employee_end = timezone.make_aware(
+            datetime.combine(selected_date, employee_block.end_time),
+            current_tz,
+        )
+
+        for salon_start, salon_end in salon_ranges:
+            range_start = max(employee_start, salon_start)
+            range_end = min(employee_end, salon_end)
+
+            if range_start < range_end:
+                working_ranges.append((range_start, range_end))
+
+    return sorted(working_ranges, key=lambda working_range: working_range[0])
+
+
+def get_available_slots(employee, services, selected_date):
+    working_ranges = get_employee_working_ranges_for_date(
+        employee=employee,
+        selected_date=selected_date,
     )
 
     if not working_ranges:
