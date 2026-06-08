@@ -21,6 +21,7 @@ from .models import (
     SalonMembership,
     SalonSubscription,
     EmployeeTimeOff,
+    EmployeeWorkingHour,
     SalonPaymentSettings,
 )
 
@@ -525,6 +526,7 @@ class EmployeeTimeOffAdmin(admin.ModelAdmin):
 
         return qs.none()
 
+
     def has_module_permission(self, request):
         return request.user.is_superuser or is_owner_user(request.user) or is_staff_user(request.user)
 
@@ -600,6 +602,22 @@ class EmployeeTimeOffAdmin(admin.ModelAdmin):
                 obj.employee = employee
 
         super().save_model(request, obj, form, change)
+
+
+@admin.register(EmployeeWorkingHour)
+class EmployeeWorkingHourAdmin(admin.ModelAdmin):
+    list_display = (
+        'employee',
+        'weekday',
+        'start_time',
+        'end_time',
+        'is_active',
+    )
+    list_filter = ('employee__salon', 'employee', 'weekday', 'is_active')
+    search_fields = ('employee__name',)
+    autocomplete_fields = ('employee',)
+    ordering = ('employee', 'weekday', 'start_time')
+
 
 class WorkDayListFilter(admin.SimpleListFilter):
     title = 'día de trabajo'

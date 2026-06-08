@@ -107,6 +107,10 @@
                     Editar
                   </a>
 
+                  <a href="{% url 'panel_employee_working_hours' employee.id %}" class="nyx-filter-btn">
+                    Horarios
+                  </a>
+
                   {% if not employee.user %}
                     <a href="{% url 'panel_employee_access_create' employee.id %}" class="nyx-filter-btn">
                       Crear acceso

@@ -140,6 +140,31 @@ urlpatterns = [
     path('panel/profesionales/<int:employee_id>/editar/', panel_views.panel_employee_edit, name='panel_employee_edit'),
     path('panel/profesionales/<int:employee_id>/toggle-activo/', panel_views.panel_employee_toggle_active, name='panel_employee_toggle_active'),
     path(
+        'panel/profesionales/<int:employee_id>/horarios/',
+        panel_views.panel_employee_working_hours,
+        name='panel_employee_working_hours'
+    ),
+    path(
+        'panel/profesionales/<int:employee_id>/horarios/nuevo/',
+        panel_views.panel_employee_working_hour_create,
+        name='panel_employee_working_hour_create'
+    ),
+    path(
+        'panel/profesionales/<int:employee_id>/horarios/copiar-del-salon/',
+        panel_views.panel_employee_working_hours_copy_from_salon,
+        name='panel_employee_working_hours_copy_from_salon'
+    ),
+    path(
+        'panel/profesionales/<int:employee_id>/horarios/<int:block_id>/editar/',
+        panel_views.panel_employee_working_hour_edit,
+        name='panel_employee_working_hour_edit'
+    ),
+    path(
+        'panel/profesionales/<int:employee_id>/horarios/<int:block_id>/toggle-activo/',
+        panel_views.panel_employee_working_hour_toggle_active,
+        name='panel_employee_working_hour_toggle_active'
+    ),
+    path(
         "panel/profesionales/<int:employee_id>/crear-acceso/",
         panel_views.panel_employee_create_access,
         name="panel_employee_create_access"

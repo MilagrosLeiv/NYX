@@ -429,7 +429,89 @@ class Employee(models.Model):
 
     def __str__(self):
         return self.name
-    
+
+
+class EmployeeWorkingHour(models.Model):
+    WEEKDAY_CHOICES = [
+        (0, 'Lunes'),
+        (1, 'Martes'),
+        (2, 'Miércoles'),
+        (3, 'Jueves'),
+        (4, 'Viernes'),
+        (5, 'Sábado'),
+        (6, 'Domingo'),
+    ]
+
+    employee = models.ForeignKey(
+        Employee,
+        on_delete=models.CASCADE,
+        related_name='working_hours',
+        verbose_name='Profesional',
+    )
+    weekday = models.PositiveSmallIntegerField(
+        choices=WEEKDAY_CHOICES,
+        verbose_name='Día',
+    )
+    start_time = models.TimeField('Hora de inicio')
+    end_time = models.TimeField('Hora de fin')
+    is_active = models.BooleanField('Activo', default=True)
+
+    class Meta:
+        verbose_name = 'Horario de trabajo del profesional'
+        verbose_name_plural = 'Horarios de trabajo de profesionales'
+        ordering = ['employee', 'weekday', 'start_time']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['employee', 'weekday', 'start_time', 'end_time'],
+                name='unique_employee_working_hour',
+            ),
+        ]
+        indexes = [
+            models.Index(
+                fields=['employee', 'weekday', 'is_active'],
+                name='employee_workday_active_idx',
+            ),
+        ]
+
+    def clean(self):
+        errors = []
+
+        if self.start_time and self.end_time and self.start_time >= self.end_time:
+            errors.append("La hora de inicio debe ser menor que la hora de fin.")
+
+        if (
+            self.is_active
+            and self.employee_id
+            and self.weekday is not None
+            and self.start_time
+            and self.end_time
+        ):
+            overlaps = EmployeeWorkingHour.objects.filter(
+                employee_id=self.employee_id,
+                weekday=self.weekday,
+                is_active=True,
+                start_time__lt=self.end_time,
+                end_time__gt=self.start_time,
+            ).exclude(pk=self.pk)
+
+            if overlaps.exists():
+                errors.append(
+                    "Este bloque horario se superpone con otro bloque activo "
+                    "del mismo profesional y día."
+                )
+
+        if errors:
+            raise ValidationError(errors)
+
+    def __str__(self):
+        day_name = dict(self.WEEKDAY_CHOICES).get(self.weekday, self.weekday)
+        status = '' if self.is_active else ' (Inactivo)'
+        return (
+            f"{self.employee.name} - {day_name}: "
+            f"{self.start_time} - {self.end_time}{status}"
+        )
+
+
 class StaffInvitation(models.Model):
     salon = models.ForeignKey(
         Salon,

@@ -7,6 +7,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
+from django.db import transaction
 from django.shortcuts import get_object_or_404, render, redirect
 from django.urls import reverse
 from django.utils import timezone
@@ -20,6 +21,7 @@ from .models import (
     Service,
     ServiceCategory,
     Employee,
+    EmployeeWorkingHour,
     BusinessHours,
     BusinessHourBlock,
     Salon,
@@ -34,6 +36,7 @@ from .panel_forms import (
     PanelBusinessHourBlockForm,
     PanelServiceForm,
     PanelEmployeeForm,
+    PanelEmployeeWorkingHourForm,
     EmployeeTimeOffForm,
     PanelSalonSettingsForm,
     PanelEmployeeAccessForm,
@@ -991,6 +994,271 @@ def panel_employee_toggle_active(request, employee_id):
 
     return redirect('panel_employees')
 
+
+@login_required
+@subscription_required
+def panel_employee_working_hours(request, employee_id):
+    if request.user.is_superuser:
+        return redirect('/admin/')
+
+    salon = get_user_salon(request.user)
+
+    if not salon or not is_owner_user(request.user):
+        raise PermissionDenied("Solo la dueña puede gestionar horarios de profesionales.")
+
+    employee = get_object_or_404(Employee, pk=employee_id, salon=salon)
+    blocks = list(
+        EmployeeWorkingHour.objects
+        .filter(employee=employee)
+        .order_by('weekday', 'start_time')
+    )
+
+    blocks_by_weekday = []
+    for weekday_value, weekday_name in EmployeeWorkingHour.WEEKDAY_CHOICES:
+        day_blocks = [
+            block for block in blocks
+            if block.weekday == weekday_value
+        ]
+        blocks_by_weekday.append({
+            'weekday': weekday_value,
+            'weekday_name': weekday_name,
+            'blocks': day_blocks,
+            'active_blocks_count': sum(
+                1 for block in day_blocks if block.is_active
+            ),
+        })
+
+    return render(request, 'reservas/panel/employee_working_hours.html', {
+        'panel_role': 'owner',
+        'salon': salon,
+        'employee': employee,
+        'blocks_by_weekday': blocks_by_weekday,
+    })
+
+
+@login_required
+@subscription_required
+def panel_employee_working_hour_create(request, employee_id):
+    if request.user.is_superuser:
+        return redirect('/admin/')
+
+    salon = get_user_salon(request.user)
+
+    if not salon or not is_owner_user(request.user):
+        raise PermissionDenied("Solo la dueña puede crear horarios de profesionales.")
+
+    employee = get_object_or_404(Employee, pk=employee_id, salon=salon)
+
+    if request.method == 'POST':
+        form = PanelEmployeeWorkingHourForm(
+            request.POST,
+            employee=employee,
+        )
+        if form.is_valid():
+            with transaction.atomic():
+                for weekday in form.cleaned_data['weekdays']:
+                    block = EmployeeWorkingHour(
+                        employee=employee,
+                        weekday=weekday,
+                        start_time=form.cleaned_data['start_time'],
+                        end_time=form.cleaned_data['end_time'],
+                        is_active=form.cleaned_data['is_active'],
+                    )
+                    block.full_clean()
+                    block.save()
+
+            created_count = len(form.cleaned_data['weekdays'])
+            messages.success(
+                request,
+                f"Se crearon {created_count} franja"
+                f"{'s' if created_count != 1 else ''} de trabajo.",
+            )
+            return redirect('panel_employee_working_hours', employee_id=employee.id)
+    else:
+        form = PanelEmployeeWorkingHourForm(employee=employee)
+
+    return render(request, 'reservas/panel/employee_working_hour_form.html', {
+        'panel_role': 'owner',
+        'salon': salon,
+        'employee': employee,
+        'form': form,
+        'form_title': f'Agregar horario: {employee.name}',
+        'submit_label': 'Guardar franja',
+    })
+
+
+@login_required
+@subscription_required
+def panel_employee_working_hour_edit(request, employee_id, block_id):
+    if request.user.is_superuser:
+        return redirect('/admin/')
+
+    salon = get_user_salon(request.user)
+
+    if not salon or not is_owner_user(request.user):
+        raise PermissionDenied("Solo la dueña puede editar horarios de profesionales.")
+
+    employee = get_object_or_404(Employee, pk=employee_id, salon=salon)
+    block = get_object_or_404(
+        EmployeeWorkingHour,
+        pk=block_id,
+        employee=employee,
+    )
+
+    if request.method == 'POST':
+        form = PanelEmployeeWorkingHourForm(
+            request.POST,
+            instance=block,
+            employee=employee,
+        )
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Franja de trabajo actualizada correctamente.')
+            return redirect('panel_employee_working_hours', employee_id=employee.id)
+    else:
+        form = PanelEmployeeWorkingHourForm(
+            instance=block,
+            employee=employee,
+        )
+
+    return render(request, 'reservas/panel/employee_working_hour_form.html', {
+        'panel_role': 'owner',
+        'salon': salon,
+        'employee': employee,
+        'block': block,
+        'form': form,
+        'form_title': f'Editar horario: {employee.name}',
+        'submit_label': 'Guardar cambios',
+    })
+
+
+@login_required
+@subscription_required
+def panel_employee_working_hour_toggle_active(request, employee_id, block_id):
+    if request.user.is_superuser:
+        return redirect('/admin/')
+
+    salon = get_user_salon(request.user)
+
+    if not salon or not is_owner_user(request.user):
+        raise PermissionDenied("Solo la dueña puede modificar horarios de profesionales.")
+
+    employee = get_object_or_404(Employee, pk=employee_id, salon=salon)
+    block = get_object_or_404(
+        EmployeeWorkingHour,
+        pk=block_id,
+        employee=employee,
+    )
+
+    if request.method != 'POST':
+        return redirect('panel_employee_working_hours', employee_id=employee.id)
+
+    block.is_active = not block.is_active
+
+    try:
+        block.full_clean()
+    except ValidationError as error:
+        messages.error(
+            request,
+            error.messages[0] if error.messages else 'No se pudo modificar la franja.',
+        )
+    else:
+        block.save(update_fields=['is_active'])
+        status = 'activada' if block.is_active else 'desactivada'
+        messages.success(request, f'Franja de trabajo {status} correctamente.')
+
+    return redirect('panel_employee_working_hours', employee_id=employee.id)
+
+
+@login_required
+@subscription_required
+def panel_employee_working_hours_copy_from_salon(request, employee_id):
+    if request.user.is_superuser:
+        return redirect('/admin/')
+
+    salon = get_user_salon(request.user)
+
+    if not salon or not is_owner_user(request.user):
+        raise PermissionDenied("Solo la dueña puede copiar horarios del salón.")
+
+    employee = get_object_or_404(Employee, pk=employee_id, salon=salon)
+
+    if request.method != 'POST':
+        return redirect('panel_employee_working_hours', employee_id=employee.id)
+
+    salon_blocks = BusinessHourBlock.objects.filter(
+        salon=salon,
+        is_active=True,
+    ).order_by('weekday', 'start_time')
+
+    created_count = 0
+    duplicate_count = 0
+    conflicts = []
+
+    for salon_block in salon_blocks:
+        exact_block_exists = EmployeeWorkingHour.objects.filter(
+            employee=employee,
+            weekday=salon_block.weekday,
+            start_time=salon_block.start_time,
+            end_time=salon_block.end_time,
+        ).exists()
+
+        if exact_block_exists:
+            duplicate_count += 1
+            continue
+
+        employee_block = EmployeeWorkingHour(
+            employee=employee,
+            weekday=salon_block.weekday,
+            start_time=salon_block.start_time,
+            end_time=salon_block.end_time,
+            is_active=True,
+        )
+
+        try:
+            employee_block.full_clean()
+        except ValidationError:
+            conflicts.append(
+                f"{salon_block.get_weekday_display()} "
+                f"{salon_block.start_time.strftime('%H:%M')} a "
+                f"{salon_block.end_time.strftime('%H:%M')}"
+            )
+            continue
+
+        employee_block.save()
+        created_count += 1
+
+    if created_count:
+        messages.success(
+            request,
+            f"Se copiaron {created_count} franja"
+            f"{'s' if created_count != 1 else ''} del salón.",
+        )
+
+    if duplicate_count:
+        messages.info(
+            request,
+            f"Se omitieron {duplicate_count} franja"
+            f"{'s' if duplicate_count != 1 else ''} idéntica"
+            f"{'s' if duplicate_count != 1 else ''} que ya existían.",
+        )
+
+    if conflicts:
+        messages.warning(
+            request,
+            "No se copiaron las franjas que se superponen con horarios activos "
+            f"de {employee.name}: {', '.join(conflicts)}.",
+        )
+
+    if not salon_blocks.exists():
+        messages.info(
+            request,
+            "El salón no tiene franjas activas para copiar.",
+        )
+
+    return redirect('panel_employee_working_hours', employee_id=employee.id)
+
+
 @login_required
 @subscription_required
 def panel_business_hours(request):
@@ -1151,12 +1419,25 @@ def panel_business_hour_block_create(request):
         form = PanelBusinessHourBlockForm(request.POST, salon=salon)
 
         if form.is_valid():
-            block = form.save(commit=False)
-            block.salon = salon
-            block.full_clean()
-            block.save()
+            with transaction.atomic():
+                for weekday in form.cleaned_data['weekdays']:
+                    block = BusinessHourBlock(
+                        salon=salon,
+                        weekday=weekday,
+                        start_time=form.cleaned_data['start_time'],
+                        end_time=form.cleaned_data['end_time'],
+                        is_active=form.cleaned_data['is_active'],
+                    )
+                    block.full_clean()
+                    block.save()
 
-            messages.success(request, 'Franja horaria creada correctamente.')
+            created_count = len(form.cleaned_data['weekdays'])
+            messages.success(
+                request,
+                f"Se crearon {created_count} franja"
+                f"{'s' if created_count != 1 else ''} horaria"
+                f"{'s' if created_count != 1 else ''}.",
+            )
             return redirect('panel_business_hours')
     else:
         form = PanelBusinessHourBlockForm(salon=salon)

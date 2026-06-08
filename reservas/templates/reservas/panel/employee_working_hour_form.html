@@ -2,7 +2,7 @@
 
 {% block title %}{{ form_title }} | NYX{% endblock %}
 {% block panel_title %}{{ form_title }}{% endblock %}
-{% block panel_subtitle %}Definí una franja de atención. Podés cargar más de una franja por día.{% endblock %}
+{% block panel_subtitle %}Definí una franja semanal de trabajo para {{ employee.name }}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -26,16 +26,6 @@
   .nyx-form-label{
     font-weight: 700;
     margin-bottom: .45rem;
-  }
-
-  .nyx-help-box{
-    background: #f6ffff;
-    border: 1px solid var(--nyx-border);
-    border-radius: 1rem;
-    padding: 1rem;
-    color: var(--nyx-text-muted);
-    font-size: .92rem;
-    line-height: 1.5;
   }
 
   .nyx-weekdays-box{
@@ -62,17 +52,6 @@
 
 {% block panel_content %}
 <div class="nyx-card p-4 nyx-form-card">
-
-  <div class="nyx-help-box mb-4">
-    <strong>Ejemplo:</strong> si el salón trabaja horario corrido, cargá una sola franja:
-    <br>
-    09:00 a 20:00.
-    <br><br>
-    Si trabaja horario cortado, cargá dos franjas para el mismo día:
-    <br>
-    09:00 a 13:00 y 16:00 a 20:00.
-  </div>
-
   <form method="post">
     {% csrf_token %}
 
@@ -118,10 +97,6 @@
             Franja activa
           </label>
         </div>
-
-        <div class="text-secondary small mt-1">
-          Si desactivás esta franja, no se usará para generar turnos disponibles.
-        </div>
       </div>
     </div>
 
@@ -133,7 +108,7 @@
 
     <div class="d-flex gap-2 flex-wrap mt-4">
       <button type="submit" class="nyx-primary-btn">{{ submit_label }}</button>
-      <a href="{% url 'panel_business_hours' %}" class="nyx-filter-btn">Cancelar</a>
+      <a href="{% url 'panel_employee_working_hours' employee.id %}" class="nyx-filter-btn">Cancelar</a>
     </div>
   </form>
 </div>

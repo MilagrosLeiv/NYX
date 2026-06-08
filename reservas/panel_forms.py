@@ -8,7 +8,16 @@ from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.auth import get_user_model
 
 
-from .models import Service, Employee, BusinessHours,BusinessHourBlock, Salon,EmployeeTimeOff,ServiceCategory
+from .models import (
+    BusinessHourBlock,
+    BusinessHours,
+    Employee,
+    EmployeeTimeOff,
+    EmployeeWorkingHour,
+    Salon,
+    Service,
+    ServiceCategory,
+)
 
 def build_time_choices(start_hour=6, end_hour=23, step_minutes=30):
     choices = [("", "Seleccionar hora")]
@@ -498,6 +507,13 @@ class PanelBusinessHoursForm(forms.ModelForm):
         return instance
     
 class PanelBusinessHourBlockForm(forms.ModelForm):
+    weekdays = forms.MultipleChoiceField(
+        label="Días",
+        choices=BusinessHourBlock.WEEKDAY_CHOICES,
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+    )
+
     start_time = forms.TypedChoiceField(
         label="Hora de inicio",
         choices=TIME_CHOICES_30,
@@ -533,8 +549,13 @@ class PanelBusinessHourBlockForm(forms.ModelForm):
     def __init__(self, *args, salon=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.salon = salon
+        self.is_multiple_create = not (self.instance and self.instance.pk)
 
-        if self.instance and self.instance.pk:
+        if self.is_multiple_create:
+            self.fields.pop('weekday')
+            self.fields['weekdays'].required = True
+        else:
+            self.fields.pop('weekdays')
             self.initial["start_time"] = format_time_for_select(self.instance.start_time)
             self.initial["end_time"] = format_time_for_select(self.instance.end_time)
 
@@ -552,25 +573,180 @@ class PanelBusinessHourBlockForm(forms.ModelForm):
         if start_time >= end_time:
             raise forms.ValidationError("La hora de inicio debe ser menor que la hora de fin.")
 
-        if self.salon and weekday is not None and start_time and end_time and is_active:
-            overlaps = BusinessHourBlock.objects.filter(
+        if self.is_multiple_create:
+            weekdays = [int(value) for value in cleaned_data.get('weekdays', [])]
+        else:
+            weekdays = [weekday] if weekday is not None else []
+
+        duplicate_days = []
+        conflict_days = []
+        weekday_names = dict(BusinessHourBlock.WEEKDAY_CHOICES)
+
+        for selected_weekday in weekdays:
+            blocks = BusinessHourBlock.objects.filter(
                 salon=self.salon,
-                weekday=weekday,
-                is_active=True,
-                start_time__lt=end_time,
-                end_time__gt=start_time,
+                weekday=selected_weekday,
             )
 
             if self.instance and self.instance.pk:
-                overlaps = overlaps.exclude(pk=self.instance.pk)
+                blocks = blocks.exclude(pk=self.instance.pk)
 
-            if overlaps.exists():
-                raise forms.ValidationError(
-                    "Este bloque horario se superpone con otro bloque activo del mismo día."
-                )
+            if blocks.filter(
+                start_time=start_time,
+                end_time=end_time,
+            ).exists():
+                duplicate_days.append(weekday_names[selected_weekday])
+                continue
 
+            if blocks.filter(
+                is_active=True,
+                start_time__lt=end_time,
+                end_time__gt=start_time,
+            ).exists():
+                conflict_days.append(weekday_names[selected_weekday])
+
+        validation_errors = []
+        if duplicate_days:
+            validation_errors.append(
+                f"Ya existe una franja idéntica para: {', '.join(duplicate_days)}."
+            )
+        if conflict_days:
+            validation_errors.append(
+                "La franja se superpone con horarios activos para: "
+                f"{', '.join(conflict_days)}."
+            )
+        if validation_errors:
+            raise forms.ValidationError(validation_errors)
+
+        cleaned_data['weekdays'] = weekdays
         return cleaned_data
-    
+
+
+class PanelEmployeeWorkingHourForm(forms.ModelForm):
+    weekdays = forms.MultipleChoiceField(
+        label="Días",
+        choices=EmployeeWorkingHour.WEEKDAY_CHOICES,
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+    )
+
+    start_time = forms.TypedChoiceField(
+        label="Hora de inicio",
+        choices=TIME_CHOICES_30,
+        coerce=parse_time_choice,
+        empty_value=None,
+        widget=forms.Select(attrs={
+            "class": "form-select nyx-form-input",
+        })
+    )
+
+    end_time = forms.TypedChoiceField(
+        label="Hora de fin",
+        choices=TIME_CHOICES_30,
+        coerce=parse_time_choice,
+        empty_value=None,
+        widget=forms.Select(attrs={
+            "class": "form-select nyx-form-input",
+        })
+    )
+
+    class Meta:
+        model = EmployeeWorkingHour
+        fields = ['weekday', 'start_time', 'end_time', 'is_active']
+        widgets = {
+            'weekday': forms.Select(attrs={
+                'class': 'form-select nyx-form-input',
+            }),
+            'is_active': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',
+            }),
+        }
+
+    def __init__(self, *args, employee, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.employee = employee
+        self.is_multiple_create = not (self.instance and self.instance.pk)
+
+        if self.is_multiple_create:
+            self.fields.pop('weekday')
+            self.fields['weekdays'].required = True
+        else:
+            self.fields.pop('weekdays')
+            self.initial["start_time"] = format_time_for_select(self.instance.start_time)
+            self.initial["end_time"] = format_time_for_select(self.instance.end_time)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        weekday = cleaned_data.get('weekday')
+        start_time = cleaned_data.get('start_time')
+        end_time = cleaned_data.get('end_time')
+        is_active = cleaned_data.get('is_active')
+
+        if not start_time or not end_time:
+            raise forms.ValidationError("Debés indicar hora de inicio y hora de fin.")
+
+        if start_time >= end_time:
+            raise forms.ValidationError("La hora de inicio debe ser menor que la hora de fin.")
+
+        if self.is_multiple_create:
+            weekdays = [int(value) for value in cleaned_data.get('weekdays', [])]
+        else:
+            weekdays = [weekday] if weekday is not None else []
+
+        duplicate_days = []
+        conflict_days = []
+        weekday_names = dict(EmployeeWorkingHour.WEEKDAY_CHOICES)
+
+        for selected_weekday in weekdays:
+            blocks = EmployeeWorkingHour.objects.filter(
+                employee=self.employee,
+                weekday=selected_weekday,
+            )
+
+            if self.instance and self.instance.pk:
+                blocks = blocks.exclude(pk=self.instance.pk)
+
+            if blocks.filter(
+                start_time=start_time,
+                end_time=end_time,
+            ).exists():
+                duplicate_days.append(weekday_names[selected_weekday])
+                continue
+
+            if is_active and blocks.filter(
+                is_active=True,
+                start_time__lt=end_time,
+                end_time__gt=start_time,
+            ).exists():
+                conflict_days.append(weekday_names[selected_weekday])
+
+        validation_errors = []
+        if duplicate_days:
+            validation_errors.append(
+                f"Ya existe una franja idéntica para: {', '.join(duplicate_days)}."
+            )
+        if conflict_days:
+            validation_errors.append(
+                "La franja se superpone con horarios activos para: "
+                f"{', '.join(conflict_days)}."
+            )
+        if validation_errors:
+            raise forms.ValidationError(validation_errors)
+
+        cleaned_data['weekdays'] = weekdays
+        return cleaned_data
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.employee = self.employee
+
+        if commit:
+            instance.full_clean()
+            instance.save()
+
+        return instance
+
+
 class PanelSalonSettingsForm(forms.ModelForm):
     class Meta:
         model = Salon

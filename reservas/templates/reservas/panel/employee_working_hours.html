@@ -1,0 +1,108 @@
+{% extends "reservas/panel/base_panel.html" %}
+
+{% block title %}Horarios de {{ employee.name }} | NYX{% endblock %}
+{% block panel_title %}Horarios de {{ employee.name }}{% endblock %}
+{% block panel_subtitle %}Gestioná las franjas semanales de trabajo del profesional{% endblock %}
+
+{% block panel_content %}
+<div class="nyx-card p-4 mb-4">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+      <h5 class="fw-bold mb-1">{{ employee.name }}</h5>
+      <div class="text-secondary">
+        Podés cargar más de una franja por día para representar horarios cortados.
+      </div>
+    </div>
+
+    <div class="d-flex gap-2 flex-wrap">
+      <a href="{% url 'panel_employees' %}" class="nyx-filter-btn">Volver</a>
+      <form method="post" action="{% url 'panel_employee_working_hours_copy_from_salon' employee.id %}">
+        {% csrf_token %}
+        <button type="submit" class="nyx-filter-btn border-0">
+          Copiar horarios del salón
+        </button>
+      </form>
+      <a href="{% url 'panel_employee_working_hour_create' employee.id %}" class="nyx-primary-btn">
+        <span>+</span>
+        <span>Agregar franja</span>
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="nyx-card p-4">
+  <div class="nyx-hours-days">
+    {% for day in blocks_by_weekday %}
+      <section class="nyx-hours-day-card">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+          <div>
+            <h5 class="fw-bold mb-1">{{ day.weekday_name }}</h5>
+            <div class="text-secondary small">
+              {{ day.active_blocks_count }} franja{% if day.active_blocks_count != 1 %}s{% endif %} activa{% if day.active_blocks_count != 1 %}s{% endif %}
+            </div>
+          </div>
+        </div>
+
+        {% if day.blocks %}
+          <div class="table-responsive">
+            <table class="table nyx-table align-middle mb-0">
+              <thead>
+                <tr>
+                  <th>Inicio</th>
+                  <th>Fin</th>
+                  <th>Estado</th>
+                  <th class="text-end">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for block in day.blocks %}
+                  <tr>
+                    <td>{{ block.start_time|time:"H:i" }}</td>
+                    <td>{{ block.end_time|time:"H:i" }}</td>
+                    <td>
+                      {% if block.is_active %}
+                        <span class="nyx-badge">Activa</span>
+                      {% else %}
+                        <span class="nyx-badge" style="background:#fff3f3;color:#b54747;border-color:#f1caca;">Inactiva</span>
+                      {% endif %}
+                    </td>
+                    <td class="text-end">
+                      <div class="d-flex justify-content-end gap-2 flex-wrap">
+                        <a href="{% url 'panel_employee_working_hour_edit' employee.id block.id %}" class="nyx-filter-btn">
+                          Editar
+                        </a>
+                        <form method="post" action="{% url 'panel_employee_working_hour_toggle_active' employee.id block.id %}">
+                          {% csrf_token %}
+                          <button type="submit" class="nyx-filter-btn border-0">
+                            {% if block.is_active %}Desactivar{% else %}Activar{% endif %}
+                          </button>
+                        </form>
+                      </div>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="nyx-empty py-3">No hay franjas cargadas para este día.</div>
+        {% endif %}
+      </section>
+    {% endfor %}
+  </div>
+</div>
+
+<style>
+  .nyx-hours-days{
+    display: grid;
+    gap: 1rem;
+  }
+
+  .nyx-hours-day-card{
+    border: 1px solid var(--nyx-border);
+    border-radius: 1.25rem;
+    padding: 1rem;
+    background: #fbfefe;
+  }
+</style>
+{% endblock %}
