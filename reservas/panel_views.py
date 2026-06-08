@@ -300,7 +300,7 @@ def panel_agenda(request):
     else:
         items = items.none()
 
-    visible_agenda_statuses = ['confirmed', 'pending']
+    visible_agenda_statuses = ['confirmed', 'pending','completed']
 
     items = items.filter(
         start_datetime__date=selected_date,
