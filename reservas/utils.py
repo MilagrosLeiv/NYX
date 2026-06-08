@@ -115,8 +115,8 @@ def get_employee_working_ranges_for_date(employee, selected_date):
 
 
 def get_available_slots(employee, services, selected_date):
-    working_ranges = get_employee_working_ranges_for_date(
-        employee=employee,
+    working_ranges = get_working_ranges_for_date(
+        salon=employee.salon,
         selected_date=selected_date,
     )
 
