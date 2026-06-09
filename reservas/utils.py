@@ -24,15 +24,13 @@ def overlaps(start_a, end_a, start_b, end_b):
 
 
 def get_working_ranges_for_date(salon, selected_date):
-    """
-    Devuelve rangos reales de atención para un salón en una fecha.
-
-    Regla:
-    - Si hay BusinessHourBlock activos para ese día, usa esos bloques.
-    - Si no hay bloques activos, usa el horario viejo BusinessHours.
-    - Si BusinessHours está cerrado o no existe, no hay horarios.
-    """
     weekday = selected_date.weekday()
+
+    print("========== DEBUG get_working_ranges_for_date ==========")
+    print("salon id:", salon.id)
+    print("salon name:", salon.name)
+    print("selected_date:", selected_date)
+    print("weekday:", weekday)
 
     current_tz = timezone.get_current_timezone()
     working_ranges = []
@@ -45,13 +43,27 @@ def get_working_ranges_for_date(salon, selected_date):
         ).order_by("start_time")
     )
 
-    # 1. Si existen bloques nuevos, usar bloques
+    print("active_blocks count:", len(active_blocks))
+    print("active_blocks values:", list(
+        BusinessHourBlock.objects.filter(
+            salon=salon,
+            weekday=weekday,
+            is_active=True
+        ).values("id", "weekday", "start_time", "end_time", "is_active")
+    ))
+
     if active_blocks:
+        print("USANDO BusinessHourBlock")
+
         for block in active_blocks:
+            print("block:", block.id, block.start_time, block.end_time, block.is_active)
+
             if not block.start_time or not block.end_time:
+                print("block salteado por falta de start/end")
                 continue
 
             if block.start_time >= block.end_time:
+                print("block salteado por rango invalido")
                 continue
 
             start_datetime = timezone.make_aware(
@@ -66,24 +78,38 @@ def get_working_ranges_for_date(salon, selected_date):
 
             working_ranges.append((start_datetime, end_datetime))
 
+        print("working_ranges desde blocks:", working_ranges)
         return working_ranges
 
-    # 2. Si NO hay bloques nuevos, usar BusinessHours viejo
+    print("NO HAY BLOQUES ACTIVOS. PROBANDO BusinessHours")
+
     business_hour = BusinessHours.objects.filter(
         salon=salon,
         weekday=weekday
     ).first()
 
+    print("business_hour:", business_hour)
+
+    print("business_hours values del salon:", list(
+        BusinessHours.objects.filter(salon=salon).values(
+            "id", "weekday", "start_time", "end_time", "is_closed"
+        )
+    ))
+
     if not business_hour:
+        print("RETURN [] porque no existe BusinessHours para weekday:", weekday)
         return []
 
     if business_hour.is_closed:
+        print("RETURN [] porque BusinessHours esta cerrado")
         return []
 
     if not business_hour.start_time or not business_hour.end_time:
+        print("RETURN [] porque BusinessHours no tiene start_time/end_time")
         return []
 
     if business_hour.start_time >= business_hour.end_time:
+        print("RETURN [] porque BusinessHours tiene rango invalido")
         return []
 
     start_datetime = timezone.make_aware(
@@ -97,6 +123,8 @@ def get_working_ranges_for_date(salon, selected_date):
     )
 
     working_ranges.append((start_datetime, end_datetime))
+
+    print("working_ranges desde BusinessHours:", working_ranges)
 
     return working_ranges
 
@@ -147,22 +175,35 @@ def get_employee_working_ranges_for_date(employee, selected_date):
 
     return sorted(working_ranges, key=lambda working_range: working_range[0])
 
-
 def get_available_slots(employee, services, selected_date):
+    print("========== DEBUG get_available_slots ==========")
+    print("employee:", employee.id, employee)
+    print("employee salon:", employee.salon_id)
+    print("selected_date:", selected_date)
+    print("services:", [(s.id, s.name, s.duration_minutes) for s in services])
+
     working_ranges = get_working_ranges_for_date(
         salon=employee.salon,
         selected_date=selected_date,
     )
 
+    print("working_ranges count:", len(working_ranges))
+    print("working_ranges:", working_ranges)
+
     if not working_ranges:
+        print("RETURN [] PORQUE working_ranges ESTA VACIO")
         return []
 
     total_duration = get_total_duration_minutes(services)
 
+    print("total_duration:", total_duration)
+
     if total_duration <= 0:
+        print("RETURN [] PORQUE total_duration <= 0")
         return []
-    
-    step_minutes = total_duration
+
+    step_minutes = 30
+    print("step_minutes:", step_minutes)
 
     existing_appointments = Appointment.objects.filter(
         employee=employee,
@@ -183,6 +224,23 @@ def get_available_slots(employee, services, selected_date):
         start_datetime__date=selected_date,
     )
 
+    print("existing_appointments:", list(
+        existing_appointments.values("id", "appointment_datetime", "status")
+    ))
+
+    print("existing_booking_items:", list(
+        existing_booking_items.values(
+            "id",
+            "start_datetime",
+            "end_datetime",
+            "booking__status",
+        )
+    ))
+
+    print("existing_time_off_blocks:", list(
+        existing_time_off_blocks.values("id", "start_datetime", "end_datetime")
+    ))
+
     occupied_ranges = []
 
     for existing in existing_appointments:
@@ -191,29 +249,64 @@ def get_available_slots(employee, services, selected_date):
             minutes=existing.get_total_duration_minutes()
         )
         occupied_ranges.append((existing_start, existing_end))
+        print("occupied appointment:", existing.id, existing_start, existing_end)
 
     for item in existing_booking_items:
+        print(
+            "booking item:",
+            item.id,
+            item.start_datetime,
+            item.end_datetime,
+            "booking status:",
+            item.booking.status,
+            "is_blocking:",
+            item.booking.is_blocking_slot()
+        )
+
         if item.booking.is_blocking_slot():
             occupied_ranges.append((item.start_datetime, item.end_datetime))
 
     for block in existing_time_off_blocks:
         occupied_ranges.append((block.start_datetime, block.end_datetime))
+        print("occupied time off:", block.id, block.start_datetime, block.end_datetime)
+
+    print("occupied_ranges count:", len(occupied_ranges))
+    print("occupied_ranges:", occupied_ranges)
 
     slots = []
 
     for range_start, range_end in working_ranges:
+        range_minutes = int((range_end - range_start).total_seconds() / 60)
+
+        print("----- WORKING RANGE -----")
+        print("range_start:", range_start)
+        print("range_end:", range_end)
+        print("range_minutes:", range_minutes)
+        print("total_duration:", total_duration)
+
         current_start = range_start
 
         while current_start < range_end:
             current_end = current_start + timedelta(minutes=total_duration)
 
+            print("probando slot:", current_start, "->", current_end)
+
             if current_end > range_end:
+                print("BREAK porque current_end > range_end:", current_end, ">", range_end)
                 break
 
             is_available = True
 
             for occupied_start, occupied_end in occupied_ranges:
                 if overlaps(current_start, current_end, occupied_start, occupied_end):
+                    print(
+                        "NO disponible por overlap:",
+                        current_start,
+                        current_end,
+                        "choca con",
+                        occupied_start,
+                        occupied_end
+                    )
                     is_available = False
                     break
 
@@ -222,7 +315,10 @@ def get_available_slots(employee, services, selected_date):
 
                 if slot_text not in slots:
                     slots.append(slot_text)
+                    print("SLOT AGREGADO:", slot_text)
 
             current_start += timedelta(minutes=step_minutes)
+
+    print("SLOTS FINALES:", slots)
 
     return slots
