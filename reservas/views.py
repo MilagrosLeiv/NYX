@@ -732,6 +732,11 @@ def select_time(request):
     mode = request.GET.get('mode', 'single_employee')
     today = timezone.localdate()
     selected_date_raw = request.GET.get('date') or today.strftime("%Y-%m-%d")
+    print("=== DEBUG RESERVAR HORARIO ===")
+    print("selected_service_ids:", selected_service_ids)
+    print("employee_id:", employee_id)
+    print("mode:", mode)
+    print("selected_date_raw:", selected_date_raw)
 
     date_options = []
 

@@ -27,11 +27,15 @@ def get_working_ranges_for_date(salon, selected_date):
     """
     Devuelve rangos reales de atención para un salón en una fecha.
 
-    Regla actual:
-    - Si hay bloques activos para ese día, el negocio atiende.
-    - Si no hay bloques activos, el día está cerrado.
+    Regla:
+    - Si hay BusinessHourBlock activos para ese día, usa esos bloques.
+    - Si no hay bloques activos, usa el horario viejo BusinessHours.
+    - Si BusinessHours está cerrado o no existe, no hay horarios.
     """
     weekday = selected_date.weekday()
+
+    current_tz = timezone.get_current_timezone()
+    working_ranges = []
 
     active_blocks = list(
         BusinessHourBlock.objects.filter(
@@ -41,30 +45,60 @@ def get_working_ranges_for_date(salon, selected_date):
         ).order_by("start_time")
     )
 
-    if not active_blocks:
+    # 1. Si existen bloques nuevos, usar bloques
+    if active_blocks:
+        for block in active_blocks:
+            if not block.start_time or not block.end_time:
+                continue
+
+            if block.start_time >= block.end_time:
+                continue
+
+            start_datetime = timezone.make_aware(
+                datetime.combine(selected_date, block.start_time),
+                current_tz
+            )
+
+            end_datetime = timezone.make_aware(
+                datetime.combine(selected_date, block.end_time),
+                current_tz
+            )
+
+            working_ranges.append((start_datetime, end_datetime))
+
+        return working_ranges
+
+    # 2. Si NO hay bloques nuevos, usar BusinessHours viejo
+    business_hour = BusinessHours.objects.filter(
+        salon=salon,
+        weekday=weekday
+    ).first()
+
+    if not business_hour:
         return []
 
-    current_tz = timezone.get_current_timezone()
-    working_ranges = []
+    if business_hour.is_closed:
+        return []
 
-    for block in active_blocks:
-        if not block.start_time or not block.end_time or block.start_time >= block.end_time:
-            continue
+    if not business_hour.start_time or not business_hour.end_time:
+        return []
 
-        start_datetime = timezone.make_aware(
-            datetime.combine(selected_date, block.start_time),
-            current_tz
-        )
+    if business_hour.start_time >= business_hour.end_time:
+        return []
 
-        end_datetime = timezone.make_aware(
-            datetime.combine(selected_date, block.end_time),
-            current_tz
-        )
+    start_datetime = timezone.make_aware(
+        datetime.combine(selected_date, business_hour.start_time),
+        current_tz
+    )
 
-        working_ranges.append((start_datetime, end_datetime))
+    end_datetime = timezone.make_aware(
+        datetime.combine(selected_date, business_hour.end_time),
+        current_tz
+    )
+
+    working_ranges.append((start_datetime, end_datetime))
 
     return working_ranges
-
 
 def get_employee_working_ranges_for_date(employee, selected_date):
     salon_ranges = get_working_ranges_for_date(
