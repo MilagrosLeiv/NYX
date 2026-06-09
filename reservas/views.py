@@ -666,13 +666,7 @@ def select_professional(request):
 
     # Asumimos que todos los servicios elegidos son del mismo salón
     salon = services[0].salon
-    print("========== DEBUG NYX HORARIOS ==========")
-    print("selected_service_ids:", selected_service_ids)
-    print("employee_id GET:", employee_id)
-    print("mode:", mode)
-    print("selected_date_raw:", selected_date_raw)
-    print("salon id:", salon.id)
-    print("salon name:", salon.name)
+    
 
     print("SERVICIOS:")
     for s in services:
