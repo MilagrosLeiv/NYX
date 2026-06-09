@@ -112,7 +112,7 @@
                   </a>
 
                   {% if not employee.user %}
-                    <a href="{% url 'panel_employee_access_create' employee.id %}" class="nyx-filter-btn">
+                    <a href="{% url 'panel_employee_create_access' employee.id %}" class="nyx-filter-btn">
                       Crear acceso
                     </a>
                   {% endif %}
