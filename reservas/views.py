@@ -666,6 +666,32 @@ def select_professional(request):
 
     # Asumimos que todos los servicios elegidos son del mismo salón
     salon = services[0].salon
+    print("========== DEBUG NYX HORARIOS ==========")
+    print("selected_service_ids:", selected_service_ids)
+    print("employee_id GET:", employee_id)
+    print("mode:", mode)
+    print("selected_date_raw:", selected_date_raw)
+    print("salon id:", salon.id)
+    print("salon name:", salon.name)
+
+    print("SERVICIOS:")
+    for s in services:
+        print("service:", s.id, s.name, "duration:", s.duration_minutes, "active:", s.is_active)
+
+    print("BUSINESS HOURS DEL SALON:")
+    print(list(
+        BusinessHours.objects.filter(salon=salon).values(
+            "id", "weekday", "start_time", "end_time", "is_closed"
+        )
+    ))
+
+    print("BUSINESS HOUR BLOCKS DEL SALON:")
+    print(list(
+        BusinessHourBlock.objects.filter(salon=salon).values(
+            "id", "weekday", "start_time", "end_time", "is_active"
+        )
+    ))
+
     if any(service.salon_id != salon.id for service in services):
         return redirect('landing_nyx')
 
@@ -797,6 +823,31 @@ def select_time(request):
         return redirect('landing_nyx')
 
     salon = services[0].salon
+    print("========== DEBUG NYX HORARIOS ==========")
+    print("selected_service_ids:", selected_service_ids)
+    print("employee_id GET:", employee_id)
+    print("mode:", mode)
+    print("selected_date_raw:", selected_date_raw)
+    print("salon id:", salon.id)
+    print("salon name:", salon.name)
+
+    print("SERVICIOS:")
+    for s in services:
+        print("service:", s.id, s.name, "duration:", s.duration_minutes, "active:", s.is_active)
+
+    print("BUSINESS HOURS DEL SALON:")
+    print(list(
+        BusinessHours.objects.filter(salon=salon).values(
+            "id", "weekday", "start_time", "end_time", "is_closed"
+        )
+    ))
+
+    print("BUSINESS HOUR BLOCKS DEL SALON:")
+    print(list(
+        BusinessHourBlock.objects.filter(salon=salon).values(
+            "id", "weekday", "start_time", "end_time", "is_active"
+        )
+    ))
 
     if mode == 'per_service_consecutive':
         for service in services:
@@ -843,6 +894,19 @@ def select_time(request):
                 salon=salon
             )
 
+            print("EMPLEADO ENCONTRADO:", employee.id, employee)
+            print("employee is_active:", employee.is_active)
+            print("employee salon:", employee.salon_id)
+
+            requested_service_ids = {int(service_id) for service_id in selected_service_ids}
+            employee_service_ids = set(
+                employee.services.filter(id__in=selected_service_ids).values_list('id', flat=True)
+            )
+
+            print("requested_service_ids:", requested_service_ids)
+            print("employee_service_ids:", employee_service_ids)
+            print("match servicios:", employee_service_ids == requested_service_ids)
+
             requested_service_ids = {int(service_id) for service_id in selected_service_ids}
             employee_service_ids = set(
                 employee.services.filter(id__in=selected_service_ids).values_list('id', flat=True)
@@ -878,8 +942,23 @@ def select_time(request):
                 available_slots = filter_past_slots_for_today(available_slots, selected_date)
 
             elif employee:
+                
+                print("ANTES DE get_available_slots")
+                print("employee:", employee.id, employee)
+                print("selected_date:", selected_date)
+                print("services:", [(s.id, s.name, s.duration_minutes) for s in services])
+
                 available_slots = get_available_slots(employee, services, selected_date)
+
+                print("DESPUES DE get_available_slots")
+                print("available_slots:", available_slots)
+                print("count available_slots:", len(available_slots))
+
                 available_slots = filter_past_slots_for_today(available_slots, selected_date)
+
+                print("DESPUES DE filter_past_slots_for_today")
+                print("available_slots final:", available_slots)
+                print("count available_slots final:", len(available_slots))
 
         except ValueError:
             selected_date = None
@@ -927,6 +1006,31 @@ def confirm_appointment(request):
         return redirect('landing_nyx')
 
     salon = services[0].salon
+    print("========== DEBUG NYX HORARIOS ==========")
+    print("selected_service_ids:", selected_service_ids)
+    print("employee_id GET:", employee_id)
+    print("mode:", mode)
+    print("selected_date_raw:", selected_date_raw)
+    print("salon id:", salon.id)
+    print("salon name:", salon.name)
+
+    print("SERVICIOS:")
+    for s in services:
+        print("service:", s.id, s.name, "duration:", s.duration_minutes, "active:", s.is_active)
+
+    print("BUSINESS HOURS DEL SALON:")
+    print(list(
+        BusinessHours.objects.filter(salon=salon).values(
+            "id", "weekday", "start_time", "end_time", "is_closed"
+        )
+    ))
+
+    print("BUSINESS HOUR BLOCKS DEL SALON:")
+    print(list(
+        BusinessHourBlock.objects.filter(salon=salon).values(
+            "id", "weekday", "start_time", "end_time", "is_active"
+        )
+    ))
 
     try:
         employee = Employee.objects.get(
@@ -1111,6 +1215,31 @@ def confirm_booking(request):
         return redirect('landing_nyx')
 
     salon = services[0].salon
+    print("========== DEBUG NYX HORARIOS ==========")
+    print("selected_service_ids:", selected_service_ids)
+    print("employee_id GET:", employee_id)
+    print("mode:", mode)
+    print("selected_date_raw:", selected_date_raw)
+    print("salon id:", salon.id)
+    print("salon name:", salon.name)
+
+    print("SERVICIOS:")
+    for s in services:
+        print("service:", s.id, s.name, "duration:", s.duration_minutes, "active:", s.is_active)
+
+    print("BUSINESS HOURS DEL SALON:")
+    print(list(
+        BusinessHours.objects.filter(salon=salon).values(
+            "id", "weekday", "start_time", "end_time", "is_closed"
+        )
+    ))
+
+    print("BUSINESS HOUR BLOCKS DEL SALON:")
+    print(list(
+        BusinessHourBlock.objects.filter(salon=salon).values(
+            "id", "weekday", "start_time", "end_time", "is_active"
+        )
+    ))
     employee = None
     selected_employees = {}
     service_employee_pairs = []
