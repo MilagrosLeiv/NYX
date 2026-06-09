@@ -114,6 +114,27 @@
   </div>
 </div>
 
+{% if show_next_step %}
+  <div class="nyx-card p-4 mt-4">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+      <div>
+        <span class="nyx-badge mb-2">Siguiente paso</span>
+        <h5 class="fw-bold mb-1">Compartí tu link de reservas</h5>
+        <div class="text-secondary">La configuración principal está lista para empezar a recibir turnos.</div>
+      </div>
+      <div class="d-flex gap-2 flex-wrap nyx-share-actions">
+        <button type="button" class="nyx-primary-btn border-0" id="business-hours-copy-link" data-public-url="{{ public_url }}">
+          <i class="bi bi-copy"></i>
+          Copiar link
+        </button>
+        <a href="{% url 'service_list' salon.slug %}" target="_blank" class="nyx-filter-btn" data-no-scroll-restore>
+          Ver sitio público
+        </a>
+      </div>
+    </div>
+  </div>
+{% endif %}
+
 <style>
   .nyx-hours-days{
     display: grid;
@@ -143,6 +164,15 @@
   }
 
   @media (max-width: 767.98px){
+    .nyx-share-actions {
+      width: 100%;
+    }
+
+    .nyx-share-actions > * {
+      width: 100%;
+      justify-content: center;
+    }
+
     .nyx-card.p-4{
       padding: 1rem !important;
     }
@@ -247,4 +277,25 @@
     }
   }
 </style>
+
+{% if show_next_step %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const button = document.getElementById("business-hours-copy-link");
+  if (!button) return;
+
+  button.addEventListener("click", async function () {
+    const originalText = this.innerHTML;
+
+    try {
+      await navigator.clipboard.writeText(this.dataset.publicUrl);
+      this.innerHTML = '<i class="bi bi-check2"></i> Link copiado';
+      setTimeout(() => { this.innerHTML = originalText; }, 1800);
+    } catch (error) {
+      window.prompt("Copiá el link de reservas:", this.dataset.publicUrl);
+    }
+  });
+});
+</script>
+{% endif %}
 {% endblock %}

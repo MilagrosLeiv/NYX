@@ -128,6 +128,22 @@
   {% endif %}
 </div>
 
+{% if show_next_step %}
+  <div class="nyx-card p-4 mt-4">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+      <div>
+        <span class="nyx-badge mb-2">Siguiente paso</span>
+        <h5 class="fw-bold mb-1">Agregá tu equipo</h5>
+        <div class="text-secondary">Asigná profesionales y definí qué servicios realiza cada persona.</div>
+      </div>
+      <a href="{% url 'panel_employees' %}" class="nyx-primary-btn" data-no-scroll-restore>
+        Ir a profesionales
+        <i class="bi bi-arrow-right"></i>
+      </a>
+    </div>
+  </div>
+{% endif %}
+
 </div>
 
 <script>

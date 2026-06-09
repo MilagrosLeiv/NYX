@@ -241,6 +241,41 @@ def panel_onboarding(request):
         reverse("service_list", kwargs={"salon_slug": salon.slug})
     )
 
+    if not has_service_categories:
+        next_step = {
+            "title": "Creá categorías",
+            "description": "Organizá tus servicios en secciones para que tu catálogo sea fácil de recorrer.",
+            "url": reverse("panel_service_categories"),
+            "button_label": "Ir a categorías",
+        }
+    elif active_services_count == 0:
+        next_step = {
+            "title": "Cargá tus servicios",
+            "description": "Agregá lo que ofrecés, con precio, duración y categoría.",
+            "url": reverse("panel_services"),
+            "button_label": "Ir a servicios",
+        }
+    elif employees_count == 0:
+        next_step = {
+            "title": "Agregá tu equipo",
+            "description": "Cargá las personas que atienden y asignales los servicios que realizan.",
+            "url": reverse("panel_employees"),
+            "button_label": "Ir a profesionales",
+        }
+    elif business_hours_count == 0:
+        next_step = {
+            "title": "Configurá tus horarios",
+            "description": "Definí los días y franjas en los que tu negocio recibe reservas.",
+            "url": reverse("panel_business_hours"),
+            "button_label": "Ir a horarios",
+        }
+    else:
+        next_step = {
+            "title": "Compartí tu link de reservas",
+            "description": "Tu configuración principal está lista. Compartí el link para empezar a recibir turnos.",
+            "is_share_step": True,
+        }
+
     context = {
         "panel_role": "owner",
         "salon": salon,
@@ -254,6 +289,7 @@ def panel_onboarding(request):
         "has_business_hours": business_hours_count > 0,
         "has_employees": employees_count > 0,
         "has_service_categories": has_service_categories,
+        "next_step": next_step,
     }
 
     return render(request, "reservas/panel/onboarding.html", context)
@@ -407,11 +443,13 @@ def panel_services(request):
         raise PermissionDenied("Solo la dueña puede gestionar servicios.")
 
     services = Service.objects.filter(salon=salon).order_by('name')
+    has_active_services = services.filter(is_active=True).exists()
 
     context = {
         'panel_role': 'owner',
         'salon': salon,
         'services': services,
+        'show_next_step': has_active_services,
     }
     return render(request, 'reservas/panel/services.html', context)
 
@@ -535,11 +573,13 @@ def panel_service_categories(request):
         .filter(salon=salon)
         .order_by("order", "name")
     )
+    has_categories = categories.exists()
 
     context = {
         "panel_role": "owner",
         "salon": salon,
         "categories": categories,
+        "show_next_step": has_categories,
     }
 
     return render(request, "reservas/panel/service_categories.html", context)
@@ -680,6 +720,7 @@ def panel_employees(request):
         'panel_role': 'owner',
         'salon': salon,
         'employees': employees,
+        'show_next_step': any(employee.is_active for employee in employees),
     }
     return render(request, 'reservas/panel/employees.html', context)
 
@@ -1295,10 +1336,20 @@ def panel_business_hours(request):
             'active_blocks_count': len(active_blocks),
         })
 
+    has_active_blocks = any(
+        day['active_blocks_count'] > 0
+        for day in blocks_by_weekday
+    )
+    public_url = request.build_absolute_uri(
+        reverse("service_list", kwargs={"salon_slug": salon.slug})
+    )
+
     context = {
         'panel_role': 'owner',
         'salon': salon,
         'blocks_by_weekday': blocks_by_weekday,
+        'show_next_step': has_active_blocks,
+        'public_url': public_url,
     }
 
     return render(request, 'reservas/panel/business_hours.html', context)

@@ -5,6 +5,31 @@
 {% block panel_subtitle %}Configurá tu negocio y empezá a recibir reservas online{% endblock %}
 
 {% block panel_content %}
+<section class="nyx-card nyx-recommended-step">
+  <div>
+    <span class="nyx-badge">Próximo paso recomendado</span>
+    <h2>{{ next_step.title }}</h2>
+    <p>{{ next_step.description }}</p>
+  </div>
+
+  <div class="nyx-recommended-actions">
+    {% if next_step.is_share_step %}
+      <button type="button" class="nyx-primary-btn border-0" id="onboarding-copy-link-recommended" data-public-url="{{ public_url }}">
+        <i class="bi bi-copy"></i>
+        Copiar link
+      </button>
+      <a href="{% url 'service_list' salon.slug %}" target="_blank" class="nyx-filter-btn" data-no-scroll-restore>
+        Ver sitio público
+      </a>
+    {% else %}
+      <a href="{{ next_step.url }}" class="nyx-primary-btn" data-no-scroll-restore>
+        {{ next_step.button_label }}
+        <i class="bi bi-arrow-right"></i>
+      </a>
+    {% endif %}
+  </div>
+</section>
+
 <section class="nyx-onboarding-hero">
   <div class="nyx-onboarding-copy">
     <div class="nyx-onboarding-badge">
@@ -79,7 +104,7 @@
         </div>
 
         <a href="{% url 'panel_service_categories' %}" class="nyx-step-link" data-no-scroll-restore>
-          {% if has_service_categories %}Editar categorías{% else %}Crear categorías{% endif %}
+          {% if has_service_categories %}Revisar categorías{% else %}Crear categorías{% endif %}
           <i class="bi bi-arrow-right"></i>
         </a>
       </div>
@@ -108,7 +133,7 @@
         </div>
 
         <a href="{% url 'panel_services' %}" class="nyx-step-link" data-no-scroll-restore>
-          {% if has_services %}Editar servicios{% else %}Agregar servicios{% endif %}
+          {% if has_services %}Revisar servicios{% else %}Agregar servicios{% endif %}
           <i class="bi bi-arrow-right"></i>
         </a>
       </div>
@@ -137,7 +162,7 @@
         </div>
 
         <a href="{% url 'panel_employees' %}" class="nyx-step-link" data-no-scroll-restore>
-          {% if has_employees %}Editar equipo{% else %}Agregar equipo{% endif %}
+          {% if has_employees %}Revisar equipo{% else %}Agregar equipo{% endif %}
           <i class="bi bi-arrow-right"></i>
         </a>
       </div>
@@ -166,7 +191,7 @@
         </div>
 
         <a href="{% url 'panel_business_hours' %}" class="nyx-step-link" data-no-scroll-restore>
-          {% if has_business_hours %}Editar horarios{% else %}Configurar horarios{% endif %}
+          {% if has_business_hours %}Revisar horarios{% else %}Configurar horarios{% endif %}
           <i class="bi bi-arrow-right"></i>
         </a>
       </div>
@@ -201,6 +226,38 @@
 </section>
 
 <style>
+  .nyx-recommended-step {
+    padding: 1.35rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    background:
+      radial-gradient(circle at top left, rgba(140, 220, 223, .24), transparent 38%),
+      #ffffff;
+    border-color: rgba(118, 207, 210, .42);
+  }
+
+  .nyx-recommended-step h2 {
+    margin: .65rem 0 .3rem;
+    color: var(--nyx-text);
+    font-size: 1.35rem;
+    font-weight: 950;
+  }
+
+  .nyx-recommended-step p {
+    margin: 0;
+    color: var(--nyx-muted);
+  }
+
+  .nyx-recommended-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: .65rem;
+  }
+
   .nyx-onboarding-hero {
     display: grid;
     grid-template-columns: minmax(0, 1.4fr) minmax(280px, .8fr);
@@ -503,6 +560,16 @@
   }
 
   @media (max-width: 991.98px) {
+    .nyx-recommended-step {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .nyx-recommended-actions {
+      width: 100%;
+      justify-content: flex-start;
+    }
+
     .nyx-onboarding-hero,
     .nyx-onboarding-steps {
       grid-template-columns: 1fr;
@@ -519,6 +586,15 @@
   }
 
   @media (max-width: 575.98px) {
+    .nyx-recommended-step {
+      padding: 1rem;
+    }
+
+    .nyx-recommended-actions > * {
+      width: 100%;
+      justify-content: center;
+    }
+
     .nyx-onboarding-copy,
     .nyx-onboarding-panel,
     .nyx-step-card,
@@ -588,7 +664,8 @@
 document.addEventListener("DOMContentLoaded", function () {
   const buttons = [
     document.getElementById("onboarding-copy-link"),
-    document.getElementById("onboarding-copy-link-bottom")
+    document.getElementById("onboarding-copy-link-bottom"),
+    document.getElementById("onboarding-copy-link-recommended")
   ].filter(Boolean);
 
   buttons.forEach(function (button) {

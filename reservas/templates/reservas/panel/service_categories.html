@@ -112,6 +112,22 @@
     </div>
   {% endif %}
 </div>
+
+{% if show_next_step %}
+  <div class="nyx-card p-4 mt-4">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+      <div>
+        <span class="nyx-badge mb-2">Siguiente paso</span>
+        <h5 class="fw-bold mb-1">Cargá tus servicios</h5>
+        <div class="text-secondary">Ya organizaste el catálogo. Ahora agregá los servicios que ofrecés.</div>
+      </div>
+      <a href="{% url 'panel_services' %}" class="nyx-primary-btn" data-no-scroll-restore>
+        Ir a servicios
+        <i class="bi bi-arrow-right"></i>
+      </a>
+    </div>
+  </div>
+{% endif %}
 {% endblock %}
 
 {% block extra_css %}
