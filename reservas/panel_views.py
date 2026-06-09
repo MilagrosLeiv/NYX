@@ -303,7 +303,7 @@ def panel_agenda(request):
     expire_unpaid_bookings()
     mark_completed_bookings()
     mark_completed_appointments()
-    expire_unpaid_bookings()
+
     salon = get_user_salon(request.user)
     employee = get_user_employee(request.user)
 
@@ -329,7 +329,10 @@ def panel_agenda(request):
         selected_date = today
 
     items = BookingItem.objects.select_related(
-        'booking', 'booking__salon', 'employee', 'service'
+        'booking',
+        'booking__salon',
+        'employee',
+        'service',
     )
 
     if is_owner_user(request.user):
@@ -339,10 +342,10 @@ def panel_agenda(request):
     else:
         items = items.none()
 
-    visible_agenda_statuses = ['confirmed', 'pending','completed']
+    visible_agenda_statuses = ['confirmed', 'pending', 'completed']
 
     items = items.filter(
-        start_datetime__date=selected_date,
+        start_datetime__date__gte=selected_date,
         booking__status__in=visible_agenda_statuses,
     ).order_by('start_datetime')
 
@@ -354,8 +357,8 @@ def panel_agenda(request):
         'today': today,
         'tomorrow': tomorrow,
     }
-    return render(request, 'reservas/panel/agenda.html', context)
 
+    return render(request, 'reservas/panel/agenda.html', context)
 
 @login_required
 @subscription_required
