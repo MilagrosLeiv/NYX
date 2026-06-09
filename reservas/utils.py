@@ -219,10 +219,7 @@ def get_available_slots(employee, services, selected_date):
         booking__status__in=['cancelled', 'expired']
     )
 
-    existing_time_off_blocks = EmployeeTimeOff.objects.filter(
-        employee=employee,
-        start_datetime__date=selected_date,
-    )
+    existing_time_off_blocks = EmployeeTimeOff.objects.none()
 
     print("existing_appointments:", list(
         existing_appointments.values("id", "appointment_datetime", "status")
