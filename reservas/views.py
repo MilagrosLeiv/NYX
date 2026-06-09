@@ -29,7 +29,7 @@ from .forms import AppointmentForm, PublicAppointmentForm, AppointmentConfirmFor
 from .models import (Appointment, Employee,
     Salon, Service, Booking,
     SalonPaymentSettings, SalonMembership,
-    Employee,BusinessHourBlock, ServiceCategory)
+    Employee,BusinessHours,BusinessHourBlock, ServiceCategory)
 from .utils import get_available_slots
 from .booking_utils import (
     expire_unpaid_bookings,
