@@ -1,0 +1,182 @@
+{% extends "reservas/panel/base_panel.html" %}
+{% load static %}
+
+{% block title %}Integraciones | Panel NYX{% endblock %}
+{% block panel_title %}Integraciones{% endblock %}
+{% block panel_subtitle %}Conectá NYX con las herramientas que usás para gestionar tu negocio{% endblock %}
+
+{% block panel_content %}
+<div class="row g-4">
+  <div class="col-12 col-xl-6">
+    <article class="nyx-card nyx-integration-card h-100">
+      <div class="nyx-integration-header">
+        <div class="nyx-integration-icon nyx-integration-icon-mp">
+          <img
+            src="{% static 'reservas/img/integrations/mercado-pago.png' %}"
+            alt="Mercado Pago"
+            class="nyx-integration-logo"
+            onerror="this.style.display='none'; this.nextElementSibling.hidden=false;"
+          >
+          <i class="bi bi-credit-card-fill" hidden></i>
+        </div>
+        {% if mercadopago_ready %}
+          <span class="nyx-integration-status nyx-integration-status-available">Conectado</span>
+        {% else %}
+          <span class="nyx-integration-status nyx-integration-status-soon">No conectado</span>
+        {% endif %}
+      </div>
+
+      <div>
+        <h2 class="nyx-integration-title">Mercado Pago</h2>
+        <p class="nyx-integration-description">
+          Configurá la cuenta que usás para recibir pagos online de tus clientes.
+        </p>
+      </div>
+
+      <div class="mt-auto pt-4">
+        <a href="{% url 'panel_mercado_pago_settings' %}" class="nyx-primary-btn" data-no-scroll-restore>
+          Configurar Mercado Pago
+          <i class="bi bi-arrow-right"></i>
+        </a>
+      </div>
+    </article>
+  </div>
+
+  <div class="col-12 col-xl-6">
+    <article class="nyx-card nyx-integration-card h-100">
+      <div class="nyx-integration-header">
+        <div class="nyx-integration-icon nyx-integration-icon-calendar">
+          <img
+            src="{% static 'reservas/img/integrations/google-calendar.webp' %}"
+            alt="Google Calendar"
+            class="nyx-integration-logo"
+            onerror="this.style.display='none'; this.nextElementSibling.hidden=false;"
+          >
+          <i class="bi bi-calendar-event-fill" hidden></i>
+        </div>
+        {% if google_calendar_connected %}
+          <span class="nyx-integration-status nyx-integration-status-available">Conectado</span>
+        {% else %}
+          <span class="nyx-integration-status nyx-integration-status-soon">No conectado</span>
+        {% endif %}
+      </div>
+
+      <div>
+        <h2 class="nyx-integration-title">Google Calendar</h2>
+        <p class="nyx-integration-description">
+          Enviá automáticamente los turnos confirmados de NYX a tu calendario.
+        </p>
+      </div>
+
+      <div class="mt-auto pt-4">
+        <a href="{% url 'panel_google_calendar_settings' %}" class="nyx-primary-btn" data-no-scroll-restore>
+          Configurar Google Calendar
+          <i class="bi bi-arrow-right"></i>
+        </a>
+      </div>
+    </article>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .nyx-integration-card {
+    display: flex;
+    flex-direction: column;
+    min-height: 320px;
+    padding: 1.6rem;
+  }
+
+  .nyx-integration-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .nyx-integration-icon {
+    width: 58px;
+    height: 58px;
+    border-radius: 1.15rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.55rem;
+  }
+
+  .nyx-integration-logo {
+    width: 44px;
+    height: 44px;
+    object-fit: contain;
+    display: block;
+  }
+
+  .nyx-integration-icon-mp {
+    color: #2678c9;
+    background: #e8f3ff;
+  }
+
+  .nyx-integration-icon-calendar {
+    color: #2f6d71;
+    background: rgba(118, 207, 210, .18);
+  }
+
+  .nyx-integration-status {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: .42rem .72rem;
+    font-size: .78rem;
+    font-weight: 850;
+  }
+
+  .nyx-integration-status-available {
+    color: #23734f;
+    background: #def7ea;
+  }
+
+  .nyx-integration-status-soon {
+    color: #6d8789;
+    background: #eef4f4;
+  }
+
+  .nyx-integration-title {
+    margin: 0 0 .65rem;
+    color: var(--nyx-text);
+    font-size: 1.3rem;
+    font-weight: 850;
+  }
+
+  .nyx-integration-description {
+    margin: 0;
+    color: var(--nyx-muted);
+    line-height: 1.65;
+  }
+
+  .nyx-integration-disabled {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    padding: .85rem 1.25rem;
+    color: var(--nyx-muted);
+    background: var(--nyx-surface-soft);
+    border: 1px solid var(--nyx-border);
+    font-weight: 800;
+  }
+
+  @media (max-width: 575.98px) {
+    .nyx-integration-card {
+      min-height: 290px;
+      padding: 1.25rem;
+    }
+
+    .nyx-integration-card .nyx-primary-btn,
+    .nyx-integration-disabled {
+      width: 100%;
+    }
+  }
+</style>
+{% endblock %}

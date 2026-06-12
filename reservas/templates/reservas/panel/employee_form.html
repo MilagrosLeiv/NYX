@@ -126,6 +126,11 @@
 
     <div class="d-flex gap-2 flex-wrap mt-4">
       <button type="submit" class="nyx-primary-btn">{{ submit_label }}</button>
+      {% if employee %}
+        <a href="{% url 'panel_employee_working_hours' employee.id %}" class="nyx-filter-btn">
+          Gestionar horarios
+        </a>
+      {% endif %}
       <a href="{% url 'panel_employees' %}" class="nyx-filter-btn">Cancelar</a>
     </div>
   </form>

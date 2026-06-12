@@ -2,189 +2,391 @@
 
 {% block title %}Agenda | NYX{% endblock %}
 {% block panel_title %}Agenda{% endblock %}
-{% block panel_subtitle %}Tus turnos y bloques reales del día seleccionado{% endblock %}
+{% block panel_subtitle %}Turnos y bloqueos del día seleccionado{% endblock %}
 
 {% block extra_css %}
 <style>
-  .nyx-date-form{
+  .agenda-toolbar {
     display: flex;
-    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
     gap: 1rem;
-    align-items: end;
+    flex-wrap: wrap;
   }
 
-  .nyx-date-label{
-    display: block;
-    font-weight: 700;
-    margin-bottom: .45rem;
+  .agenda-date-nav,
+  .agenda-actions,
+  .agenda-date-form {
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+    flex-wrap: wrap;
+  }
+
+  .agenda-date-title {
+    min-width: 130px;
     color: var(--nyx-text);
+    font-size: 1rem;
+    font-weight: 900;
+    text-align: center;
   }
 
-  .nyx-date-input{
-    min-width: 240px;
-    border-radius: 1rem;
-    border: 1px solid var(--nyx-border);
-    padding: .85rem 1rem;
-    background: #fff;
-    color: var(--nyx-text);
-    box-shadow: none;
-  }
-
-  .nyx-date-input:focus{
-    outline: none;
-    border-color: var(--nyx-primary);
-    box-shadow: 0 0 0 0.2rem rgba(118, 207, 210, .18);
-  }
-
-  .nyx-primary-btn{
-    border: none;
-    border-radius: 999px;
-    padding: .85rem 1.25rem;
-    background: linear-gradient(135deg, var(--nyx-primary), var(--nyx-primary-strong));
-    color: #fff;
-    font-weight: 800;
-    transition: .2s ease;
-  }
-
-  .nyx-primary-btn:hover{
-    transform: translateY(-1px);
-    opacity: .96;
-  }
-
-  .nyx-date-chip{
+  .agenda-nav-button {
+    width: 40px;
+    height: 40px;
     display: inline-flex;
     align-items: center;
-    gap: .5rem;
-    background: #f5fbfb;
+    justify-content: center;
+    flex: 0 0 40px;
     border: 1px solid var(--nyx-border);
-    color: var(--nyx-muted);
-    padding: .55rem .85rem;
-    border-radius: 999px;
-    font-weight: 700;
+    border-radius: 50%;
+    background: #fff;
+    color: var(--nyx-primary-dark);
+    text-decoration: none;
   }
 
-  .nyx-agenda-card{
-    border: 1px solid #e0eded;
-    border-radius: 1.2rem;
-    padding: 1rem 1.1rem;
-    background: #fbfefe;
-    margin-bottom: .85rem;
-  }
-
-  .nyx-agenda-time{
-    min-width: 145px;
-    font-weight: 800;
-    color: #0f2f31;
-  }
-
-  .nyx-agenda-service{
-    font-weight: 800;
-    color: #173335;
-  }
-
-  .nyx-agenda-meta{
-    color: var(--nyx-muted);
-    font-size: .95rem;
-  }
-
-  .nyx-agenda-grid{
-    display: grid;
-    grid-template-columns: 160px 1fr auto;
-    gap: 1rem;
+  .agenda-secondary-button {
+    min-height: 42px;
+    display: inline-flex;
     align-items: center;
+    justify-content: center;
+    gap: .45rem;
+    padding: .65rem 1rem;
+    border: 1px solid #e6d39c;
+    border-radius: 999px;
+    background: #fff8e6;
+    color: #765b16;
+    font-weight: 850;
+    text-decoration: none;
   }
 
-  @media (max-width: 768px){
-    .nyx-agenda-grid{
-      grid-template-columns: 1fr;
+  .agenda-date-input {
+    min-height: 42px;
+    padding: .55rem .75rem;
+    border: 1px solid var(--nyx-border);
+    border-radius: .85rem;
+    background: #fff;
+    color: var(--nyx-text);
+  }
+
+  .agenda-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+  }
+
+  .agenda-summary-title {
+    margin: 0;
+    color: var(--nyx-text);
+    font-size: 1rem;
+    font-weight: 900;
+  }
+
+  .agenda-counts {
+    display: flex;
+    gap: .5rem;
+    flex-wrap: wrap;
+  }
+
+  .agenda-count {
+    padding: .35rem .65rem;
+    border-radius: 999px;
+    background: #f3f9f9;
+    color: var(--nyx-muted);
+    font-size: .78rem;
+    font-weight: 800;
+  }
+
+  .agenda-list {
+    display: grid;
+    gap: .8rem;
+  }
+
+  .agenda-entry {
+    display: grid;
+    grid-template-columns: 110px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    border: 1px solid #dceaea;
+    border-left: 5px solid var(--nyx-primary-dark);
+    border-radius: 1rem;
+    background: #fbfefe;
+  }
+
+  .agenda-entry-block {
+    border-color: #eadcae;
+    border-left-color: #cf9f2f;
+    background: #fffaf0;
+  }
+
+  .agenda-entry-time {
+    color: var(--nyx-text);
+    font-size: .92rem;
+    font-weight: 900;
+  }
+
+  .agenda-entry-kicker {
+    margin-bottom: .15rem;
+    color: var(--nyx-muted);
+    font-size: .72rem;
+    font-weight: 900;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+  }
+
+  .agenda-entry-title {
+    overflow-wrap: anywhere;
+    color: var(--nyx-text);
+    font-weight: 900;
+  }
+
+  .agenda-entry-meta {
+    margin-top: .2rem;
+    color: var(--nyx-muted);
+    font-size: .86rem;
+  }
+
+  .agenda-entry-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: .5rem;
+    flex-wrap: wrap;
+  }
+
+  .agenda-status {
+    display: inline-flex;
+    padding: .3rem .55rem;
+    border-radius: 999px;
+    background: #eaf7f7;
+    color: #315d60;
+    font-size: .72rem;
+    font-weight: 900;
+  }
+
+  .agenda-block-badge {
+    background: #fff0c7;
+    color: #765b16;
+  }
+
+  .agenda-whatsapp {
+    width: 36px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #bfe4d1;
+    border-radius: 50%;
+    background: #f1fbf6;
+    color: #138a55;
+    text-decoration: none;
+  }
+
+  .agenda-empty {
+    padding: 2.5rem 1rem;
+    color: var(--nyx-muted);
+    text-align: center;
+  }
+
+  @media (max-width: 767.98px) {
+    .agenda-toolbar {
+      align-items: stretch;
     }
 
-    .nyx-agenda-time{
-      min-width: auto;
+    .agenda-date-nav,
+    .agenda-actions,
+    .agenda-date-form {
+      width: 100%;
+    }
+
+    .agenda-date-nav {
+      justify-content: space-between;
+    }
+
+    .agenda-date-title {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .agenda-actions > * {
+      flex: 1 1 140px;
+    }
+
+    .agenda-date-input {
+      width: 100%;
+      font-size: 16px;
+    }
+
+    .agenda-entry {
+      grid-template-columns: 1fr;
+      gap: .55rem;
+      padding: .9rem;
+    }
+
+    .agenda-entry-actions {
+      justify-content: flex-start;
+    }
+  }
+
+  @media (max-width: 575.98px) {
+    .agenda-date-nav .nyx-filter-btn {
+      flex: 1 1 calc(50% - .3rem);
+      text-align: center;
     }
   }
 </style>
 {% endblock %}
 
 {% block panel_content %}
-<div class="nyx-card p-4 mb-4">
-  <div class="d-flex flex-wrap gap-2 mb-4">
-    <a href="{% url 'panel_agenda' %}?quick=today" class="nyx-filter-btn {% if selected_date == today %}active{% endif %}">
-      Hoy
-    </a>
-    <a href="{% url 'panel_agenda' %}?quick=tomorrow" class="nyx-filter-btn {% if selected_date == tomorrow %}active{% endif %}">
-      Mañana
-    </a>
-  </div>
+<div class="nyx-card p-3 p-md-4 mb-3">
+  <div class="agenda-toolbar">
+    <div class="agenda-date-nav">
+      <a
+        href="{% url 'panel_agenda' %}?date={{ previous_date|date:'Y-m-d' }}"
+        class="agenda-nav-button"
+        data-no-scroll-restore
+        aria-label="Día anterior"
+      >
+        <i class="bi bi-chevron-left"></i>
+      </a>
 
-  <form method="get" class="nyx-date-form">
-    <div>
-      <label for="date" class="nyx-date-label">Elegir fecha</label>
+      <div class="agenda-date-title">{{ selected_date|date:"d/m/Y" }}</div>
+
+      <a
+        href="{% url 'panel_agenda' %}?date={{ next_date|date:'Y-m-d' }}"
+        class="agenda-nav-button"
+        data-no-scroll-restore
+        aria-label="Día siguiente"
+      >
+        <i class="bi bi-chevron-right"></i>
+      </a>
+
+      <a
+        href="{% url 'panel_agenda' %}?quick=today"
+        class="nyx-filter-btn {% if selected_date == today %}active{% endif %}"
+        data-no-scroll-restore
+      >
+        Hoy
+      </a>
+      <a
+        href="{% url 'panel_agenda' %}?quick=tomorrow"
+        class="nyx-filter-btn {% if selected_date == tomorrow %}active{% endif %}"
+        data-no-scroll-restore
+      >
+        Mañana
+      </a>
+    </div>
+
+    {% if panel_role == "owner" %}
+      <div class="agenda-actions">
+        <a
+          href="{% url 'panel_manual_booking_create' %}?date={{ selected_date|date:'Y-m-d' }}"
+          class="nyx-primary-btn text-decoration-none"
+        >
+          <i class="bi bi-plus-lg"></i>
+          Cargar turno
+        </a>
+        <a href="{% url 'panel_bloqueos' %}" class="agenda-secondary-button">
+          <i class="bi bi-calendar-x"></i>
+          Bloquear horario
+        </a>
+      </div>
+    {% endif %}
+
+    <form method="get" class="agenda-date-form" data-no-scroll-restore>
       <input
         type="date"
-        id="date"
         name="date"
-        class="nyx-date-input"
+        class="agenda-date-input"
         value="{{ selected_date|date:'Y-m-d' }}"
+        aria-label="Elegir fecha"
+        onchange="this.form.submit()"
       >
-    </div>
-
-    <div>
-      <button type="submit" class="nyx-primary-btn">
-        Ver agenda
-      </button>
-    </div>
-
-    <div class="ms-auto">
-      <div class="nyx-date-chip">
-        <span>Fecha seleccionada</span>
-        <strong>{{ selected_date|date:"d/m/Y" }}</strong>
-      </div>
-    </div>
-  </form>
+    </form>
+  </div>
 </div>
 
-<div class="nyx-card p-4">
-  {% if items %}
-    <div class="mb-3">
-      <h5 class="fw-bold mb-1">Turnos del día</h5>
-      <div class="text-secondary">
-        {{ items|length }} bloque{{ items|length|pluralize:"s" }} encontrado{{ items|length|pluralize:"s" }}
-      </div>
+<div class="nyx-card p-3 p-md-4">
+  <div class="agenda-summary">
+    <h2 class="agenda-summary-title">Agenda del {{ selected_date|date:"d/m/Y" }}</h2>
+    <div class="agenda-counts">
+      <span class="agenda-count">{{ booking_count }} turno{{ booking_count|pluralize }}</span>
+      <span class="agenda-count">{{ block_count }} bloqueo{{ block_count|pluralize }}</span>
     </div>
+  </div>
 
-    {% for item in items %}
-      <div class="nyx-agenda-card">
-        <div class="nyx-agenda-grid">
-          <div class="nyx-agenda-time">
-            {{ item.start_datetime|date:"H:i" }} — {{ item.end_datetime|date:"H:i" }}
-          </div>
+  {% if agenda_entries %}
+    <div class="agenda-list">
+      {% for entry in agenda_entries %}
+        {% if entry.kind == "booking" %}
+          <article class="agenda-entry">
+            <div class="agenda-entry-time">
+              {{ entry.item.start_datetime|date:"H:i" }} - {{ entry.item.end_datetime|date:"H:i" }}
+            </div>
 
-          <div>
-            <div class="nyx-agenda-service">{{ item.service.name }}</div>
-            <div class="nyx-agenda-meta">
-              Cliente: <strong>{{ item.booking.customer_name }}</strong>
-              {% if item.booking.customer_phone %}
-                · {{ item.booking.customer_phone }}
+            <div>
+              <div class="agenda-entry-kicker">Turno · {{ entry.item.employee.name }}</div>
+              <div class="agenda-entry-title">{{ entry.item.booking.customer_name }}</div>
+              <div class="agenda-entry-meta">
+                {{ entry.item.service.name }}
+                {% if entry.item.booking.customer_phone %}
+                  · {{ entry.item.booking.customer_phone }}
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="agenda-entry-actions">
+              <span class="agenda-status">{{ entry.item.booking.get_status_display }}</span>
+              {% if entry.phone_digits %}
+                <a
+                  href="https://wa.me/{{ entry.phone_digits }}"
+                  class="agenda-whatsapp"
+                  target="_blank"
+                  rel="noopener"
+                  aria-label="Abrir WhatsApp de {{ entry.item.booking.customer_name }}"
+                >
+                  <i class="bi bi-whatsapp"></i>
+                </a>
+              {% endif %}
+            </div>
+          </article>
+        {% else %}
+          <article class="agenda-entry agenda-entry-block">
+            <div class="agenda-entry-time">
+              {% if entry.block.all_day %}
+                Todo el día
+              {% else %}
+                {{ entry.display_start|date:"H:i" }} - {{ entry.display_end|date:"H:i" }}
               {% endif %}
             </div>
 
-            {% if panel_role == 'owner' %}
-              <div class="nyx-agenda-meta mt-1">
-                Profesional: <strong>{{ item.employee.name }}</strong>
+            <div>
+              <div class="agenda-entry-kicker">
+                Bloqueo ·
+                {% if entry.block.employee %}
+                  {{ entry.block.employee.name }}
+                {% else %}
+                  Todo el salón
+                {% endif %}
               </div>
-            {% endif %}
-          </div>
+              <div class="agenda-entry-title">{{ entry.block.title }}</div>
+              <div class="agenda-entry-meta">{{ entry.block.get_block_type_display }}</div>
+            </div>
 
-          <div>
-            <span class="nyx-badge">{{ item.booking.get_status_display }}</span>
-          </div>
-        </div>
-      </div>
-    {% endfor %}
+            <div class="agenda-entry-actions">
+              <span class="agenda-status agenda-block-badge">Bloqueado</span>
+            </div>
+          </article>
+        {% endif %}
+      {% endfor %}
+    </div>
   {% else %}
-    <div class="nyx-empty">
-      No hay turnos para el día {{ selected_date|date:"d/m/Y" }}.
+    <div class="agenda-empty">
+      No hay turnos ni bloqueos para este día.
     </div>
   {% endif %}
 </div>

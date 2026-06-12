@@ -47,6 +47,7 @@ from .mail_utils import (
     send_salon_booking_rescheduled_email,
     send_staff_new_booking_emails,
 )
+from .services.google_calendar import sync_booking_to_google_calendar
 
 def get_common_employees(service_ids, salon=None):
     if not service_ids:
@@ -1929,6 +1930,7 @@ def reschedule_booking(request, token):
 
         send_booking_rescheduled_email(booking, request=request)
         send_salon_booking_rescheduled_email(booking)
+        sync_booking_to_google_calendar(booking)
 
         messages.success(request, "Tu turno fue modificado correctamente.")
         return redirect('manage_booking', token=booking.client_manage_token)
@@ -1957,11 +1959,11 @@ def mercadopago_oauth_connect(request, salon_id):
 
     if not user_is_salon_owner(request.user, salon):
         messages.error(request, "No tenés permisos para configurar los pagos de este salón.")
-        return redirect("panel_settings")
+        return redirect("panel_mercado_pago_settings")
 
     if not settings.MERCADOPAGO_CLIENT_ID:
         messages.error(request, "Falta configurar MERCADOPAGO_CLIENT_ID.")
-        return redirect("panel_settings")
+        return redirect("panel_mercado_pago_settings")
 
     state = secrets.token_urlsafe(32)
 
@@ -1991,21 +1993,21 @@ def mercadopago_oauth_callback(request):
 
     if not code:
         messages.error(request, "Mercado Pago no devolvió el código de autorización.")
-        return redirect("panel_settings")
+        return redirect("panel_mercado_pago_settings")
 
     if not expected_state or not state or state != expected_state:
         messages.error(request, "No se pudo validar la conexión con Mercado Pago.")
-        return redirect("panel_settings")
+        return redirect("panel_mercado_pago_settings")
 
     salon = get_object_or_404(Salon, id=salon_id)
 
     if not user_is_salon_owner(request.user, salon):
         messages.error(request, "No tenés permisos para configurar los pagos de este salón.")
-        return redirect("panel_settings")
+        return redirect("panel_mercado_pago_settings")
 
     if not settings.MERCADOPAGO_CLIENT_ID or not settings.MERCADOPAGO_CLIENT_SECRET:
         messages.error(request, "Faltan configurar las credenciales OAuth de Mercado Pago.")
-        return redirect("panel_settings")
+        return redirect("panel_mercado_pago_settings")
 
     redirect_uri = f"{settings.SITE_URL}{reverse('mercadopago_oauth_callback')}"
 
@@ -2030,11 +2032,11 @@ def mercadopago_oauth_callback(request):
         data = response.json()
     except requests.RequestException:
         messages.error(request, "No se pudo conectar con Mercado Pago. Intentá nuevamente.")
-        return redirect("panel_settings")
+        return redirect("panel_mercado_pago_settings")
 
     if response.status_code not in [200, 201]:
         messages.error(request, f"No se pudo conectar Mercado Pago: {data}")
-        return redirect("panel_settings")
+        return redirect("panel_mercado_pago_settings")
 
     payment_settings, _ = SalonPaymentSettings.objects.get_or_create(salon=salon)
 
@@ -2064,7 +2066,7 @@ def mercadopago_oauth_callback(request):
     request.session.pop("mp_oauth_salon_id", None)
 
     messages.success(request, "Mercado Pago conectado correctamente.")
-    return redirect("panel_settings")
+    return redirect("panel_mercado_pago_settings")
 
 @login_required
 def mercadopago_oauth_disconnect(request, salon_id):
@@ -2084,31 +2086,32 @@ def mercadopago_oauth_disconnect(request, salon_id):
         raise PermissionDenied("Solo la dueña puede desconectar Mercado Pago.")
 
     if request.method != "POST":
-        return redirect("panel_settings")
+        return redirect("panel_mercado_pago_settings")
 
-    payment_settings, _ = SalonPaymentSettings.objects.get_or_create(salon=salon)
+    payment_settings = SalonPaymentSettings.objects.filter(salon=salon).first()
 
-    payment_settings.mercadopago_enabled = False
-    payment_settings.mercadopago_connected = False
-    payment_settings.mp_user_id = ""
-    payment_settings.mp_access_token = ""
-    payment_settings.mp_refresh_token = ""
-    payment_settings.mp_public_key = ""
-    payment_settings.mp_token_expires_at = None
+    if payment_settings:
+        payment_settings.mercadopago_enabled = False
+        payment_settings.mercadopago_connected = False
+        payment_settings.mp_user_id = ""
+        payment_settings.mp_access_token = ""
+        payment_settings.mp_refresh_token = ""
+        payment_settings.mp_public_key = ""
+        payment_settings.mp_token_expires_at = None
 
-    payment_settings.save(update_fields=[
-        "mercadopago_enabled",
-        "mercadopago_connected",
-        "mp_user_id",
-        "mp_access_token",
-        "mp_refresh_token",
-        "mp_public_key",
-        "mp_token_expires_at",
-        "updated_at",
-    ])
+        payment_settings.save(update_fields=[
+            "mercadopago_enabled",
+            "mercadopago_connected",
+            "mp_user_id",
+            "mp_access_token",
+            "mp_refresh_token",
+            "mp_public_key",
+            "mp_token_expires_at",
+            "updated_at",
+        ])
 
     messages.success(request, "Mercado Pago fue desconectado correctamente.")
-    return redirect("panel_settings")
+    return redirect("panel_mercado_pago_settings")
 
 def terms_view(request):
     return render(request, "reservas/legal/terms.html")

@@ -3,9 +3,13 @@ from datetime import datetime, timedelta
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
-from reservas.utils import get_working_ranges_for_date
+from reservas.utils import (
+    get_employee_working_ranges_for_date,
+    get_special_block_ranges,
+    get_working_ranges_for_date,
+)
 
-from .models import BookingItem, Booking, Appointment, Employee, EmployeeTimeOff
+from .models import BookingItem, Booking, Appointment, Employee
 
 
 def make_aware_datetime(selected_date, selected_time_str):
@@ -143,6 +147,13 @@ def get_consecutive_slots_for_service_assignments(
         employee.id: employee
         for _service, employee in service_employee_pairs
     }
+    employee_working_ranges = {
+        employee.id: get_employee_working_ranges_for_date(
+            employee=employee,
+            selected_date=selected_date,
+        )
+        for employee in employees.values()
+    }
 
     existing_items_by_employee = {}
 
@@ -174,15 +185,10 @@ def get_consecutive_slots_for_service_assignments(
             ).prefetch_related("services", "service")
         )
 
-    existing_time_off_by_employee = {}
-
-    for employee in employees.values():
-        existing_time_off_by_employee[employee.id] = list(
-            EmployeeTimeOff.objects.filter(
-                employee=employee,
-                start_datetime__date=selected_date
-            )
-        )
+    existing_time_off_by_employee = {
+        employee.id: get_special_block_ranges(employee, selected_date)
+        for employee in employees.values()
+    }
 
     slots = []
 
@@ -201,6 +207,15 @@ def get_consecutive_slots_for_service_assignments(
 
             for service, employee in service_employee_pairs:
                 block_end = block_start + timedelta(minutes=service.duration_minutes)
+
+                works_during_block = any(
+                    block_start >= employee_start and block_end <= employee_end
+                    for employee_start, employee_end
+                    in employee_working_ranges.get(employee.id, [])
+                )
+                if not works_during_block:
+                    is_valid = False
+                    break
 
                 for item in existing_items_by_employee.get(employee.id, []):
                     if block_start < item.end_datetime and block_end > item.start_datetime:
@@ -223,8 +238,8 @@ def get_consecutive_slots_for_service_assignments(
                 if not is_valid:
                     break
 
-                for block in existing_time_off_by_employee.get(employee.id, []):
-                    if block_start < block.end_datetime and block_end > block.start_datetime:
+                for time_off_start, time_off_end in existing_time_off_by_employee.get(employee.id, []):
+                    if block_start < time_off_end and block_end > time_off_start:
                         is_valid = False
                         break
 
@@ -312,16 +327,37 @@ def find_auto_assignment_for_start(*, salon, services, selected_date, start_time
             ).exclude(status='cancelled').prefetch_related('services', 'service')
         )
 
-    existing_time_off_by_employee = {}
-    for employee_id in all_employee_ids:
-        existing_time_off_by_employee[employee_id] = list(
-            EmployeeTimeOff.objects.filter(
-                employee_id=employee_id,
-                start_datetime__date=selected_date
-            )
+    employees_by_id = {
+        employee.id: employee
+        for employees in employees_by_service.values()
+        for employee in employees
+    }
+    existing_time_off_by_employee = {
+        employee_id: get_special_block_ranges(
+            employees_by_id[employee_id],
+            selected_date,
         )
+        for employee_id in all_employee_ids
+    }
+
+    employee_working_ranges = {
+        employee.id: get_employee_working_ranges_for_date(
+            employee=employee,
+            selected_date=selected_date,
+        )
+        for employees in employees_by_service.values()
+        for employee in employees
+    }
 
     def employee_is_available(employee, block_start, block_end):
+        works_during_block = any(
+            block_start >= employee_start and block_end <= employee_end
+            for employee_start, employee_end
+            in employee_working_ranges.get(employee.id, [])
+        )
+        if not works_during_block:
+            return False
+
         for item in existing_items_by_employee[employee.id]:
             if not item.booking.is_blocking_slot():
                 continue
@@ -338,9 +374,9 @@ def find_auto_assignment_for_start(*, salon, services, selected_date, start_time
             if overlaps:
                 return False
 
-        for block in existing_time_off_by_employee[employee.id]:
-            overlaps = block_start < block.end_datetime and block_end > block.start_datetime
-            if overlaps:
+        for time_off_start, time_off_end in existing_time_off_by_employee[employee.id]:
+            has_overlap = block_start < time_off_end and block_end > time_off_start
+            if has_overlap:
                 return False
 
         return True

@@ -852,6 +852,11 @@ document.addEventListener('DOMContentLoaded', function () {
               <span>Configuración</span>
             </a>
 
+            <a href="{% url 'panel_integrations' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_integrations' or request.resolver_match.url_name == 'panel_mercado_pago_settings' or request.resolver_match.url_name == 'panel_google_calendar_settings' or request.resolver_match.url_name == 'panel_google_calendar_connect' or request.resolver_match.url_name == 'panel_google_calendar_callback' or request.resolver_match.url_name == 'panel_google_calendar_disconnect' %}active{% endif %}">
+              <i class="bi bi-puzzle-fill"></i>
+              <span>Integraciones</span>
+            </a>
+
             <a href="{% url 'panel_plan' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_plan' %}active{% endif %}">
               <i class="bi bi-credit-card-2-front-fill"></i>
               <span>Mi plan</span>
@@ -944,6 +949,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 <a href="{% url 'panel_settings' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_settings' %}active{% endif %}">
                   <i class="bi bi-gear-fill"></i>
                   <span>Configuración</span>
+                </a>
+
+                <a href="{% url 'panel_integrations' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_integrations' or request.resolver_match.url_name == 'panel_mercado_pago_settings' or request.resolver_match.url_name == 'panel_google_calendar_settings' or request.resolver_match.url_name == 'panel_google_calendar_connect' or request.resolver_match.url_name == 'panel_google_calendar_callback' or request.resolver_match.url_name == 'panel_google_calendar_disconnect' %}active{% endif %}">
+                  <i class="bi bi-puzzle-fill"></i>
+                  <span>Integraciones</span>
                 </a>
 
                 <a href="{% url 'panel_plan' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_plan' %}active{% endif %}">

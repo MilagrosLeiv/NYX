@@ -1,0 +1,164 @@
+{% extends "reservas/panel/base_panel.html" %}
+
+{% block title %}Mercado Pago | Panel NYX{% endblock %}
+{% block panel_title %}Mercado Pago{% endblock %}
+{% block panel_subtitle %}Configurá la cuenta que recibe los pagos online de tus clientes{% endblock %}
+
+{% block panel_content %}
+<div class="nyx-card nyx-mp-card">
+  <div class="nyx-mp-heading">
+    <div class="nyx-mp-icon">
+      <i class="bi bi-credit-card-fill"></i>
+    </div>
+
+    <div>
+      <div class="nyx-mp-status {% if mercadopago_ready %}is-connected{% endif %}">
+        {% if mercadopago_ready %}
+          <i class="bi bi-check-circle-fill"></i>
+          Conectado
+        {% else %}
+          <i class="bi bi-circle"></i>
+          No conectado
+        {% endif %}
+      </div>
+      <h2>Mercado Pago</h2>
+    </div>
+  </div>
+
+  <p class="nyx-mp-description">
+    Conectá la cuenta donde querés recibir los pagos online. Antes de continuar,
+    asegurate de haber iniciado sesión en Mercado Pago con la cuenta correcta.
+    La disponibilidad del dinero depende de sus plazos y comisiones.
+  </p>
+
+  {% if mercadopago_ready %}
+    {% if mercadopago_visible_to_clients %}
+      <div class="alert alert-success rounded-4 mb-4">
+        <strong>Mercado Pago activo para clientes.</strong>
+        <div class="small mt-1">Tus clientes podrán pagar online con Mercado Pago.</div>
+      </div>
+    {% elif accepts_integrated %}
+      <div class="alert alert-warning rounded-4 mb-4">
+        <strong>Mercado Pago conectado, pero revisá la configuración.</strong>
+        <div class="small mt-1">
+          El método integrado está seleccionado, pero falta validar la conexión.
+        </div>
+      </div>
+    {% else %}
+      <div class="alert alert-info rounded-4 mb-4">
+        <strong>Mercado Pago conectado, pero no visible para clientes.</strong>
+        <div class="small mt-1">
+          Para mostrarlo, elegí “Mercado Pago” o “Transferencia y Mercado Pago”
+          en la configuración general.
+        </div>
+      </div>
+    {% endif %}
+
+    <form method="post" action="{% url 'mercadopago_oauth_disconnect' salon.id %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-outline-danger rounded-pill px-4">
+        Desconectar Mercado Pago
+      </button>
+    </form>
+  {% else %}
+    <div class="alert alert-warning rounded-4 mb-4">
+      <strong>Mercado Pago no conectado.</strong>
+      <div class="small mt-1">
+        Conectá una cuenta para poder recibir pagos online.
+      </div>
+    </div>
+
+    <a
+      href="{% url 'mercadopago_oauth_connect' salon.id %}"
+      class="nyx-primary-btn"
+      data-no-scroll-restore
+    >
+      Conectar Mercado Pago
+    </a>
+  {% endif %}
+
+  <div class="nyx-mp-links">
+    <a href="{% url 'panel_integrations' %}" class="nyx-outline-light" data-no-scroll-restore>
+      Volver a Integraciones
+    </a>
+    <a href="{% url 'panel_settings' %}" class="nyx-outline-light" data-no-scroll-restore>
+      Configurar métodos de pago
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .nyx-mp-card {
+    max-width: 780px;
+    padding: 1.75rem;
+  }
+
+  .nyx-mp-heading {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .nyx-mp-icon {
+    width: 62px;
+    height: 62px;
+    flex: 0 0 62px;
+    border-radius: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #2678c9;
+    background: #e8f3ff;
+    font-size: 1.6rem;
+  }
+
+  .nyx-mp-heading h2 {
+    margin: .25rem 0 0;
+    color: var(--nyx-text);
+    font-size: 1.4rem;
+    font-weight: 850;
+  }
+
+  .nyx-mp-status {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    color: var(--nyx-muted);
+    font-size: .82rem;
+    font-weight: 850;
+  }
+
+  .nyx-mp-status.is-connected {
+    color: #23734f;
+  }
+
+  .nyx-mp-description {
+    max-width: 650px;
+    margin: 0 0 1.5rem;
+    color: var(--nyx-muted);
+    line-height: 1.65;
+  }
+
+  .nyx-mp-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .75rem;
+    margin-top: 1.5rem;
+  }
+
+  @media (max-width: 575.98px) {
+    .nyx-mp-card {
+      padding: 1.25rem;
+    }
+
+    .nyx-mp-card .nyx-primary-btn,
+    .nyx-mp-card form button,
+    .nyx-mp-links .nyx-outline-light {
+      width: 100%;
+    }
+  }
+</style>
+{% endblock %}

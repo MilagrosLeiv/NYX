@@ -1,4 +1,4 @@
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, timezone as datetime_timezone
 
 
 from django.conf import settings
@@ -8,9 +8,12 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
+from django.db.models import Q
 from django.shortcuts import get_object_or_404, render, redirect
+from django.http import JsonResponse
 from django.urls import reverse
 from django.utils import timezone
+from google_auth_oauthlib.flow import Flow
 
 from reservas.notifications import notify_admin_new_trial_account
 
@@ -30,6 +33,8 @@ from .models import (
     StaffInvitation,
     SalonPaymentSettings,
     SalonSubscription,
+    GoogleCalendarIntegration,
+    SpecialAvailabilityBlock,
 )
 from .panel_forms import (
     PanelBusinessHoursForm,
@@ -38,6 +43,8 @@ from .panel_forms import (
     PanelEmployeeForm,
     PanelEmployeeWorkingHourForm,
     EmployeeTimeOffForm,
+    SpecialAvailabilityBlockForm,
+    ManualBookingForm,
     PanelSalonSettingsForm,
     PanelEmployeeAccessForm,
     AcceptStaffInvitationForm,
@@ -50,6 +57,8 @@ from .booking_utils import (
     mark_completed_appointments,
     expire_unpaid_bookings,
 )
+from .utils import get_available_slots
+from .services.google_calendar import GOOGLE_CALENDAR_SCOPES
 
 
 
@@ -344,21 +353,219 @@ def panel_agenda(request):
 
     visible_agenda_statuses = ['confirmed', 'pending', 'completed']
 
-    items = items.filter(
-        start_datetime__date__gte=selected_date,
+    items = list(items.filter(
+        start_datetime__date=selected_date,
         booking__status__in=visible_agenda_statuses,
-    ).order_by('start_datetime')
+    ).order_by('start_datetime'))
+
+    current_tz = timezone.get_current_timezone()
+    day_start = timezone.make_aware(
+        datetime.combine(selected_date, datetime.min.time()),
+        current_tz,
+    )
+    day_end = day_start + timedelta(days=1)
+    previous_date = selected_date - timedelta(days=1)
+    next_date = selected_date + timedelta(days=1)
+
+    special_blocks = SpecialAvailabilityBlock.objects.select_related(
+        'employee',
+    ).filter(
+        salon=salon,
+        show_in_agenda=True,
+        start_datetime__lt=day_end,
+        end_datetime__gt=day_start,
+    )
+
+    if is_owner_user(request.user):
+        pass
+    elif is_staff_user(request.user) and employee:
+        special_blocks = special_blocks.filter(
+            Q(employee__isnull=True) | Q(employee=employee)
+        )
+    else:
+        special_blocks = special_blocks.none()
+
+    agenda_entries = [
+        {
+            'kind': 'booking',
+            'sort_datetime': item.start_datetime,
+            'item': item,
+            'phone_digits': ''.join(
+                character
+                for character in (item.booking.customer_phone or '')
+                if character.isdigit()
+            ),
+        }
+        for item in items
+    ]
+    agenda_entries.extend({
+        'kind': 'block',
+        'sort_datetime': max(block.start_datetime, day_start),
+        'block': block,
+        'display_start': max(block.start_datetime, day_start),
+        'display_end': min(block.end_datetime, day_end),
+    } for block in special_blocks)
+    agenda_entries.sort(
+        key=lambda entry: (
+            entry['sort_datetime'],
+            0 if entry['kind'] == 'block' else 1,
+        )
+    )
 
     context = {
         'panel_role': 'owner' if is_owner_user(request.user) else 'staff',
         'salon': salon,
         'items': items,
+        'agenda_entries': agenda_entries,
+        'booking_count': len(items),
+        'block_count': len(agenda_entries) - len(items),
         'selected_date': selected_date,
         'today': today,
         'tomorrow': tomorrow,
+        'previous_date': previous_date,
+        'next_date': next_date,
     }
 
     return render(request, 'reservas/panel/agenda.html', context)
+
+
+@login_required
+@subscription_required
+def panel_manual_booking_create(request):
+    if request.user.is_superuser:
+        return redirect('/admin/')
+
+    salon = get_user_salon(request.user)
+    if not salon or not is_owner_user(request.user):
+        raise PermissionDenied("Solo la dueña puede cargar turnos manuales.")
+
+    initial = {}
+    selected_date_raw = request.GET.get('date')
+    if selected_date_raw:
+        try:
+            initial['appointment_date'] = datetime.strptime(
+                selected_date_raw,
+                '%Y-%m-%d',
+            ).date()
+        except ValueError:
+            pass
+
+    if request.method == 'POST':
+        form = ManualBookingForm(request.POST, salon=salon)
+        if form.is_valid():
+            try:
+                _create_manual_booking(salon, form.cleaned_data)
+            except ValidationError as error:
+                form.add_error(
+                    None,
+                    error.messages[0] if error.messages else (
+                        'Ese horario ya no está disponible. Elegí otro horario.'
+                    ),
+                )
+            else:
+                messages.success(
+                    request,
+                    'Turno manual cargado correctamente.',
+                )
+                agenda_url = reverse('panel_agenda')
+                selected_date = form.cleaned_data['appointment_date']
+                return redirect(
+                    f'{agenda_url}?date={selected_date.isoformat()}'
+                )
+    else:
+        form = ManualBookingForm(salon=salon, initial=initial)
+
+    return render(request, 'reservas/panel/manual_booking_form.html', {
+        'panel_role': 'owner',
+        'salon': salon,
+        'form': form,
+    })
+
+
+def _create_manual_booking(salon, cleaned_data):
+    with transaction.atomic():
+        try:
+            employee = Employee.objects.select_for_update().get(
+                pk=cleaned_data['employee'].pk,
+                salon=salon,
+                is_active=True,
+            )
+            service = Service.objects.get(
+                pk=cleaned_data['service'].pk,
+                salon=salon,
+                is_active=True,
+                employees=employee,
+            )
+        except (Employee.DoesNotExist, Service.DoesNotExist):
+            raise ValidationError(
+                'El profesional o el servicio ya no están disponibles.'
+            )
+
+        available_slots = get_available_slots(
+            employee,
+            [service],
+            cleaned_data['appointment_date'],
+        )
+        selected_slot = cleaned_data['appointment_time'].strftime('%H:%M')
+        if selected_slot not in available_slots:
+            raise ValidationError(
+                'Ese horario ya no está disponible. Elegí otro horario.'
+            )
+
+        booking = Booking.objects.create(
+            salon=salon,
+            customer_name=cleaned_data['customer_name'],
+            customer_phone=cleaned_data['customer_phone'],
+            customer_email=cleaned_data['customer_email'] or None,
+            notes=cleaned_data['notes'],
+            booking_mode='consecutive',
+            status='confirmed',
+            payment_choice='none',
+            payment_status='not_required',
+            payment_required_amount=0,
+            selected_payment_method='none',
+        )
+        item = BookingItem(
+            booking=booking,
+            service=service,
+            employee=employee,
+            start_datetime=cleaned_data['start_datetime'],
+            end_datetime=cleaned_data['end_datetime'],
+            order=0,
+        )
+        item.full_clean()
+        item.save()
+        return booking
+
+
+@login_required
+@subscription_required
+def panel_manual_booking_services(request):
+    if request.user.is_superuser:
+        return JsonResponse({'services': []}, status=403)
+
+    salon = get_user_salon(request.user)
+    if not salon or not is_owner_user(request.user):
+        return JsonResponse({'services': []}, status=403)
+
+    employee_id = request.GET.get('employee')
+    if not employee_id:
+        return JsonResponse({'services': []})
+
+    employee = Employee.objects.filter(
+        pk=employee_id,
+        salon=salon,
+        is_active=True,
+    ).first()
+    if not employee:
+        return JsonResponse({'services': []}, status=404)
+
+    services = employee.services.filter(
+        salon=salon,
+        is_active=True,
+    ).order_by('name').values('id', 'name')
+    return JsonResponse({'services': list(services)})
+
 
 @login_required
 @subscription_required
@@ -378,60 +585,104 @@ def panel_bloqueos(request):
     if not is_owner and not (is_staff and employee):
         raise PermissionDenied("No tenés permisos para gestionar bloqueos.")
 
+    if request.method == "POST" and not is_owner:
+        raise PermissionDenied("Solo la dueña puede administrar bloqueos.")
+
     if request.method == "POST":
-        form = EmployeeTimeOffForm(
-            request.POST,
-            salon=salon,
-            employee=employee,
-            is_owner=is_owner,
-        )
-
+        form = SpecialAvailabilityBlockForm(request.POST, salon=salon)
         if form.is_valid():
-            try:
-                block = form.save(commit=False)
-                block.created_by = request.user
-                block.full_clean()
-                block.save()
-
-                messages.success(request, "Bloqueo cargado correctamente.")
-                return redirect("panel_bloqueos")
-
-            except ValidationError as e:
-                form.add_error(
-                    None,
-                    e.messages[0] if getattr(e, "messages", None) else "No se pudo cargar el bloqueo."
-                )
+            block = form.save(commit=False)
+            block.created_by = request.user
+            block.full_clean()
+            block.save()
+            messages.success(request, "Bloqueo especial creado correctamente.")
+            return redirect("panel_bloqueos")
     else:
-        form = EmployeeTimeOffForm(
-            salon=salon,
-            employee=employee,
-            is_owner=is_owner,
-        )
+        form = SpecialAvailabilityBlockForm(salon=salon) if is_owner else None
 
-    blocks = EmployeeTimeOff.objects.select_related(
+    blocks = SpecialAvailabilityBlock.objects.select_related(
+        "salon",
         "employee",
-        "employee__salon",
+        "created_by",
+    )
+    legacy_blocks = EmployeeTimeOff.objects.select_related(
+        "employee",
         "created_by",
     )
 
     if is_owner:
-        blocks = blocks.filter(employee__salon=salon)
+        blocks = blocks.filter(salon=salon)
+        legacy_blocks = legacy_blocks.filter(employee__salon=salon)
     elif is_staff and employee:
-        blocks = blocks.filter(employee=employee)
+        blocks = blocks.filter(
+            Q(employee__isnull=True) | Q(employee=employee)
+        )
+        legacy_blocks = legacy_blocks.filter(employee=employee)
     else:
         blocks = blocks.none()
+        legacy_blocks = legacy_blocks.none()
 
     blocks = blocks.order_by("start_datetime")
+    legacy_blocks = legacy_blocks.order_by("start_datetime")
 
     context = {
         "panel_role": "owner" if is_owner else "staff",
         "salon": salon,
         "employee": employee,
         "blocks": blocks,
+        "legacy_blocks": legacy_blocks,
         "form": form,
+        "editing_block": None,
     }
 
     return render(request, "reservas/panel/bloqueos.html", context)
+
+
+@login_required
+@subscription_required
+def panel_bloqueo_edit(request, block_id):
+    if request.user.is_superuser:
+        return redirect('/admin/')
+
+    salon = get_user_salon(request.user)
+    if not salon or not is_owner_user(request.user):
+        raise PermissionDenied("Solo la dueña puede editar bloqueos.")
+
+    block = get_object_or_404(
+        SpecialAvailabilityBlock,
+        pk=block_id,
+        salon=salon,
+    )
+
+    if request.method == "POST":
+        form = SpecialAvailabilityBlockForm(
+            request.POST,
+            instance=block,
+            salon=salon,
+        )
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Bloqueo especial actualizado.")
+            return redirect("panel_bloqueos")
+    else:
+        form = SpecialAvailabilityBlockForm(instance=block, salon=salon)
+
+    blocks = SpecialAvailabilityBlock.objects.filter(
+        salon=salon,
+    ).select_related("employee", "created_by").order_by("start_datetime")
+    legacy_blocks = EmployeeTimeOff.objects.filter(
+        employee__salon=salon,
+    ).select_related("employee", "created_by").order_by("start_datetime")
+
+    return render(request, "reservas/panel/bloqueos.html", {
+        "panel_role": "owner",
+        "salon": salon,
+        "employee": None,
+        "blocks": blocks,
+        "legacy_blocks": legacy_blocks,
+        "form": form,
+        "editing_block": block,
+    })
 
 
 @login_required
@@ -747,8 +998,15 @@ def panel_employee_create(request):
             employee.salon = salon
             employee.save()
             form.save_m2m()
-            messages.success(request, 'Profesional creado correctamente.')
-            return redirect('panel_employees')
+            messages.success(
+                request,
+                'Profesional creado correctamente. Ahora podés definir sus horarios de trabajo.',
+            )
+            working_hours_url = reverse(
+                'panel_employee_working_hours',
+                args=[employee.id],
+            )
+            return redirect(f'{working_hours_url}?created=1')
     else:
         form = PanelEmployeeForm(salon=salon)
 
@@ -1056,6 +1314,11 @@ def panel_employee_working_hours(request, employee_id):
         .filter(employee=employee)
         .order_by('weekday', 'start_time')
     )
+    has_own_working_hours = bool(blocks)
+    show_working_hours_decision = (
+        not has_own_working_hours
+        and request.GET.get('created') == '1'
+    )
 
     blocks_by_weekday = []
     for weekday_value, weekday_name in EmployeeWorkingHour.WEEKDAY_CHOICES:
@@ -1077,6 +1340,8 @@ def panel_employee_working_hours(request, employee_id):
         'salon': salon,
         'employee': employee,
         'blocks_by_weekday': blocks_by_weekday,
+        'has_own_working_hours': has_own_working_hours,
+        'show_working_hours_decision': show_working_hours_decision,
     })
 
 
@@ -1588,17 +1853,14 @@ def panel_bloqueo_delete(request, block_id):
     if not salon:
         raise PermissionDenied("No encontramos el negocio asociado.")
 
+    if not is_owner_user(request.user):
+        raise PermissionDenied("Solo la dueña puede eliminar bloqueos.")
+
     block = get_object_or_404(
         EmployeeTimeOff,
         pk=block_id,
         employee__salon=salon,
     )
-
-    if not is_owner_user(request.user):
-        employee = get_user_employee(request.user)
-
-        if not employee or block.employee_id != employee.id:
-            raise PermissionDenied("No podés eliminar bloqueos de otro profesional.")
 
     if request.method != "POST":
         return redirect("panel_bloqueos")
@@ -1606,6 +1868,283 @@ def panel_bloqueo_delete(request, block_id):
     block.delete()
     messages.success(request, "Bloqueo eliminado correctamente.")
     return redirect("panel_bloqueos")
+
+
+@login_required
+@subscription_required
+def panel_special_bloqueo_delete(request, block_id):
+    if request.user.is_superuser:
+        return redirect('/admin/')
+
+    salon = get_user_salon(request.user)
+    if not salon or not is_owner_user(request.user):
+        raise PermissionDenied("Solo la dueña puede eliminar bloqueos.")
+
+    if request.method != "POST":
+        return redirect("panel_bloqueos")
+
+    block = get_object_or_404(
+        SpecialAvailabilityBlock,
+        pk=block_id,
+        salon=salon,
+    )
+    block.delete()
+    messages.success(request, "Bloqueo especial eliminado correctamente.")
+    return redirect("panel_bloqueos")
+
+
+@login_required
+@subscription_required
+def panel_integrations(request):
+    if request.user.is_superuser:
+        return redirect('/admin/')
+
+    salon = get_user_salon(request.user)
+
+    if not salon:
+        raise PermissionDenied("Tu usuario no está asociado a ninguna peluquería.")
+
+    if not is_owner_user(request.user):
+        raise PermissionDenied("Solo la dueña puede ver las integraciones.")
+
+    google_calendar_connected = GoogleCalendarIntegration.objects.filter(
+        salon=salon,
+        refresh_token__isnull=False,
+    ).exclude(refresh_token="").exists()
+    payment_settings = SalonPaymentSettings.objects.filter(salon=salon).first()
+    mercadopago_ready = bool(
+        payment_settings
+        and payment_settings.has_valid_mercadopago_connection()
+    )
+
+    context = {
+        'panel_role': 'owner',
+        'salon': salon,
+        'google_calendar_connected': google_calendar_connected,
+        'mercadopago_ready': mercadopago_ready,
+    }
+    return render(request, 'reservas/panel/integrations.html', context)
+
+
+def _mercadopago_panel_context(salon):
+    payment_settings = SalonPaymentSettings.objects.filter(salon=salon).first()
+    accepts_integrated = salon.payment_method in ["integrated", "both"]
+    mercadopago_ready = bool(
+        payment_settings
+        and payment_settings.has_valid_mercadopago_connection()
+    )
+
+    return {
+        'panel_role': 'owner',
+        'salon': salon,
+        'payment_settings': payment_settings,
+        'mercadopago_ready': mercadopago_ready,
+        'accepts_integrated': accepts_integrated,
+        'mercadopago_visible_to_clients': accepts_integrated and mercadopago_ready,
+    }
+
+
+@login_required
+@subscription_required
+def panel_mercado_pago_settings(request):
+    if request.user.is_superuser:
+        return redirect('/admin/')
+
+    salon = get_user_salon(request.user)
+
+    if not salon or not is_owner_user(request.user):
+        raise PermissionDenied("Solo la dueña puede configurar Mercado Pago.")
+
+    return render(
+        request,
+        'reservas/panel/mercado_pago_settings.html',
+        _mercadopago_panel_context(salon),
+    )
+
+
+def _google_calendar_oauth_flow(state=None):
+    client_config = {
+        "web": {
+            "client_id": settings.GOOGLE_CLIENT_ID,
+            "client_secret": settings.GOOGLE_CLIENT_SECRET,
+            "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+            "token_uri": "https://oauth2.googleapis.com/token",
+            "redirect_uris": [
+                settings.GOOGLE_CALENDAR_REDIRECT_URI,
+            ],
+        }
+    }
+
+    flow = Flow.from_client_config(
+        client_config,
+        scopes=GOOGLE_CALENDAR_SCOPES,
+        state=state,
+        autogenerate_code_verifier=False,
+    )
+
+    flow.redirect_uri = settings.GOOGLE_CALENDAR_REDIRECT_URI
+    return flow
+
+@login_required
+@subscription_required
+def panel_google_calendar_settings(request):
+    if request.user.is_superuser:
+        return redirect('/admin/')
+
+    salon = get_user_salon(request.user)
+
+    if not salon or not is_owner_user(request.user):
+        raise PermissionDenied("Solo la dueña puede configurar Google Calendar.")
+
+    integration, _ = GoogleCalendarIntegration.objects.get_or_create(salon=salon)
+
+    context = {
+        'panel_role': 'owner',
+        'salon': salon,
+        'integration': integration,
+        'google_calendar_configured': all([
+            settings.GOOGLE_CLIENT_ID,
+            settings.GOOGLE_CLIENT_SECRET,
+            settings.GOOGLE_CALENDAR_REDIRECT_URI,
+        ]),
+    }
+    return render(request, 'reservas/panel/google_calendar_settings.html', context)
+
+
+@login_required
+@subscription_required
+def panel_google_calendar_connect(request):
+    if request.user.is_superuser:
+        return redirect('/admin/')
+
+    salon = get_user_salon(request.user)
+
+    if not salon or not is_owner_user(request.user):
+        raise PermissionDenied("Solo la dueña puede conectar Google Calendar.")
+
+    if not all([
+        settings.GOOGLE_CLIENT_ID,
+        settings.GOOGLE_CLIENT_SECRET,
+        settings.GOOGLE_CALENDAR_REDIRECT_URI,
+    ]):
+        messages.error(request, "Faltan configurar las credenciales de Google Calendar.")
+        return redirect("panel_google_calendar_settings")
+
+    flow = _google_calendar_oauth_flow()
+    authorization_url, state = flow.authorization_url(
+        access_type="offline",
+        prompt="consent",
+        include_granted_scopes="true",
+    )
+
+    request.session["google_calendar_oauth_state"] = state
+    request.session["google_calendar_oauth_salon_id"] = salon.id
+    return redirect(authorization_url)
+
+
+@login_required
+@subscription_required
+def panel_google_calendar_callback(request):
+    if request.user.is_superuser:
+        return redirect('/admin/')
+
+    salon = get_user_salon(request.user)
+    expected_state = request.session.get("google_calendar_oauth_state")
+    oauth_salon_id = request.session.get("google_calendar_oauth_salon_id")
+    state = request.GET.get("state")
+    code = request.GET.get("code")
+
+    if not salon or not is_owner_user(request.user):
+        raise PermissionDenied("Solo la dueña puede conectar Google Calendar.")
+
+    if request.GET.get("error"):
+        messages.error(request, "Google Calendar no autorizó la conexión.")
+        return redirect("panel_google_calendar_settings")
+
+    if not expected_state or not state or state != expected_state:
+        messages.error(request, "No se pudo validar la conexión con Google Calendar.")
+        return redirect("panel_google_calendar_settings")
+
+    if not oauth_salon_id or salon.id != oauth_salon_id:
+        raise PermissionDenied("La autorización no corresponde a este salón.")
+
+    if not code:
+        messages.error(request, "Google Calendar no devolvió un código de autorización.")
+        return redirect("panel_google_calendar_settings")
+
+    try:
+        flow = _google_calendar_oauth_flow(state=state)
+        flow.fetch_token(code=code)
+        credentials = flow.credentials
+
+        integration, _ = GoogleCalendarIntegration.objects.get_or_create(salon=salon)
+        integration.access_token = credentials.token
+        integration.refresh_token = (
+            credentials.refresh_token or integration.refresh_token
+        )
+        integration.token_expiry = credentials.expiry
+        if integration.token_expiry and timezone.is_naive(integration.token_expiry):
+            integration.token_expiry = timezone.make_aware(
+                integration.token_expiry,
+                datetime_timezone.utc,
+            )
+        integration.is_active = True
+        integration.save(update_fields=[
+            "access_token",
+            "refresh_token",
+            "token_expiry",
+            "is_active",
+            "updated_at",
+        ])
+    except Exception as error:
+        print("GOOGLE CALENDAR CALLBACK ERROR:", repr(error))
+        messages.error(request, "No se pudo conectar Google Calendar. Intentá nuevamente.")
+        return redirect("panel_google_calendar_settings")
+    finally:
+        request.session.pop("google_calendar_oauth_state", None)
+        request.session.pop("google_calendar_oauth_salon_id", None)
+
+    if not integration.is_connected():
+        messages.error(
+            request,
+            "Google no devolvió acceso permanente. Intentá conectar la cuenta nuevamente.",
+        )
+        return redirect("panel_google_calendar_settings")
+
+    messages.success(request, "Google Calendar conectado correctamente.")
+    return redirect("panel_google_calendar_settings")
+
+
+@login_required
+@subscription_required
+def panel_google_calendar_disconnect(request):
+    if request.user.is_superuser:
+        return redirect('/admin/')
+
+    salon = get_user_salon(request.user)
+
+    if not salon or not is_owner_user(request.user):
+        raise PermissionDenied("Solo la dueña puede desconectar Google Calendar.")
+
+    if request.method != "POST":
+        return redirect("panel_google_calendar_settings")
+
+    integration = GoogleCalendarIntegration.objects.filter(salon=salon).first()
+    if integration:
+        integration.access_token = None
+        integration.refresh_token = None
+        integration.token_expiry = None
+        integration.is_active = False
+        integration.save(update_fields=[
+            "access_token",
+            "refresh_token",
+            "token_expiry",
+            "is_active",
+            "updated_at",
+        ])
+
+    messages.success(request, "Google Calendar fue desconectado.")
+    return redirect("panel_google_calendar_settings")
 
 
 @login_required
@@ -1618,8 +2157,6 @@ def panel_settings(request):
 
     if not salon or not is_owner_user(request.user):
         raise PermissionDenied("Solo la dueña puede editar la configuración.")
-
-    payment_settings, _ = SalonPaymentSettings.objects.get_or_create(salon=salon)
 
     settings_saved = False
 
@@ -1639,21 +2176,13 @@ def panel_settings(request):
         or salon.full_payment_required
     )
     accepts_transfer = salon.payment_method in ["transfer", "both"]
-    accepts_integrated = salon.payment_method in ["integrated", "both"]
-    mercadopago_ready = payment_settings.has_valid_mercadopago_connection()
-    mercadopago_visible_to_clients = accepts_integrated and mercadopago_ready
-
     context = {
         'payment_policy_active': payment_policy_active,
         'panel_role': 'owner',
         'salon': salon,
         'form': form,
-        'payment_settings': payment_settings,
         'accepts_transfer': accepts_transfer,
-        'accepts_integrated': accepts_integrated,
         'settings_saved': settings_saved,
-        'mercadopago_ready': mercadopago_ready,
-        'mercadopago_visible_to_clients': mercadopago_visible_to_clients,
     }
 
     return render(request, 'reservas/panel/settings.html', context)

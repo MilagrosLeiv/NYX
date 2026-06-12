@@ -5,6 +5,10 @@
 {% block panel_subtitle %}Gestioná las franjas semanales de trabajo del profesional{% endblock %}
 
 {% block panel_content %}
+<div class="d-flex justify-content-end mb-3">
+  <a href="{% url 'panel_employees' %}" class="nyx-filter-btn">Volver</a>
+</div>
+
 <div class="nyx-card p-4 mb-4">
   <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
     <div>
@@ -15,7 +19,6 @@
     </div>
 
     <div class="d-flex gap-2 flex-wrap">
-      <a href="{% url 'panel_employees' %}" class="nyx-filter-btn">Volver</a>
       <form method="post" action="{% url 'panel_employee_working_hours_copy_from_salon' employee.id %}">
         {% csrf_token %}
         <button type="submit" class="nyx-filter-btn border-0">
@@ -29,6 +32,22 @@
     </div>
   </div>
 </div>
+
+{% if has_own_working_hours %}
+  <div class="alert alert-info rounded-4 mb-4">
+    <strong>Horarios propios activos.</strong>
+    <div class="small mt-1">
+      Los días sin franjas activas se consideran no laborables para {{ employee.name }}.
+    </div>
+  </div>
+{% else %}
+  <div class="alert alert-light border rounded-4 mb-4">
+    <strong>Usando los horarios generales del salón.</strong>
+    <div class="small mt-1">
+      Podés configurar horarios propios cuando quieras.
+    </div>
+  </div>
+{% endif %}
 
 <div class="nyx-card p-4">
   <div class="nyx-hours-days">
@@ -92,7 +111,162 @@
   </div>
 </div>
 
+{% if show_working_hours_decision %}
+  <div
+    class="modal fade"
+    id="workingHoursDecisionModal"
+    tabindex="-1"
+    aria-labelledby="workingHoursDecisionModalLabel"
+    aria-hidden="true"
+  >
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content nyx-hours-decision-modal">
+        <div class="modal-header border-0 pb-0">
+          <div class="nyx-hours-decision-icon">
+            <i class="bi bi-clock-history"></i>
+          </div>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+            aria-label="Cerrar"
+          ></button>
+        </div>
+
+        <div class="modal-body pt-3">
+          <h2 id="workingHoursDecisionModalLabel">Configurá los horarios de {{ employee.name }}</h2>
+          <p>
+            Este profesional todavía no tiene horarios propios. Si no configurás nada,
+            el sistema usará los horarios generales del salón.
+          </p>
+          <div class="nyx-hours-decision-question">¿Qué querés hacer?</div>
+
+          <div class="nyx-hours-decision-actions">
+            <form method="post" action="{% url 'panel_employee_working_hours_copy_from_salon' employee.id %}">
+              {% csrf_token %}
+              <button type="submit" class="nyx-primary-btn border-0">
+                <i class="bi bi-copy"></i>
+                Copiar horarios del salón
+              </button>
+            </form>
+
+            <a
+              href="{% url 'panel_employee_working_hour_create' employee.id %}"
+              class="nyx-hours-manual-btn"
+            >
+              <i class="bi bi-plus-circle"></i>
+              Agregar horarios manualmente
+            </a>
+
+            <button
+              type="button"
+              class="nyx-hours-later-btn"
+              data-bs-dismiss="modal"
+            >
+              Decidir después
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endif %}
+
 <style>
+  .nyx-hours-decision-modal{
+    border: 1px solid var(--nyx-border);
+    border-radius: 1.5rem;
+    box-shadow: 0 24px 70px rgba(31,55,58,.2);
+  }
+
+  .nyx-hours-decision-modal .modal-header{
+    align-items: flex-start;
+    padding: 1.5rem 1.5rem 0;
+  }
+
+  .nyx-hours-decision-modal .modal-body{
+    padding: 1rem 1.5rem 1.5rem;
+  }
+
+  .nyx-hours-decision-icon{
+    width: 52px;
+    height: 52px;
+    flex: 0 0 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 1rem;
+    background: linear-gradient(135deg, var(--nyx-primary), var(--nyx-primary-strong));
+    color: #fff;
+    font-size: 1.3rem;
+    box-shadow: 0 10px 24px rgba(118,207,210,.22);
+  }
+
+  .nyx-hours-decision-modal h2{
+    margin: 0 0 .55rem;
+    color: var(--nyx-text);
+    font-size: 1.45rem;
+    font-weight: 850;
+  }
+
+  .nyx-hours-decision-modal p{
+    margin: 0;
+    color: var(--nyx-muted);
+    line-height: 1.6;
+  }
+
+  .nyx-hours-decision-question{
+    margin-top: 1.1rem;
+    color: var(--nyx-text);
+    font-weight: 800;
+  }
+
+  .nyx-hours-decision-actions{
+    display: grid;
+    gap: .75rem;
+    margin-top: .8rem;
+  }
+
+  .nyx-hours-decision-actions form,
+  .nyx-hours-decision-actions .nyx-primary-btn,
+  .nyx-hours-decision-actions .nyx-hours-manual-btn{
+    width: 100%;
+  }
+
+  .nyx-hours-manual-btn{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    border: 1px solid var(--nyx-border);
+    border-radius: 999px;
+    padding: .82rem 1.15rem;
+    background: #fff;
+    color: var(--nyx-primary-dark);
+    font-weight: 800;
+    text-decoration: none;
+    transition: .2s ease;
+  }
+
+  .nyx-hours-manual-btn:hover{
+    color: var(--nyx-primary-dark);
+    border-color: var(--nyx-primary);
+    background: #f7fcfc;
+    transform: translateY(-1px);
+  }
+
+  .nyx-hours-later-btn{
+    border: 0;
+    background: transparent;
+    color: var(--nyx-muted);
+    padding: .55rem;
+    font-weight: 750;
+  }
+
+  .nyx-hours-later-btn:hover{
+    color: var(--nyx-text);
+  }
+
   .nyx-hours-days{
     display: grid;
     gap: 1rem;
@@ -104,5 +278,28 @@
     padding: 1rem;
     background: #fbfefe;
   }
+
+  @media (max-width: 575.98px){
+    .nyx-hours-decision-modal .modal-header{
+      padding: 1.2rem 1.2rem 0;
+    }
+
+    .nyx-hours-decision-modal .modal-body{
+      padding: .9rem 1.2rem 1.2rem;
+    }
+  }
 </style>
+
+{% if show_working_hours_decision %}
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const modalElement = document.getElementById("workingHoursDecisionModal");
+
+      if (modalElement && window.bootstrap) {
+        const decisionModal = new bootstrap.Modal(modalElement);
+        decisionModal.show();
+      }
+    });
+  </script>
+{% endif %}
 {% endblock %}

@@ -759,6 +759,13 @@
                     <div class="nyx-settings-muted mt-1">
                       Si elegís “Ninguno”, no se mostrará ninguna opción de pago al cliente.
                     </div>
+
+                    <div class="nyx-settings-muted mt-3">
+                      La conexión de Mercado Pago se administra desde
+                      <a href="{% url 'panel_mercado_pago_settings' %}" class="fw-bold">
+                        Integraciones
+                      </a>.
+                    </div>
                   </div>
 
                   <!-- Datos de transferencia -->
@@ -825,67 +832,6 @@
                             Estos datos se mostrarán a los clientes que elijan transferencia.
                           </div>
                         </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Mercado Pago dentro de métodos de pago -->
-                  <div class="col-12" id="mercadopago-settings-block">
-                    <div class="row g-4">
-                      <div class="col-12">
-                        <hr class="my-2">
-                        <h6 class="fw-bold mb-2">Mercado Pago</h6>
-
-                        <p class="nyx-settings-muted mb-3">
-                          Conectá la cuenta donde querés recibir los pagos online. Antes de continuar, asegurate de haber iniciado sesión
-                          en Mercado Pago con la cuenta correcta. La disponibilidad del dinero depende de los plazos y comisiones de Mercado Pago.
-                        </p>
-
-                        {% if payment_settings and payment_settings.mercadopago_connected %}
-                          {% if mercadopago_visible_to_clients %}
-                            <div class="alert alert-success rounded-4 mb-3">
-                              <strong>Mercado Pago activo para clientes.</strong>
-                              <div class="small mt-1">
-                                Tus clientes podrán pagar online con Mercado Pago.
-                              </div>
-                            </div>
-                          {% elif accepts_integrated %}
-                            <div class="alert alert-warning rounded-4 mb-3">
-                              <strong>Mercado Pago conectado, pero revisá la configuración.</strong>
-                              <div class="small mt-1">
-                                El método integrado está seleccionado, pero falta validar la conexión.
-                              </div>
-                            </div>
-                          {% else %}
-                            <div class="alert alert-info rounded-4 mb-3">
-                              <strong>Mercado Pago conectado, pero no visible para clientes.</strong>
-                              <div class="small mt-1">
-                                Para mostrarlo, elegí “Mercado Pago” o “Transferencia y Mercado Pago”.
-                              </div>
-                            </div>
-                          {% endif %}
-
-                          <button type="submit"
-                                  formaction="{% url 'mercadopago_oauth_disconnect' salon.id %}"
-                                  formmethod="post"
-                                  class="btn btn-outline-danger rounded-pill px-4">
-                            Desconectar Mercado Pago
-                          </button>
-
-                        {% else %}
-                          <div class="alert alert-warning rounded-4 mb-3">
-                            <strong>Mercado Pago no conectado.</strong>
-                            <div class="small mt-1">
-                              Elegiste ofrecer Mercado Pago, pero todavía falta conectar una cuenta.
-                            </div>
-                          </div>
-
-                          <a href="{% url 'mercadopago_oauth_connect' salon.id %}"
-                            class="btn rounded-pill px-4"
-                            style="background:#7ad0d4; color:#123; font-weight:700;">
-                            Conectar Mercado Pago
-                          </a>
-                        {% endif %}
                       </div>
                     </div>
                   </div>
@@ -997,7 +943,6 @@
     const noPaymentBox = document.getElementById("no-payment-active-box");
     const paymentMethodsSection = document.getElementById("payment-methods-section");
     const transferBlock = document.getElementById("transfer-settings-block");
-    const mercadoPagoBlock = document.getElementById("mercadopago-settings-block");
 
     function isPaymentPolicyActive() {
       return Boolean(
@@ -1032,10 +977,6 @@
         transferBlock.style.display = showTransfer ? "block" : "none";
       }
 
-      if (mercadoPagoBlock) {
-        const showMercadoPago = paymentActive && (method === "integrated" || method === "both");
-        mercadoPagoBlock.style.display = showMercadoPago ? "block" : "none";
-      }
     }
 
     [depositEnabled, allowFullPayment, fullPaymentRequired, paymentMethod].forEach(function (field) {

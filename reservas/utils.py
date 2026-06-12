@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 
+from django.db.models import Q
 from django.utils import timezone
 
 from .models import (
@@ -9,6 +10,7 @@ from .models import (
     BusinessHours,
     EmployeeTimeOff,
     EmployeeWorkingHour,
+    SpecialAvailabilityBlock,
 )
 
 
@@ -21,6 +23,38 @@ def get_total_duration_minutes(services):
 
 def overlaps(start_a, end_a, start_b, end_b):
     return start_a < end_b and end_a > start_b
+
+
+def get_special_block_ranges(employee, selected_date):
+    current_tz = timezone.get_current_timezone()
+    day_start = timezone.make_aware(
+        datetime.combine(selected_date, datetime.min.time()),
+        current_tz,
+    )
+    day_end = day_start + timedelta(days=1)
+
+    special_blocks = SpecialAvailabilityBlock.objects.filter(
+        salon=employee.salon,
+        start_datetime__lt=day_end,
+        end_datetime__gt=day_start,
+    ).filter(
+        Q(employee__isnull=True) | Q(employee=employee)
+    )
+    ranges = [
+        (max(block.start_datetime, day_start), min(block.end_datetime, day_end))
+        for block in special_blocks
+    ]
+
+    legacy_blocks = EmployeeTimeOff.objects.filter(
+        employee=employee,
+        start_datetime__lt=day_end,
+        end_datetime__gt=day_start,
+    )
+    ranges.extend(
+        (max(block.start_datetime, day_start), min(block.end_datetime, day_end))
+        for block in legacy_blocks
+    )
+    return ranges
 
 
 def get_working_ranges_for_date(salon, selected_date):
@@ -137,14 +171,19 @@ def get_employee_working_ranges_for_date(employee, selected_date):
     if not salon_ranges:
         return []
 
-    employee_blocks = EmployeeWorkingHour.objects.filter(
-        employee=employee,
+    employee_hours = EmployeeWorkingHour.objects.filter(employee=employee)
+
+    # Si nunca se configuraron horarios propios, el profesional hereda el salón.
+    if not employee_hours.exists():
+        return salon_ranges
+
+    employee_blocks = employee_hours.filter(
         weekday=selected_date.weekday(),
         is_active=True,
     ).order_by("start_time")
 
     if not employee_blocks.exists():
-        return salon_ranges
+        return []
 
     current_tz = timezone.get_current_timezone()
     working_ranges = []
@@ -182,8 +221,8 @@ def get_available_slots(employee, services, selected_date):
     print("selected_date:", selected_date)
     print("services:", [(s.id, s.name, s.duration_minutes) for s in services])
 
-    working_ranges = get_working_ranges_for_date(
-        salon=employee.salon,
+    working_ranges = get_employee_working_ranges_for_date(
+        employee=employee,
         selected_date=selected_date,
     )
 
@@ -219,7 +258,10 @@ def get_available_slots(employee, services, selected_date):
         booking__status__in=['cancelled', 'expired']
     )
 
-    existing_time_off_blocks = EmployeeTimeOff.objects.none()
+    existing_time_off_blocks = get_special_block_ranges(
+        employee,
+        selected_date,
+    )
 
     print("existing_appointments:", list(
         existing_appointments.values("id", "appointment_datetime", "status")
@@ -234,9 +276,7 @@ def get_available_slots(employee, services, selected_date):
         )
     ))
 
-    print("existing_time_off_blocks:", list(
-        existing_time_off_blocks.values("id", "start_datetime", "end_datetime")
-    ))
+    print("existing_time_off_blocks:", existing_time_off_blocks)
 
     occupied_ranges = []
 
@@ -263,9 +303,9 @@ def get_available_slots(employee, services, selected_date):
         if item.booking.is_blocking_slot():
             occupied_ranges.append((item.start_datetime, item.end_datetime))
 
-    for block in existing_time_off_blocks:
-        occupied_ranges.append((block.start_datetime, block.end_datetime))
-        print("occupied time off:", block.id, block.start_datetime, block.end_datetime)
+    for block_start, block_end in existing_time_off_blocks:
+        occupied_ranges.append((block_start, block_end))
+        print("occupied time off:", block_start, block_end)
 
     print("occupied_ranges count:", len(occupied_ranges))
     print("occupied_ranges:", occupied_ranges)

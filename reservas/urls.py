@@ -53,7 +53,27 @@ urlpatterns = [
     ),
     path('panel/', panel_views.panel_dashboard, name='panel_dashboard'),
     path('panel/agenda/', panel_views.panel_agenda, name='panel_agenda'),
+    path(
+        'panel/agenda/cargar-turno/',
+        panel_views.panel_manual_booking_create,
+        name='panel_manual_booking_create'
+    ),
+    path(
+        'panel/agenda/cargar-turno/servicios/',
+        panel_views.panel_manual_booking_services,
+        name='panel_manual_booking_services'
+    ),
     path('panel/bloqueos/', panel_views.panel_bloqueos, name='panel_bloqueos'),
+    path(
+        'panel/bloqueos/<int:block_id>/editar/',
+        panel_views.panel_bloqueo_edit,
+        name='panel_bloqueo_edit'
+    ),
+    path(
+        'panel/bloqueos/<int:block_id>/eliminar-especial/',
+        panel_views.panel_special_bloqueo_delete,
+        name='panel_special_bloqueo_delete'
+    ),
     path(
         'panel/bloqueos/<int:block_id>/eliminar/',
         panel_views.panel_bloqueo_delete,
@@ -187,6 +207,32 @@ urlpatterns = [
         name='panel_business_hour_block_toggle_active'
     ),
     path('panel/horarios/<int:business_hours_id>/editar/', panel_views.panel_business_hours_edit, name='panel_business_hours_edit'),
+    path('panel/integraciones/', panel_views.panel_integrations, name='panel_integrations'),
+    path(
+        'panel/integraciones/mercado-pago/',
+        panel_views.panel_mercado_pago_settings,
+        name='panel_mercado_pago_settings'
+    ),
+    path(
+        'panel/integraciones/google-calendar/',
+        panel_views.panel_google_calendar_settings,
+        name='panel_google_calendar_settings'
+    ),
+    path(
+        'panel/integraciones/google-calendar/conectar/',
+        panel_views.panel_google_calendar_connect,
+        name='panel_google_calendar_connect'
+    ),
+    path(
+        'panel/integraciones/google-calendar/callback/',
+        panel_views.panel_google_calendar_callback,
+        name='panel_google_calendar_callback'
+    ),
+    path(
+        'panel/integraciones/google-calendar/desconectar/',
+        panel_views.panel_google_calendar_disconnect,
+        name='panel_google_calendar_disconnect'
+    ),
     path('panel/configuracion/', panel_views.panel_settings, name='panel_settings'),
     path('panel/reservas/', panel_views.panel_bookings, name='panel_bookings'),
     path('panel/reservas/<int:booking_id>/', panel_views.panel_booking_detail, name='panel_booking_detail'),

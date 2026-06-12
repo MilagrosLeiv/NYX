@@ -1,5 +1,5 @@
 from decimal import Decimal, InvalidOperation
-from datetime import time
+from datetime import datetime, time, timedelta
 
 from django import forms
 from django.utils import timezone
@@ -17,7 +17,9 @@ from .models import (
     Salon,
     Service,
     ServiceCategory,
+    SpecialAvailabilityBlock,
 )
+from .utils import get_available_slots
 
 def build_time_choices(start_hour=6, end_hour=23, step_minutes=30):
     choices = [("", "Seleccionar hora")]
@@ -745,6 +747,403 @@ class PanelEmployeeWorkingHourForm(forms.ModelForm):
             instance.save()
 
         return instance
+
+
+class SpecialAvailabilityBlockForm(forms.ModelForm):
+    scope = forms.ChoiceField(
+        label='¿A quién afecta?',
+        choices=[
+            ('salon', 'Todo el salón'),
+            ('employee', 'Un profesional específico'),
+        ],
+        widget=forms.RadioSelect(attrs={
+            'class': 'form-check-input',
+            'data-block-scope': 'true',
+        }),
+        initial='salon',
+    )
+    reason = forms.ChoiceField(
+        label='Motivo',
+        choices=[
+            ('holiday', 'Feriado'),
+            ('vacation', 'Vacaciones'),
+            ('personal', 'Ausencia'),
+            ('training', 'Capacitación'),
+            ('special_closure', 'Cierre especial'),
+            ('other', 'Otro'),
+        ],
+        widget=forms.Select(attrs={
+            'class': 'form-select nyx-input',
+        }),
+    )
+    duration_type = forms.ChoiceField(
+        label='Duración del bloqueo',
+        choices=[
+            ('all_day', 'Todo el día'),
+            ('timed', 'Solo un horario'),
+        ],
+        widget=forms.RadioSelect(attrs={
+            'class': 'form-check-input',
+            'data-duration-type': 'true',
+        }),
+        initial='all_day',
+    )
+
+    start_date = forms.DateField(
+        label='Fecha de inicio',
+        widget=forms.DateInput(attrs={
+            'type': 'date',
+            'class': 'form-control nyx-input',
+        }),
+    )
+    start_time = forms.TimeField(
+        label='Hora de inicio',
+        required=False,
+        widget=forms.TimeInput(attrs={
+            'type': 'time',
+            'class': 'form-control nyx-input',
+        }),
+    )
+    end_date = forms.DateField(
+        label='Fecha de fin',
+        required=False,
+        widget=forms.DateInput(attrs={
+            'type': 'date',
+            'class': 'form-control nyx-input',
+        }),
+    )
+    end_time = forms.TimeField(
+        label='Hora de fin',
+        required=False,
+        widget=forms.TimeInput(attrs={
+            'type': 'time',
+            'class': 'form-control nyx-input',
+        }),
+    )
+
+    class Meta:
+        model = SpecialAvailabilityBlock
+        fields = [
+            'employee',
+            'title',
+            'show_in_agenda',
+            'notes',
+        ]
+        widgets = {
+            'title': forms.TextInput(attrs={
+                'class': 'form-control nyx-input',
+                'placeholder': 'Ej. Feriado, vacaciones o capacitación',
+            }),
+            'employee': forms.Select(attrs={
+                'class': 'form-select nyx-input',
+            }),
+            'show_in_agenda': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',
+            }),
+            'notes': forms.Textarea(attrs={
+                'class': 'form-control nyx-input',
+                'rows': 3,
+                'placeholder': 'Información opcional para el equipo',
+            }),
+        }
+
+    def __init__(self, *args, salon=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.salon = salon
+        self.fields['title'].required = False
+        self.fields['title'].label = 'Título personalizado (opcional)'
+        self.fields['title'].widget.attrs['placeholder'] = (
+            'Ej. Capacitación del equipo'
+        )
+        self.fields['employee'].required = False
+        self.fields['employee'].label = 'Profesional'
+        self.fields['employee'].empty_label = 'Seleccioná un profesional'
+        self.fields['employee'].queryset = Employee.objects.filter(
+            salon=salon,
+            is_active=True,
+        ).order_by('name')
+
+        if self.instance and self.instance.pk:
+            self.initial.setdefault(
+                'scope',
+                'employee' if self.instance.employee_id else 'salon',
+            )
+            self.initial.setdefault(
+                'duration_type',
+                'all_day' if self.instance.all_day else 'timed',
+            )
+            reason = self.instance.block_type
+            if (
+                reason == SpecialAvailabilityBlock.BlockType.SPECIAL_CLOSURE
+                and self.instance.title.lower().startswith('capacit')
+            ):
+                reason = 'training'
+            self.initial.setdefault('reason', reason)
+            local_start = timezone.localtime(self.instance.start_datetime)
+            local_end = timezone.localtime(self.instance.end_datetime)
+            self.initial.setdefault('start_date', local_start.date())
+            self.initial.setdefault('start_time', local_start.time())
+
+            if self.instance.all_day:
+                self.initial.setdefault(
+                    'end_date',
+                    (local_end - timedelta(days=1)).date(),
+                )
+            else:
+                self.initial.setdefault('end_time', local_end.time())
+
+    def clean_employee(self):
+        employee = self.cleaned_data.get('employee')
+
+        if employee and employee.salon_id != self.salon.id:
+            raise forms.ValidationError(
+                'Ese profesional no pertenece a este salón.'
+            )
+        return employee
+
+    def clean(self):
+        cleaned_data = super().clean()
+        scope = cleaned_data.get('scope')
+        employee = cleaned_data.get('employee')
+        reason = cleaned_data.get('reason')
+        duration_type = cleaned_data.get('duration_type')
+        title = (cleaned_data.get('title') or '').strip()
+        start_date = cleaned_data.get('start_date')
+        end_date = cleaned_data.get('end_date')
+        all_day = duration_type == 'all_day'
+        cleaned_data['all_day'] = all_day
+
+        if scope == 'employee' and not employee:
+            self.add_error(
+                'employee',
+                'Seleccioná el profesional al que afecta el bloqueo.',
+            )
+        elif scope == 'salon':
+            cleaned_data['employee'] = None
+
+        if not title and reason:
+            cleaned_data['title'] = dict(
+                self.fields['reason'].choices
+            ).get(reason, 'Bloqueo')
+
+        if not start_date:
+            return cleaned_data
+
+        current_tz = timezone.get_current_timezone()
+
+        if all_day:
+            if not end_date:
+                self.add_error('end_date', 'Indicá la fecha de fin.')
+                return cleaned_data
+            start_datetime = timezone.make_aware(
+                datetime.combine(start_date, time.min),
+                current_tz,
+            )
+            end_datetime = timezone.make_aware(
+                datetime.combine(end_date + timedelta(days=1), time.min),
+                current_tz,
+            )
+        else:
+            start_time = cleaned_data.get('start_time')
+            end_time = cleaned_data.get('end_time')
+
+            if not start_time:
+                self.add_error('start_time', 'Indicá la hora de inicio.')
+            if not end_time:
+                self.add_error('end_time', 'Indicá la hora de fin.')
+            if not start_time or not end_time:
+                return cleaned_data
+
+            start_datetime = timezone.make_aware(
+                datetime.combine(start_date, start_time),
+                current_tz,
+            )
+            end_datetime = timezone.make_aware(
+                datetime.combine(start_date, end_time),
+                current_tz,
+            )
+
+        if end_datetime <= start_datetime:
+            raise forms.ValidationError(
+                'La fecha/hora de fin debe ser posterior a la de inicio.'
+            )
+
+        cleaned_data['start_datetime'] = start_datetime
+        cleaned_data['end_datetime'] = end_datetime
+        return cleaned_data
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.salon = self.salon
+        instance.employee = self.cleaned_data.get('employee')
+        instance.all_day = self.cleaned_data['all_day']
+        reason = self.cleaned_data['reason']
+        instance.block_type = (
+            SpecialAvailabilityBlock.BlockType.SPECIAL_CLOSURE
+            if reason == 'training'
+            else reason
+        )
+        instance.title = self.cleaned_data['title']
+        instance.start_datetime = self.cleaned_data['start_datetime']
+        instance.end_datetime = self.cleaned_data['end_datetime']
+
+        if commit:
+            instance.full_clean()
+            instance.save()
+        return instance
+
+
+class ManualBookingForm(forms.Form):
+    customer_name = forms.CharField(
+        label='Nombre del cliente',
+        max_length=100,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control nyx-form-input',
+            'placeholder': 'Ej. María López',
+            'autocomplete': 'name',
+        }),
+    )
+    customer_phone = forms.CharField(
+        label='Teléfono',
+        max_length=30,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control nyx-form-input',
+            'placeholder': 'Ej. 3415555555',
+            'autocomplete': 'tel',
+        }),
+    )
+    customer_email = forms.EmailField(
+        label='Email (opcional)',
+        required=False,
+        widget=forms.EmailInput(attrs={
+            'class': 'form-control nyx-form-input',
+            'placeholder': 'cliente@email.com',
+            'autocomplete': 'email',
+        }),
+    )
+    employee = forms.ModelChoiceField(
+        label='Profesional',
+        queryset=Employee.objects.none(),
+        widget=forms.Select(attrs={
+            'class': 'form-select nyx-form-input',
+        }),
+    )
+    service = forms.ModelChoiceField(
+        label='Servicio',
+        queryset=Service.objects.none(),
+        error_messages={
+            'invalid_choice': (
+                'Ese servicio no está asignado al profesional seleccionado.'
+            ),
+        },
+        widget=forms.Select(attrs={
+            'class': 'form-select nyx-form-input',
+        }),
+    )
+    appointment_date = forms.DateField(
+        label='Fecha',
+        widget=forms.DateInput(attrs={
+            'type': 'date',
+            'class': 'form-control nyx-form-input',
+        }),
+    )
+    appointment_time = forms.TypedChoiceField(
+        label='Hora',
+        choices=TIME_CHOICES_30,
+        coerce=parse_time_choice,
+        empty_value=None,
+        widget=forms.Select(attrs={
+            'class': 'form-select nyx-form-input',
+        }),
+    )
+    notes = forms.CharField(
+        label='Notas internas (opcional)',
+        required=False,
+        widget=forms.Textarea(attrs={
+            'class': 'form-control nyx-form-input',
+            'rows': 3,
+            'placeholder': 'Información útil para el equipo',
+        }),
+    )
+
+    def __init__(self, *args, salon=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.salon = salon
+        self.fields['employee'].queryset = Employee.objects.filter(
+            salon=salon,
+            is_active=True,
+        ).order_by('name')
+        self.fields['service'].queryset = Service.objects.none()
+
+        employee_id = None
+        if self.is_bound:
+            employee_id = self.data.get('employee')
+        elif self.initial.get('employee'):
+            employee_id = getattr(
+                self.initial['employee'],
+                'pk',
+                self.initial['employee'],
+            )
+
+        if employee_id:
+            self.fields['service'].queryset = Service.objects.filter(
+                salon=salon,
+                is_active=True,
+                employees__id=employee_id,
+                employees__salon=salon,
+            ).distinct().order_by('name')
+
+    def clean(self):
+        cleaned_data = super().clean()
+        employee = cleaned_data.get('employee')
+        service = cleaned_data.get('service')
+        appointment_date = cleaned_data.get('appointment_date')
+        appointment_time = cleaned_data.get('appointment_time')
+
+        if not all([employee, service, appointment_date, appointment_time]):
+            return cleaned_data
+
+        if employee.salon_id != self.salon.id:
+            self.add_error('employee', 'Ese profesional no pertenece al salón.')
+        if service.salon_id != self.salon.id:
+            self.add_error('service', 'Ese servicio no pertenece al salón.')
+        if not employee.services.filter(pk=service.pk).exists():
+            self.add_error(
+                'service',
+                f'{employee.name} no tiene asignado ese servicio.',
+            )
+
+        start_datetime = timezone.make_aware(
+            datetime.combine(appointment_date, appointment_time),
+            timezone.get_current_timezone(),
+        )
+        if start_datetime < timezone.now():
+            self.add_error(
+                'appointment_time',
+                'No podés cargar un turno en una fecha u hora pasada.',
+            )
+
+        if self.errors:
+            return cleaned_data
+
+        available_slots = get_available_slots(
+            employee,
+            [service],
+            appointment_date,
+        )
+        selected_slot = appointment_time.strftime('%H:%M')
+
+        if selected_slot not in available_slots:
+            raise forms.ValidationError(
+                'Ese horario no está disponible. Revisá los horarios, '
+                'turnos existentes o bloqueos del profesional.'
+            )
+
+        cleaned_data['start_datetime'] = start_datetime
+        cleaned_data['end_datetime'] = start_datetime + timedelta(
+            minutes=service.duration_minutes,
+        )
+        return cleaned_data
 
 
 class PanelSalonSettingsForm(forms.ModelForm):

@@ -1128,6 +1128,17 @@ class BookingItem(models.Model):
         related_name='booking_items',
         verbose_name='Profesional'
     )
+
+    google_calendar_event_id = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True
+    )
+
+    google_calendar_synced_at = models.DateTimeField(
+        blank=True,
+        null=True
+    )
     start_datetime = models.DateTimeField(verbose_name='Inicio')
     end_datetime = models.DateTimeField(verbose_name='Fin')
     order = models.PositiveIntegerField(default=0, verbose_name='Orden')
@@ -1208,6 +1219,20 @@ class BookingItem(models.Model):
 
         if not business_blocks.exists():
             errors.append("El horario seleccionado está fuera del horario de atención del negocio.")
+
+        employee_hours = EmployeeWorkingHour.objects.filter(employee=self.employee)
+        if employee_hours.exists():
+            employee_blocks = employee_hours.filter(
+                weekday=weekday,
+                is_active=True,
+                start_time__lte=start_time,
+                end_time__gte=end_time,
+            )
+
+            if not employee_blocks.exists():
+                errors.append(
+                    f"El horario seleccionado está fuera del horario de trabajo de {self.employee.name}."
+                )
 
         overlapping_items = BookingItem.objects.select_related('booking').filter(
             employee=self.employee,
@@ -1294,3 +1319,129 @@ class EmployeeTimeOff(models.Model):
 
     def __str__(self):
         return f"{self.employee.name}: {self.start_datetime} - {self.end_datetime}"
+
+
+class SpecialAvailabilityBlock(models.Model):
+    class BlockType(models.TextChoices):
+        HOLIDAY = 'holiday', 'Feriado'
+        VACATION = 'vacation', 'Vacaciones'
+        PERSONAL = 'personal', 'Ausencia personal'
+        SPECIAL_CLOSURE = 'special_closure', 'Cierre especial'
+        OTHER = 'other', 'Otro'
+
+    salon = models.ForeignKey(
+        Salon,
+        on_delete=models.CASCADE,
+        related_name='special_availability_blocks',
+        verbose_name='Salón',
+    )
+    employee = models.ForeignKey(
+        Employee,
+        on_delete=models.CASCADE,
+        related_name='special_availability_blocks',
+        verbose_name='Profesional',
+        null=True,
+        blank=True,
+    )
+    title = models.CharField('Título', max_length=150)
+    block_type = models.CharField(
+        'Tipo',
+        max_length=30,
+        choices=BlockType.choices,
+        default=BlockType.OTHER,
+    )
+    start_datetime = models.DateTimeField('Desde')
+    end_datetime = models.DateTimeField('Hasta')
+    all_day = models.BooleanField('Todo el día', default=False)
+    notes = models.TextField('Notas', blank=True)
+    show_in_agenda = models.BooleanField(
+        'Mostrar en agenda',
+        default=True,
+    )
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_special_availability_blocks',
+        verbose_name='Creado por',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Bloqueo especial'
+        verbose_name_plural = 'Bloqueos especiales'
+        ordering = ['start_datetime']
+        indexes = [
+            models.Index(
+                fields=['salon', 'start_datetime', 'end_datetime'],
+                name='sp_block_salon_range_idx',
+            ),
+            models.Index(
+                fields=['employee', 'start_datetime', 'end_datetime'],
+                name='sp_block_employee_range_idx',
+            ),
+        ]
+
+    def clean(self):
+        errors = {}
+
+        if (
+            self.start_datetime
+            and self.end_datetime
+            and self.end_datetime <= self.start_datetime
+        ):
+            errors['end_datetime'] = (
+                'La fecha/hora de fin debe ser posterior a la de inicio.'
+            )
+
+        if (
+            self.employee_id
+            and self.salon_id
+            and self.employee.salon_id != self.salon_id
+        ):
+            errors['employee'] = (
+                'El profesional seleccionado no pertenece a este salón.'
+            )
+
+        if errors:
+            raise ValidationError(errors)
+
+    def __str__(self):
+        scope = self.employee.name if self.employee_id else self.salon.name
+        return f'{self.title} - {scope}'
+
+    @property
+    def display_end_datetime(self):
+        if self.all_day:
+            return self.end_datetime - timedelta(days=1)
+        return self.end_datetime
+
+
+class GoogleCalendarIntegration(models.Model):
+    salon = models.OneToOneField(
+        Salon,
+        on_delete=models.CASCADE,
+        related_name="google_calendar_integration"
+    )
+
+    calendar_id = models.CharField(
+        max_length=255,
+        default="primary"
+    )
+
+    access_token = models.TextField(blank=True, null=True)
+    refresh_token = models.TextField(blank=True, null=True)
+    token_expiry = models.DateTimeField(blank=True, null=True)
+
+    is_active = models.BooleanField(default=True)
+
+    sync_confirmed_bookings = models.BooleanField(default=True)
+    sync_pending_bookings = models.BooleanField(default=False)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def is_connected(self):
+        return bool(self.refresh_token)

@@ -1,0 +1,172 @@
+{% extends "reservas/panel/base_panel.html" %}
+
+{% block title %}Google Calendar | Panel NYX{% endblock %}
+{% block panel_title %}Google Calendar{% endblock %}
+{% block panel_subtitle %}Configurá la sincronización de turnos con tu calendario{% endblock %}
+
+{% block panel_content %}
+<div class="nyx-card nyx-google-calendar-card">
+  <div class="nyx-google-calendar-heading">
+    <div class="nyx-google-calendar-icon">
+      <i class="bi bi-calendar-event-fill"></i>
+    </div>
+
+    <div>
+      <div class="nyx-google-calendar-status {% if integration.is_connected %}is-connected{% endif %}">
+        {% if integration.is_connected %}
+          <i class="bi bi-check-circle-fill"></i>
+          Conectado
+        {% else %}
+          <i class="bi bi-circle"></i>
+          No conectado
+        {% endif %}
+      </div>
+      <h2>Google Calendar</h2>
+    </div>
+  </div>
+
+  <p class="nyx-google-calendar-description">
+    Los turnos confirmados se sincronizan automáticamente con tu calendario.
+    NYX sigue siendo la fuente de verdad para reservas, disponibilidad y cancelaciones.
+  </p>
+
+  {% if integration.is_connected %}
+    <div class="nyx-google-calendar-notice">
+      <i class="bi bi-arrow-repeat"></i>
+      <span>
+        Las nuevas reservas confirmadas se crearán en el calendario
+        <strong>{{ integration.calendar_id|default:"primary" }}</strong>.
+      </span>
+    </div>
+
+    <form method="post" action="{% url 'panel_google_calendar_disconnect' %}">
+      {% csrf_token %}
+      <button type="submit" class="nyx-google-calendar-disconnect">
+        <i class="bi bi-link-45deg"></i>
+        Desconectar Google Calendar
+      </button>
+    </form>
+  {% else %}
+    {% if google_calendar_configured %}
+      <a href="{% url 'panel_google_calendar_connect' %}" class="nyx-primary-btn" data-no-scroll-restore>
+        <i class="bi bi-google"></i>
+        Conectar cuenta de Google
+      </a>
+    {% else %}
+      <div class="nyx-google-calendar-warning">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span>Las credenciales OAuth de Google Calendar todavía no están configuradas.</span>
+      </div>
+    {% endif %}
+  {% endif %}
+
+  <div class="mt-4">
+    <a href="{% url 'panel_integrations' %}" class="nyx-outline-light" data-no-scroll-restore>
+      Volver a Integraciones
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .nyx-google-calendar-card {
+    max-width: 780px;
+    padding: 1.75rem;
+  }
+
+  .nyx-google-calendar-heading {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .nyx-google-calendar-icon {
+    width: 62px;
+    height: 62px;
+    flex: 0 0 62px;
+    border-radius: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #2f6d71;
+    background: rgba(118, 207, 210, .18);
+    font-size: 1.6rem;
+  }
+
+  .nyx-google-calendar-heading h2 {
+    margin: .25rem 0 0;
+    color: var(--nyx-text);
+    font-size: 1.4rem;
+    font-weight: 850;
+  }
+
+  .nyx-google-calendar-status {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    color: var(--nyx-muted);
+    font-size: .82rem;
+    font-weight: 850;
+  }
+
+  .nyx-google-calendar-status.is-connected {
+    color: #23734f;
+  }
+
+  .nyx-google-calendar-description {
+    max-width: 650px;
+    margin: 0 0 1.5rem;
+    color: var(--nyx-muted);
+    line-height: 1.65;
+  }
+
+  .nyx-google-calendar-notice,
+  .nyx-google-calendar-warning {
+    display: flex;
+    align-items: flex-start;
+    gap: .75rem;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    border-radius: 1rem;
+    font-weight: 700;
+  }
+
+  .nyx-google-calendar-notice {
+    color: #315558;
+    background: #f2fbfb;
+    border: 1px solid var(--nyx-border);
+  }
+
+  .nyx-google-calendar-warning {
+    color: #8a611b;
+    background: #fffaf0;
+    border: 1px solid #f3dfaa;
+  }
+
+  .nyx-google-calendar-disconnect {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    border: 1px solid #f0c6c6;
+    border-radius: 999px;
+    padding: .82rem 1.15rem;
+    color: #a43e3e;
+    background: #fff6f6;
+    font-weight: 800;
+  }
+
+  @media (max-width: 575.98px) {
+    .nyx-google-calendar-card {
+      padding: 1.25rem;
+    }
+
+    .nyx-google-calendar-card .nyx-primary-btn,
+    .nyx-google-calendar-disconnect {
+      width: 100%;
+    }
+  }
+</style>
+{% endblock %}

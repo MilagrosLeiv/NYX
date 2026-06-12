@@ -1,0 +1,195 @@
+{% extends "reservas/panel/base_panel.html" %}
+
+{% block title %}Cargar turno manual | NYX{% endblock %}
+{% block panel_title %}Cargar turno manual{% endblock %}
+{% block panel_subtitle %}Agregá una reserva real a la agenda sin solicitar pago online{% endblock %}
+
+{% block panel_content %}
+<div class="d-flex justify-content-end mb-3">
+  <a href="{% url 'panel_agenda' %}" class="nyx-filter-btn">Volver a Agenda</a>
+</div>
+
+<div class="nyx-card p-4 nyx-manual-booking-card">
+  <div class="d-flex align-items-start gap-3 mb-4 nyx-manual-booking-head">
+    <div class="nyx-manual-booking-icon">
+      <i class="bi bi-calendar-plus"></i>
+    </div>
+    <div>
+      <h2 class="h5 fw-bold mb-1">Datos del turno</h2>
+      <p class="text-muted mb-0">
+        Se guardará como una reserva confirmada y ocupará ese horario.
+      </p>
+    </div>
+  </div>
+
+  <form method="post" class="row g-3">
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+      <div class="col-12">
+        <div class="alert alert-warning rounded-4 mb-0">
+          {{ form.non_field_errors }}
+        </div>
+      </div>
+    {% endif %}
+
+    <div class="col-12 col-md-6">
+      <label class="form-label fw-semibold">{{ form.customer_name.label }}</label>
+      {{ form.customer_name }}
+      <div class="text-danger small mt-1">{{ form.customer_name.errors }}</div>
+    </div>
+    <div class="col-12 col-md-6">
+      <label class="form-label fw-semibold">{{ form.customer_phone.label }}</label>
+      {{ form.customer_phone }}
+      <div class="text-danger small mt-1">{{ form.customer_phone.errors }}</div>
+    </div>
+    <div class="col-12">
+      <label class="form-label fw-semibold">{{ form.customer_email.label }}</label>
+      {{ form.customer_email }}
+      <div class="text-danger small mt-1">{{ form.customer_email.errors }}</div>
+    </div>
+
+    <div class="col-12"><hr class="my-2"></div>
+
+    <div class="col-12 col-md-6">
+      <label class="form-label fw-semibold">{{ form.employee.label }}</label>
+      {{ form.employee }}
+      <div class="text-danger small mt-1">{{ form.employee.errors }}</div>
+    </div>
+    <div class="col-12 col-md-6">
+      <label class="form-label fw-semibold">{{ form.service.label }}</label>
+      {{ form.service }}
+      <div class="text-danger small mt-1">{{ form.service.errors }}</div>
+      <div class="form-text" id="manualBookingServiceHelp">
+        Elegí primero un profesional.
+      </div>
+    </div>
+    <div class="col-12 col-md-6">
+      <label class="form-label fw-semibold">{{ form.appointment_date.label }}</label>
+      {{ form.appointment_date }}
+      <div class="text-danger small mt-1">{{ form.appointment_date.errors }}</div>
+    </div>
+    <div class="col-12 col-md-6">
+      <label class="form-label fw-semibold">{{ form.appointment_time.label }}</label>
+      {{ form.appointment_time }}
+      <div class="text-danger small mt-1">{{ form.appointment_time.errors }}</div>
+    </div>
+    <div class="col-12">
+      <label class="form-label fw-semibold">{{ form.notes.label }}</label>
+      {{ form.notes }}
+      <div class="text-danger small mt-1">{{ form.notes.errors }}</div>
+    </div>
+
+    <div class="col-12 d-flex justify-content-end gap-2 flex-wrap nyx-manual-booking-actions">
+      <a href="{% url 'panel_agenda' %}" class="nyx-filter-btn">Cancelar</a>
+      <button type="submit" class="nyx-primary-btn border-0">
+        <i class="bi bi-check-lg"></i>
+        Cargar turno
+      </button>
+    </div>
+  </form>
+</div>
+
+<style>
+  .nyx-manual-booking-card{
+    max-width: 850px;
+    margin: 0 auto;
+  }
+  .nyx-manual-booking-icon{
+    width: 46px;
+    height: 46px;
+    flex: 0 0 46px;
+    display: grid;
+    place-items: center;
+    border-radius: 15px;
+    background: linear-gradient(135deg, var(--nyx-primary), var(--nyx-primary-strong));
+    color: #fff;
+    font-size: 1.2rem;
+  }
+  @media (max-width: 575.98px){
+    .nyx-manual-booking-card{
+      padding: 1rem !important;
+    }
+    .nyx-manual-booking-head{
+      gap: .75rem !important;
+    }
+    .nyx-manual-booking-card .form-control,
+    .nyx-manual-booking-card .form-select{
+      min-height: 48px;
+      font-size: 16px;
+    }
+    .nyx-manual-booking-actions{
+      flex-direction: column-reverse;
+    }
+    .nyx-manual-booking-actions > *{
+      width: 100%;
+      min-height: 48px;
+      justify-content: center;
+    }
+  }
+</style>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const employeeSelect = document.getElementById("{{ form.employee.id_for_label }}");
+    const serviceSelect = document.getElementById("{{ form.service.id_for_label }}");
+    const serviceHelp = document.getElementById("manualBookingServiceHelp");
+    const servicesUrl = "{% url 'panel_manual_booking_services' %}";
+
+    function resetServices(message) {
+      serviceSelect.innerHTML = '<option value="">---------</option>';
+      serviceSelect.disabled = true;
+      serviceHelp.textContent = message;
+    }
+
+    async function loadServices() {
+      const employeeId = employeeSelect.value;
+      resetServices("Cargando servicios...");
+
+      if (!employeeId) {
+        resetServices("Elegí primero un profesional.");
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          servicesUrl + "?employee=" + encodeURIComponent(employeeId),
+          {headers: {"X-Requested-With": "XMLHttpRequest"}}
+        );
+        if (!response.ok) {
+          throw new Error("No se pudieron cargar los servicios.");
+        }
+
+        const data = await response.json();
+        if (!data.services.length) {
+          resetServices("Este profesional no tiene servicios asignados.");
+          return;
+        }
+
+        serviceSelect.innerHTML = '<option value="">Seleccioná un servicio</option>';
+        data.services.forEach(function (service) {
+          const option = document.createElement("option");
+          option.value = service.id;
+          option.textContent = service.name;
+          serviceSelect.appendChild(option);
+        });
+        serviceSelect.disabled = false;
+        serviceHelp.textContent = "Mostramos solo los servicios de este profesional.";
+      } catch (error) {
+        resetServices("No pudimos cargar los servicios. Intentá nuevamente.");
+      }
+    }
+
+    employeeSelect.addEventListener("change", loadServices);
+
+    if (!employeeSelect.value) {
+      resetServices("Elegí primero un profesional.");
+    } else if (!serviceSelect.options.length || serviceSelect.options.length <= 1) {
+      loadServices();
+    } else {
+      serviceSelect.disabled = false;
+      serviceHelp.textContent = "Mostramos solo los servicios de este profesional.";
+    }
+  });
+</script>
+{% endblock %}
