@@ -15,6 +15,7 @@
   }
 
   .agenda-date-nav,
+  .agenda-quick-actions,
   .agenda-actions,
   .agenda-date-form {
     display: flex;
@@ -193,31 +194,73 @@
   }
 
   @media (max-width: 767.98px) {
+    .agenda-controls-card {
+      padding: .8rem !important;
+    }
+
     .agenda-toolbar {
       align-items: stretch;
+      gap: .7rem;
     }
 
     .agenda-date-nav,
+    .agenda-quick-actions,
     .agenda-actions,
     .agenda-date-form {
       width: 100%;
     }
 
     .agenda-date-nav {
-      justify-content: space-between;
+      display: grid;
+      grid-template-columns: 36px minmax(0, 1fr) 36px;
+      align-items: center;
+      gap: .5rem;
     }
 
     .agenda-date-title {
       min-width: 0;
-      flex: 1;
+      padding: .45rem .6rem;
+      border: 1px solid var(--nyx-border);
+      border-radius: .75rem;
+      background: #f8fbfb;
+      font-size: .92rem;
+      line-height: 1.2;
     }
 
-    .agenda-actions > * {
-      flex: 1 1 140px;
+    .agenda-nav-button {
+      width: 36px;
+      height: 36px;
+      min-height: 36px;
+      flex-basis: 36px;
+    }
+
+    .agenda-quick-actions,
+    .agenda-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: .5rem;
+    }
+
+    .agenda-quick-actions .nyx-filter-btn,
+    .agenda-actions .nyx-primary-btn,
+    .agenda-actions .agenda-secondary-button {
+      width: 100%;
+      min-height: 38px;
+      padding: .5rem .65rem;
+      font-size: .78rem;
+      line-height: 1.15;
+      text-align: center;
+    }
+
+    .agenda-actions .nyx-primary-btn,
+    .agenda-actions .agenda-secondary-button {
+      border-radius: .8rem;
     }
 
     .agenda-date-input {
       width: 100%;
+      min-height: 38px;
+      padding: .4rem .65rem;
       font-size: 16px;
     }
 
@@ -233,16 +276,16 @@
   }
 
   @media (max-width: 575.98px) {
-    .agenda-date-nav .nyx-filter-btn {
-      flex: 1 1 calc(50% - .3rem);
-      text-align: center;
+    .agenda-actions .nyx-primary-btn,
+    .agenda-actions .agenda-secondary-button {
+      font-size: .74rem;
     }
   }
 </style>
 {% endblock %}
 
 {% block panel_content %}
-<div class="nyx-card p-3 p-md-4 mb-3">
+<div class="nyx-card p-3 p-md-4 mb-3 agenda-controls-card">
   <div class="agenda-toolbar">
     <div class="agenda-date-nav">
       <a
@@ -264,7 +307,9 @@
       >
         <i class="bi bi-chevron-right"></i>
       </a>
+    </div>
 
+    <div class="agenda-quick-actions">
       <a
         href="{% url 'panel_agenda' %}?quick=today"
         class="nyx-filter-btn {% if selected_date == today %}active{% endif %}"
