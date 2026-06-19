@@ -47,6 +47,31 @@ urlpatterns = [
     # Panel de gestión
     path('panel/bienvenida/', panel_views.panel_onboarding, name='panel_onboarding'),
     path(
+        'panel/bienvenida/empezar/',
+        panel_views.panel_onboarding_start,
+        name='panel_onboarding_start'
+    ),
+    path(
+        'panel/bienvenida/ahora-no/',
+        panel_views.panel_onboarding_dismiss,
+        name='panel_onboarding_dismiss'
+    ),
+    path(
+        'panel/bienvenida/finalizar/',
+        panel_views.panel_onboarding_complete,
+        name='panel_onboarding_complete'
+    ),
+    path(
+        'panel/bienvenida/link-compartido/',
+        panel_views.panel_onboarding_mark_link_shared,
+        name='panel_onboarding_mark_link_shared'
+    ),
+    path(
+        'panel/bienvenida/decision/',
+        panel_views.panel_onboarding_decision,
+        name='panel_onboarding_decision'
+    ),
+    path(
         'panel/suscripcion-requerida/',
         panel_views.panel_billing_required,
         name='panel_billing_required'
@@ -173,6 +198,11 @@ urlpatterns = [
         'panel/profesionales/<int:employee_id>/horarios/copiar-del-salon/',
         panel_views.panel_employee_working_hours_copy_from_salon,
         name='panel_employee_working_hours_copy_from_salon'
+    ),
+    path(
+        'panel/profesionales/<int:employee_id>/horarios/usar-horarios-salon/',
+        panel_views.panel_employee_working_hours_use_salon,
+        name='panel_employee_working_hours_use_salon'
     ),
     path(
         'panel/profesionales/<int:employee_id>/horarios/<int:block_id>/editar/',

@@ -147,6 +147,22 @@ class Salon(models.Model):
         'Recibir notificaciones de nuevos turnos por email',
         default=True
     )
+    onboarding_dismissed = models.BooleanField(
+        'Onboarding descartado',
+        default=False
+    )
+    onboarding_completed = models.BooleanField(
+        'Onboarding completado',
+        default=False
+    )
+    onboarding_link_shared = models.BooleanField(
+        'Link de reservas compartido',
+        default=False
+    )
+    onboarding_current_step = models.PositiveSmallIntegerField(
+        'Paso actual del onboarding',
+        default=1
+    )
 
     class Meta:
         verbose_name = 'Peluquería'

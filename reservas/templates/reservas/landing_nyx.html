@@ -97,6 +97,14 @@
   .nyx-feature-card h3{ font-size:1rem; font-weight:900; margin-bottom:.6rem; }
   .nyx-feature-card p{ color:var(--nyx-landing-muted); font-size:.9rem; line-height:1.55; margin:0; }
 
+  .nyx-demo-section{ padding:3.5rem 0 4rem; }
+  .nyx-demo-panel{ display:grid; grid-template-columns:.75fr 1.25fr; gap:2.5rem; align-items:center; background:rgba(255,255,255,.82); border:1px solid var(--nyx-landing-border); border-radius:24px; padding:2rem; box-shadow:var(--nyx-landing-shadow); }
+  .nyx-demo-eyebrow{ display:inline-flex; align-items:center; gap:.45rem; margin-bottom:1rem; color:var(--nyx-landing-primary); font-size:.82rem; font-weight:900; text-transform:uppercase; letter-spacing:.08em; }
+  .nyx-demo-copy h2{ font-size:clamp(1.85rem, 3vw, 2.45rem); line-height:1.14; font-weight:800; letter-spacing:-.045em; margin-bottom:1rem; }
+  .nyx-demo-copy p{ color:var(--nyx-landing-muted); line-height:1.7; margin-bottom:1.5rem; max-width:520px; }
+  .nyx-demo-video-frame{ position:relative; width:100%; max-width:420px; aspect-ratio:9 / 16; justify-self:center; margin:0 auto; overflow:hidden; border-radius:22px; border:1px solid rgba(64,136,136,.18); background:linear-gradient(135deg, rgba(24,49,49,.08), rgba(140,220,223,.18)); box-shadow:0 20px 55px rgba(24,49,49,.14); }
+  .nyx-demo-video-frame video{ position:absolute; inset:0; width:100%; height:100%; display:block; object-fit:cover; background:#183131; }
+
   .nyx-showcase{ display:grid; grid-template-columns:.8fr 1.4fr; gap:3rem; align-items:center; padding:3rem 0; }
   .nyx-showcase h2{ font-size:2rem; line-height:1.2; font-weight:750; letter-spacing:-.04em; margin-bottom:1rem; }
   .nyx-showcase p{ color:var(--nyx-landing-muted); line-height:1.7; margin-bottom:1.4rem; }
@@ -166,7 +174,10 @@
     .nyx-landing-menu{ display:none; }
     .nyx-hero,
     .nyx-showcase,
-    .nyx-app-access{ grid-template-columns:1fr; gap:2.5rem; }
+    .nyx-app-access,
+    .nyx-demo-panel{ grid-template-columns:1fr; gap:2rem; }
+    .nyx-demo-copy{ text-align:center; }
+    .nyx-demo-copy p{ margin-left:auto; margin-right:auto; }
     .nyx-feature-grid{ grid-template-columns:repeat(2, 1fr); }
     .nyx-business-grid{ grid-template-columns:repeat(3, 1fr); }
     .nyx-pricing-grid,
@@ -192,6 +203,9 @@
     .nyx-stat-item:last-child{ border-bottom:0; }
     .nyx-app-access{ padding:1.35rem; border-radius:20px; }
     .nyx-app-step{ grid-template-columns:1fr; }
+    .nyx-demo-section{ padding:2.5rem 0 3rem; }
+    .nyx-demo-panel{ padding:1rem; border-radius:20px; }
+    .nyx-demo-video-frame{ max-width:360px; border-radius:18px; }
     .nyx-landing-footer{ padding:52px 0 24px; }
     .nyx-landing-footer-grid{ grid-template-columns:1fr; gap:32px; }
     .nyx-landing-footer-bottom{ flex-direction:column; }
@@ -211,7 +225,7 @@
         <li><a href="#app">Como app</a></li>
         <li><a href="#para-quien">Para quién es</a></li>
         <li><a href="#precios">Precios</a></li>
-        <li><a href="#demo">Demo</a></li>
+        <li><a href="#demo-rapida">Demo</a></li>
       </ul>
 
       <div class="nyx-landing-actions">
@@ -293,6 +307,23 @@
         <div class="nyx-feature-card"><div class="nyx-feature-icon"><i class="bi bi-credit-card"></i></div><h3>Pagos y señas</h3><p>Cobrá anticipos, gestioná pagos y reducí cancelaciones.</p></div>
         <div class="nyx-feature-card"><div class="nyx-feature-icon"><i class="bi bi-bell"></i></div><h3>Notificaciones</h3><p>Avisos automáticos por email para clientes, salón y profesionales.</p></div>
         <div class="nyx-feature-card"><div class="nyx-feature-icon"><i class="bi bi-graph-up-arrow"></i></div><h3>Reportes</h3><p>Visualizá la actividad del negocio con datos claros y rápidos.</p></div>
+      </div>
+    </section>
+
+    <section id="demo-rapida" class="nyx-landing-container nyx-demo-section">
+      <div class="nyx-demo-panel">
+        <div class="nyx-demo-copy">
+          <div class="nyx-demo-eyebrow"><i class="bi bi-play-circle"></i> Demo rápida</div>
+          <h2>Mirá cómo funciona NYX en menos de un minuto</h2>
+          <p>Un recorrido simple por el sistema para ver cómo tus clientes reservan turnos.</p>
+          <a href="{% url 'trial_signup' %}" class="nyx-btn-solid">Empezar prueba gratis</a>
+        </div>
+        <div class="nyx-demo-video-frame">
+          <video controls preload="metadata" playsinline>
+            <source src="{% static 'reservas/videos/demo-nyx.mp4' %}" type="video/mp4">
+            Tu navegador no puede reproducir este video.
+          </video>
+        </div>
       </div>
     </section>
 

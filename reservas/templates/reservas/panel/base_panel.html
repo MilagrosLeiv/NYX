@@ -109,6 +109,116 @@
     color:var(--nyx-primary-dark);
   }
 
+  .nyx-onboarding-modal-backdrop{
+    position:fixed;
+    inset:0;
+    z-index:1060;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:1.25rem;
+    background:rgba(24,50,52,.42);
+    backdrop-filter:blur(5px);
+  }
+
+  .nyx-onboarding-modal{
+    width:min(560px, 100%);
+    padding:1.35rem;
+    display:grid;
+    gap:1rem;
+    border:1px solid rgba(118,207,210,.38);
+    border-radius:1.35rem;
+    background:
+      radial-gradient(circle at top left, rgba(140,220,223,.24), transparent 34%),
+      linear-gradient(135deg, #ffffff 0%, #f8fbfb 100%);
+    box-shadow:0 26px 80px rgba(24,50,52,.28);
+  }
+
+  .nyx-onboarding-modal-icon{
+    width:52px;
+    height:52px;
+    border-radius:18px;
+    background:linear-gradient(135deg, var(--nyx-primary), var(--nyx-primary-strong));
+    color:#ffffff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:1.35rem;
+    box-shadow:0 12px 24px rgba(118,207,210,.24);
+  }
+
+  .nyx-onboarding-modal-kicker{
+    display:inline-flex;
+    align-items:center;
+    gap:.45rem;
+    padding:.28rem .65rem;
+    border-radius:999px;
+    background:rgba(118,207,210,.13);
+    border:1px solid rgba(118,207,210,.25);
+    color:#2f6d71;
+    font-size:.75rem;
+    font-weight:850;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    margin-bottom:.45rem;
+  }
+
+  .nyx-onboarding-modal h2{
+    margin:0;
+    color:var(--nyx-text);
+    font-size:1.18rem;
+    font-weight:950;
+    letter-spacing:-.025em;
+  }
+
+  .nyx-onboarding-modal p{
+    margin:.25rem 0 0;
+    color:var(--nyx-muted);
+    line-height:1.45;
+  }
+
+  .nyx-onboarding-modal-actions{
+    display:flex;
+    align-items:center;
+    justify-content:flex-start;
+    flex-wrap:wrap;
+    gap:.65rem;
+  }
+
+  .nyx-onboarding-modal-primary,
+  .nyx-onboarding-modal-secondary{
+    min-height:42px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:.45rem;
+    border-radius:999px;
+    padding:.65rem 1rem;
+    font-weight:850;
+    font-size:.88rem;
+    text-decoration:none;
+    transition:.2s ease;
+    white-space:nowrap;
+  }
+
+  .nyx-onboarding-modal-primary{
+    border:1px solid transparent;
+    background:linear-gradient(135deg, var(--nyx-primary), var(--nyx-primary-strong));
+    color:#ffffff !important;
+    box-shadow:0 10px 22px rgba(118,207,210,.22);
+  }
+
+  .nyx-onboarding-modal-secondary{
+    background:#ffffff;
+    border:1px solid var(--nyx-border);
+    color:#315558;
+  }
+
+  .nyx-onboarding-modal-primary:hover,
+  .nyx-onboarding-modal-secondary:hover{
+    transform:translateY(-1px);
+  }
+
   @media (max-width:575.98px){
     .nyx-message{
       border-radius:1rem;
@@ -121,6 +231,18 @@
       width:32px;
       height:32px;
       flex-basis:32px;
+    }
+
+    .nyx-onboarding-modal{
+      border-radius:1rem;
+      padding:1rem;
+    }
+
+    .nyx-onboarding-modal-actions,
+    .nyx-onboarding-modal-actions > *,
+    .nyx-onboarding-modal-actions form,
+    .nyx-onboarding-modal-actions button{
+      width:100%;
     }
   }
 
@@ -1102,7 +1224,81 @@ document.addEventListener('DOMContentLoaded', function () {
             </section>
           {% endif %}
 
-          {% if messages %}
+          {% if onboarding_modal %}
+            <div class="nyx-onboarding-modal-backdrop">
+              <section class="nyx-onboarding-modal" role="dialog" aria-modal="true" aria-label="Continuación del tutorial">
+                <div class="nyx-onboarding-modal-icon">
+                  <i class="bi bi-rocket-takeoff-fill"></i>
+                </div>
+
+                <div>
+                  <span class="nyx-onboarding-modal-kicker">Tutorial guiado</span>
+                  <h2>{{ onboarding_modal.title }}</h2>
+                  <p>{{ onboarding_modal.text }}</p>
+                </div>
+
+                <div class="nyx-onboarding-modal-actions">
+                  {% for action in onboarding_modal.actions %}
+                    {% if action.kind == "link" %}
+                      <a
+                        href="{{ action.url }}"
+                        class="{% if action.style == 'primary' %}nyx-onboarding-modal-primary{% else %}nyx-onboarding-modal-secondary{% endif %}"
+                        {% if action.target %}target="{{ action.target }}" rel="noopener"{% endif %}
+                        data-no-scroll-restore
+                      >
+                        {{ action.label }}
+                        {% if action.icon %}
+                          <i class="bi {{ action.icon }}"></i>
+                        {% endif %}
+                      </a>
+                    {% elif action.kind == "copy" %}
+                      <button
+                        type="button"
+                        class="{% if action.style == 'primary' %}nyx-onboarding-modal-primary{% else %}nyx-onboarding-modal-secondary{% endif %} js-onboarding-modal-copy"
+                        data-public-url="{{ action.public_url }}"
+                      >
+                        {{ action.label }}
+                        <i class="bi bi-clipboard"></i>
+                      </button>
+                    {% elif action.kind == "post" %}
+                      <form method="post" action="{{ action.url }}">
+                        {% csrf_token %}
+                        <button type="submit" class="{% if action.style == 'primary' %}nyx-onboarding-modal-primary{% else %}nyx-onboarding-modal-secondary{% endif %}">
+                          {{ action.label }}
+                          {% if action.style == 'primary' %}
+                            <i class="bi bi-arrow-right"></i>
+                          {% endif %}
+                        </button>
+                      </form>
+                    {% else %}
+                      <form method="post" action="{% url 'panel_onboarding_decision' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="decision" value="{{ action.decision }}">
+                        <input type="hidden" name="step" value="{{ action.step }}">
+                        <input type="hidden" name="next" value="{{ action.next }}">
+                        <button type="submit" class="{% if action.style == 'primary' %}nyx-onboarding-modal-primary{% else %}nyx-onboarding-modal-secondary{% endif %}">
+                          {{ action.label }}
+                          {% if action.style == 'primary' %}
+                            <i class="bi bi-arrow-right"></i>
+                          {% endif %}
+                        </button>
+                      </form>
+                    {% endif %}
+                  {% endfor %}
+
+                  <form method="post" action="{{ onboarding_modal.dismiss_url }}">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ onboarding_modal.dismiss_next }}">
+                    <button type="submit" class="nyx-onboarding-modal-secondary">
+                      Salir del tutorial
+                    </button>
+                  </form>
+                </div>
+              </section>
+            </div>
+          {% endif %}
+
+          {% if messages and not onboarding_modal %}
             <div class="nyx-messages mb-4">
               {% for message in messages %}
                 <div class="nyx-message nyx-message-{{ message.tags|default:'info' }}" role="alert">
@@ -1225,6 +1421,28 @@ document.addEventListener('DOMContentLoaded', function () {
           saveScrollForUrl(targetUrl);
         } else {
           saveScrollForUrl(new URL(window.location.href));
+        }
+      });
+    });
+
+    document.querySelectorAll(".js-onboarding-modal-copy").forEach(function (button) {
+      button.addEventListener("click", function () {
+        const publicUrl = button.dataset.publicUrl || "";
+        if (!publicUrl) return;
+
+        function markCopied() {
+          button.textContent = "Link copiado";
+          setTimeout(function () {
+            button.textContent = "Copiar link";
+          }, 1800);
+        }
+
+        if (navigator.clipboard && window.isSecureContext) {
+          navigator.clipboard.writeText(publicUrl).then(markCopied).catch(function () {
+            window.prompt("Copiá tu link de reservas:", publicUrl);
+          });
+        } else {
+          window.prompt("Copiá tu link de reservas:", publicUrl);
         }
       });
     });

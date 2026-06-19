@@ -21,6 +21,16 @@ def generate_unique_slugs(apps, schema_editor):
         used_slugs.add(slug)
 
 
+def drop_old_slug_indexes(apps, schema_editor):
+    suffix = "" if schema_editor.connection.vendor == "sqlite" else " CASCADE"
+    schema_editor.execute(
+        f"DROP INDEX IF EXISTS reservas_salon_slug_c1634057_like{suffix};"
+    )
+    schema_editor.execute(
+        f"DROP INDEX IF EXISTS reservas_salon_slug_key{suffix};"
+    )
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -28,13 +38,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunSQL(
-            sql="""
-                DROP INDEX IF EXISTS reservas_salon_slug_c1634057_like CASCADE;
-                DROP INDEX IF EXISTS reservas_salon_slug_key CASCADE;
-            """,
-            reverse_sql=migrations.RunSQL.noop,
-        ),
+        migrations.RunPython(drop_old_slug_indexes, migrations.RunPython.noop),
 
         migrations.AddField(
             model_name="salon",

@@ -147,6 +147,10 @@ class PanelServiceForm(forms.ModelForm):
         return value
 
 class PanelServiceCategoryForm(forms.ModelForm):
+    def __init__(self, *args, salon=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.salon = salon
+
     class Meta:
         model = ServiceCategory
         fields = ["name", "description", "image", "order", "is_active"]
@@ -172,6 +176,24 @@ class PanelServiceCategoryForm(forms.ModelForm):
                 "class": "form-check-input",
             }),
         }
+
+    def clean_name(self):
+        name = self.cleaned_data["name"].strip()
+
+        if self.salon:
+            duplicate = ServiceCategory.objects.filter(
+                salon=self.salon,
+                name__iexact=name,
+            )
+            if self.instance.pk:
+                duplicate = duplicate.exclude(pk=self.instance.pk)
+
+            if duplicate.exists():
+                raise forms.ValidationError(
+                    "Ya existe una categor\u00eda con ese nombre en tu sal\u00f3n."
+                )
+
+        return name
 
 class PanelEmployeeForm(forms.ModelForm):
     services = forms.ModelMultipleChoiceField(

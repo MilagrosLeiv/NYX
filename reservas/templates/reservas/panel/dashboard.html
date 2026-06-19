@@ -5,6 +5,38 @@
 {% block panel_subtitle %}Resumen rápido de la actividad de la peluquería{% endblock %}
 
 {% block panel_content %}
+{% if panel_role == 'owner' and onboarding_show_prompt %}
+  <div class="nyx-onboarding-modal-backdrop">
+    <section class="nyx-onboarding-modal" role="dialog" aria-modal="true" aria-label="Bienvenida a NYX">
+    <div class="nyx-onboarding-modal-icon">
+      <i class="bi bi-rocket-takeoff-fill"></i>
+    </div>
+
+    <div>
+      <span class="nyx-onboarding-modal-kicker">Tutorial guiado</span>
+      <h2>Bienvenida a NYX</h2>
+      <p>Te guiamos para dejar tu negocio listo y empezar a recibir reservas online.</p>
+    </div>
+
+    <div class="nyx-onboarding-modal-actions">
+      <form method="post" action="{% url 'panel_onboarding_start' %}">
+        {% csrf_token %}
+        <input type="hidden" name="reset" value="1">
+        <button type="submit" class="nyx-onboarding-modal-primary">
+          Empezar tutorial
+          <i class="bi bi-arrow-right"></i>
+        </button>
+      </form>
+
+      <form method="post" action="{% url 'panel_onboarding_dismiss' %}">
+        {% csrf_token %}
+        <button type="submit" class="nyx-onboarding-modal-secondary">Lo hago después</button>
+      </form>
+    </div>
+    </section>
+  </div>
+{% endif %}
+
 <div class="row g-4">
   <div class="col-md-6 col-xl-3">
     <div class="nyx-card nyx-stat">
@@ -77,6 +109,11 @@
       <div class="d-flex flex-wrap gap-2">
         <a href="{% url 'panel_agenda' %}?quick=today" class="nyx-filter-btn active" data-no-scroll-restore>Ver agenda</a>
         <a href="{% url 'panel_bloqueos' %}" class="nyx-filter-btn" data-no-scroll-restore>Ver bloqueos</a>
+        {% if panel_role == 'owner' %}
+          <a href="{% url 'panel_onboarding' %}" class="nyx-filter-btn" data-no-scroll-restore>
+            {% if salon.onboarding_dismissed and not salon.onboarding_completed %}Retomar tutorial{% else %}Ver primeros pasos{% endif %}
+          </a>
+        {% endif %}
       </div>
     </div>
   </div>
@@ -112,6 +149,114 @@
 </div>
 
 <style>
+  .nyx-tutorial-prompt {
+    position: fixed;
+    inset: 50% auto auto 50%;
+    z-index: 1060;
+    width: min(620px, calc(100% - 2rem));
+    transform: translate(-50%, -50%);
+    padding: 1.35rem;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 1rem;
+    background:
+      radial-gradient(circle at top left, rgba(140, 220, 223, .24), transparent 36%),
+      linear-gradient(135deg, #ffffff 0%, #f8fbfb 100%);
+    border-color: rgba(118, 207, 210, .42);
+  }
+
+  .nyx-tutorial-prompt-icon {
+    width: 54px;
+    height: 54px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, var(--nyx-primary), var(--nyx-primary-strong));
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.35rem;
+    box-shadow: 0 12px 24px rgba(118, 207, 210, .24);
+  }
+
+  .nyx-tutorial-prompt-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: .28rem .65rem;
+    border-radius: 999px;
+    background: rgba(118, 207, 210, .13);
+    border: 1px solid rgba(118, 207, 210, .25);
+    color: #2f6d71;
+    font-size: .75rem;
+    font-weight: 850;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: .45rem;
+  }
+
+  .nyx-tutorial-prompt h2 {
+    margin: 0;
+    color: var(--nyx-text);
+    font-size: 1.25rem;
+    font-weight: 950;
+    letter-spacing: -.025em;
+  }
+
+  .nyx-tutorial-prompt p {
+    margin: .25rem 0 0;
+    color: var(--nyx-muted);
+    line-height: 1.45;
+  }
+
+  .nyx-tutorial-prompt-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: .65rem;
+  }
+
+  .nyx-tutorial-primary,
+  .nyx-tutorial-secondary {
+    min-height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .45rem;
+    border-radius: 999px;
+    padding: .65rem 1rem;
+    font-weight: 850;
+    font-size: .88rem;
+    transition: .2s ease;
+    white-space: nowrap;
+  }
+
+  .nyx-tutorial-primary {
+    border: 1px solid transparent;
+    background: linear-gradient(135deg, var(--nyx-primary), var(--nyx-primary-strong));
+    color: #ffffff;
+    box-shadow: 0 10px 22px rgba(118, 207, 210, .22);
+  }
+
+  .nyx-tutorial-prompt::before {
+    content: "";
+    position: fixed;
+    inset: -100vh -100vw;
+    z-index: -1;
+    background: rgba(24, 50, 52, .42);
+    backdrop-filter: blur(5px);
+  }
+
+  .nyx-tutorial-secondary {
+    background: #ffffff;
+    border: 1px solid var(--nyx-border);
+    color: #315558;
+  }
+
+  .nyx-tutorial-primary:hover,
+  .nyx-tutorial-secondary:hover {
+    transform: translateY(-1px);
+  }
+
   .nyx-empty-dashboard {
     margin-top: 1.5rem;
     padding: 1.35rem;
@@ -218,6 +363,16 @@
   }
 
   @media (max-width: 991.98px) {
+    .nyx-tutorial-prompt {
+      grid-template-columns: 1fr;
+      align-items: flex-start;
+    }
+
+    .nyx-tutorial-prompt-actions {
+      width: 100%;
+      justify-content: flex-start;
+    }
+
     .nyx-empty-dashboard {
       grid-template-columns: 1fr;
       align-items: flex-start;
@@ -230,6 +385,17 @@
   }
 
   @media (max-width: 575.98px) {
+    .nyx-tutorial-prompt {
+      border-radius: 1rem;
+      padding: 1rem;
+    }
+
+    .nyx-tutorial-prompt-actions,
+    .nyx-tutorial-prompt-actions form,
+    .nyx-tutorial-prompt-actions button {
+      width: 100%;
+    }
+
     .nyx-empty-dashboard {
       border-radius: 1rem;
       padding: 1rem;

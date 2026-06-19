@@ -50,6 +50,50 @@
     font-weight: 600;
     color: var(--nyx-text);
   }
+
+  .nyx-employee-hours-eyebrow{
+    display:inline-flex;
+    margin-bottom:.4rem;
+    color:var(--nyx-primary-dark);
+    font-size:.78rem;
+    font-weight:850;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+  }
+
+  .nyx-employee-hours-summary h2{
+    margin:0 0 .35rem;
+    color:var(--nyx-text);
+    font-size:1.2rem;
+    font-weight:900;
+  }
+
+  .nyx-employee-hours-summary p{
+    margin:0;
+    color:var(--nyx-muted);
+  }
+
+  .nyx-employee-hours-days{
+    display:grid;
+    gap:.65rem;
+  }
+
+  .nyx-employee-hours-day{
+    display:flex;
+    justify-content:space-between;
+    gap:1rem;
+    padding:.75rem .9rem;
+    border:1px solid var(--nyx-border);
+    border-radius:.9rem;
+    background:#fbfefe;
+  }
+
+  @media (max-width:575.98px){
+    .nyx-employee-hours-day{
+      display:grid;
+      gap:.25rem;
+    }
+  }
 </style>
 {% endblock %}
 
@@ -135,4 +179,39 @@
     </div>
   </form>
 </div>
+
+{% if employee %}
+  <section class="nyx-card p-4 mt-4 nyx-employee-hours-summary">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+      <div>
+        <span class="nyx-employee-hours-eyebrow">Horarios de trabajo</span>
+        <h2>Disponibilidad de {{ employee.name }}</h2>
+        {% if has_own_working_hours %}
+          <p>Este profesional tiene horarios personalizados.</p>
+        {% else %}
+          <p>Este profesional usa los horarios generales del salón.</p>
+        {% endif %}
+      </div>
+
+      <a href="{% url 'panel_employee_working_hours' employee.id %}" class="nyx-primary-btn">
+        Editar horarios
+      </a>
+    </div>
+
+    {% if has_own_working_hours %}
+      <div class="nyx-employee-hours-days mt-3">
+        {% for day in working_hours_summary %}
+          <div class="nyx-employee-hours-day">
+            <strong>{{ day.weekday_name }}</strong>
+            <span>
+              {% for block in day.blocks %}
+                {{ block.start_time|time:"H:i" }}-{{ block.end_time|time:"H:i" }}{% if not forloop.last %}, {% endif %}
+              {% endfor %}
+            </span>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </section>
+{% endif %}
 {% endblock %}

@@ -1,286 +1,259 @@
 {% extends "reservas/panel/base_panel.html" %}
 
 {% block title %}Primeros pasos | NYX{% endblock %}
-{% block panel_title %}Primeros pasos en NYX{% endblock %}
-{% block panel_subtitle %}Configurá tu negocio y empezá a recibir reservas online{% endblock %}
+{% block panel_title %}Tutorial de configuración{% endblock %}
+{% block panel_subtitle %}Configurá tu negocio y prepará tu link de reservas online{% endblock %}
 
 {% block panel_content %}
-<section class="nyx-card nyx-recommended-step">
-  <div>
-    <span class="nyx-badge">Próximo paso recomendado</span>
-    <h2>{{ next_step.title }}</h2>
-    <p>{{ next_step.description }}</p>
+{% if salon.onboarding_dismissed and not salon.onboarding_completed %}
+  <section class="nyx-tutorial-paused nyx-card">
+    <div>
+      <span class="nyx-tutorial-eyebrow">Tutorial pausado</span>
+      <h2>Podés retomar la guía cuando quieras</h2>
+      <p>Al retomarla, NYX volverá a mostrarte los carteles de continuación paso a paso.</p>
+    </div>
+    <form method="post" action="{% url 'panel_onboarding_start' %}">
+      {% csrf_token %}
+      <button type="submit" class="nyx-tutorial-primary">
+        Retomar tutorial
+      </button>
+    </form>
+  </section>
+{% endif %}
+
+<section class="nyx-tutorial-hero nyx-card">
+  <div class="nyx-tutorial-hero-copy">
+    <span class="nyx-tutorial-eyebrow">
+      <i class="bi bi-stars"></i>
+      Onboarding guiado
+    </span>
+    <h1>Configurá NYX paso a paso</h1>
+    <p>Te guiamos para dejar tu negocio listo y empezar a recibir reservas online.</p>
+
+    <div class="nyx-tutorial-progress" aria-label="Progreso del tutorial">
+      <div class="nyx-tutorial-progress-text">
+        <strong>{{ onboarding_completed_steps_count }} de {{ onboarding_total_steps_count }} pasos completados</strong>
+        <span>{{ onboarding_progress_percent }}%</span>
+      </div>
+      <div class="nyx-tutorial-progress-track">
+        <div class="nyx-tutorial-progress-bar" style="width: {{ onboarding_progress_percent }}%"></div>
+      </div>
+    </div>
   </div>
 
-  <div class="nyx-recommended-actions">
-    {% if next_step.is_share_step %}
-      <button type="button" class="nyx-primary-btn border-0" id="onboarding-copy-link-recommended" data-public-url="{{ public_url }}">
-        <i class="bi bi-copy"></i>
-        Copiar link
-      </button>
-      <a href="{% url 'service_list' salon.slug %}" target="_blank" class="nyx-filter-btn" data-no-scroll-restore>
-        Ver sitio público
-      </a>
+  <div class="nyx-tutorial-next">
+    <span class="nyx-tutorial-next-label">
+      {% if onboarding_all_steps_completed %}Listo para finalizar{% else %}Siguiente paso{% endif %}
+    </span>
+    <h2>{{ onboarding_next_step.title }}</h2>
+    <p>{{ onboarding_next_step.text }}</p>
+
+    {% if onboarding_next_step.is_finish_step %}
+      <div class="nyx-tutorial-share-actions">
+        <form method="post" action="{% url 'panel_onboarding_complete' %}">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{% url 'panel_dashboard' %}">
+          <button type="submit" class="nyx-tutorial-primary">
+            Ir al panel
+          </button>
+        </form>
+        <form method="post" action="{% url 'panel_onboarding_complete' %}">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{% url 'panel_integrations' %}">
+          <button type="submit" class="nyx-tutorial-secondary">
+            Configurar integraciones
+          </button>
+        </form>
+      </div>
+    {% elif onboarding_next_step.is_share_step %}
+      <div class="nyx-tutorial-share-actions">
+        <a href="{% url 'service_list' salon.slug %}" target="_blank" class="nyx-tutorial-secondary js-onboarding-share" data-no-scroll-restore>
+          <i class="bi bi-box-arrow-up-right"></i>
+          Ver sitio público
+        </a>
+        <button type="button" class="nyx-tutorial-primary js-onboarding-copy" data-public-url="{{ public_url }}">
+          <i class="bi bi-copy"></i>
+          Copiar link
+        </button>
+        <button type="button" class="nyx-tutorial-primary js-onboarding-continue" data-continue-url="{% url 'panel_onboarding' %}">
+          Continuar
+          <i class="bi bi-arrow-right"></i>
+        </button>
+      </div>
     {% else %}
-      <a href="{{ next_step.url }}" class="nyx-primary-btn" data-no-scroll-restore>
-        {{ next_step.button_label }}
+      <a href="{{ onboarding_next_step.url }}" class="nyx-tutorial-primary" data-no-scroll-restore>
+        {{ onboarding_next_step.button }}
         <i class="bi bi-arrow-right"></i>
       </a>
     {% endif %}
   </div>
 </section>
 
-<section class="nyx-onboarding-hero">
-  <div class="nyx-onboarding-copy">
-    <div class="nyx-onboarding-badge">
-      <i class="bi bi-stars"></i>
-      Primeros pasos
-    </div>
+<section class="nyx-tutorial-steps" aria-label="Pasos del tutorial">
+  {% for step in onboarding_steps %}
+    <article class="nyx-tutorial-step nyx-card {% if step.completed %}is-complete{% endif %}">
+      <div class="nyx-tutorial-step-head">
+        <div class="nyx-tutorial-step-icon">
+          {% if step.completed %}
+            <i class="bi bi-check2"></i>
+          {% else %}
+            <i class="bi {{ step.icon }}"></i>
+          {% endif %}
+        </div>
 
-    <h1>Dejá tu agenda online lista en pocos minutos.</h1>
+        <div>
+          <div class="nyx-tutorial-step-kicker">Paso {{ step.number }}</div>
+          <h2>{{ step.title }}</h2>
+        </div>
+      </div>
 
+      <p>{{ step.text }}</p>
+
+      <div class="nyx-tutorial-step-footer">
+        <span class="nyx-tutorial-status {% if step.completed %}is-complete{% endif %}">
+          {% if step.completed %}
+            <i class="bi bi-check-circle-fill"></i>
+            Completado
+          {% else %}
+            <i class="bi bi-circle"></i>
+            Pendiente
+          {% endif %}
+        </span>
+        <span class="nyx-tutorial-meta">{{ step.meta }}</span>
+      </div>
+
+      {% if step.is_finish_step %}
+        <div class="nyx-tutorial-share-actions">
+          <form method="post" action="{% url 'panel_onboarding_complete' %}">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{% url 'panel_dashboard' %}">
+            <button type="submit" class="nyx-tutorial-primary">
+              Ir al panel
+            </button>
+          </form>
+          <form method="post" action="{% url 'panel_onboarding_complete' %}">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{% url 'panel_integrations' %}">
+            <button type="submit" class="nyx-tutorial-secondary">
+              Configurar integraciones
+            </button>
+          </form>
+        </div>
+      {% elif step.is_share_step %}
+        <div class="nyx-tutorial-public-link">{{ public_url }}</div>
+        <div class="nyx-tutorial-share-actions">
+          <a href="{% url 'service_list' salon.slug %}" target="_blank" class="nyx-tutorial-secondary js-onboarding-share" data-no-scroll-restore>
+            <i class="bi bi-box-arrow-up-right"></i>
+            Ver sitio público
+          </a>
+          <button type="button" class="nyx-tutorial-primary js-onboarding-copy" data-public-url="{{ public_url }}">
+            <i class="bi bi-copy"></i>
+            Copiar link
+          </button>
+          <button type="button" class="nyx-tutorial-primary js-onboarding-continue" data-continue-url="{% url 'panel_onboarding' %}">
+            Continuar
+            <i class="bi bi-arrow-right"></i>
+          </button>
+        </div>
+      {% else %}
+        <a href="{{ step.url }}" class="nyx-tutorial-step-link" data-no-scroll-restore>
+          {{ step.button }}
+          <i class="bi bi-arrow-right"></i>
+        </a>
+      {% endif %}
+    </article>
+  {% endfor %}
+</section>
+
+<section class="nyx-tutorial-finish nyx-card">
+  <div>
+    <span class="nyx-tutorial-eyebrow">
+      {% if salon.onboarding_completed %}Tutorial finalizado{% else %}Cierre del tutorial{% endif %}
+    </span>
+    <h2>
+      {% if salon.onboarding_completed %}
+        Tu guía queda disponible cuando quieras revisarla.
+      {% else %}
+        Cuando estés conforme, finalizá el tutorial.
+      {% endif %}
+    </h2>
     <p>
-      Para que tus clientes puedan reservar turnos, primero organizá tus categorías
-        cargá tus servicios, configurá tu equipo, definí tus horarios y compartí tu link público.
+      Podés volver a esta pantalla desde Primeros pasos para revisar la configuración o compartir el link de reservas.
     </p>
+  </div>
 
-    <div class="nyx-onboarding-actions">
-      <a href="{% url 'panel_service_categories' %}" class="nyx-onboarding-primary" data-no-scroll-restore>
-        <i class="bi bi-scissors"></i>
-        Empezar configuración
-      </a>
-
-      <a href="{% url 'panel_dashboard' %}" class="nyx-onboarding-secondary" data-no-scroll-restore>
+  <div class="nyx-tutorial-finish-actions">
+    {% if not salon.onboarding_completed %}
+      <form method="post" action="{% url 'panel_onboarding_complete' %}">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{% url 'panel_dashboard' %}">
+        <button type="submit" class="nyx-tutorial-primary">
+          <i class="bi bi-check2-circle"></i>
+          Ir al dashboard
+        </button>
+      </form>
+      <form method="post" action="{% url 'panel_onboarding_complete' %}">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{% url 'panel_integrations' %}">
+        <button type="submit" class="nyx-tutorial-secondary">
+          Configurar integraciones
+        </button>
+      </form>
+    {% else %}
+      <a href="{% url 'panel_dashboard' %}" class="nyx-tutorial-secondary" data-no-scroll-restore>
         Ir al dashboard
       </a>
-    </div>
-  </div>
-
-  <div class="nyx-onboarding-panel">
-    <div class="nyx-onboarding-panel-title">Tu link de reservas</div>
-    <div class="nyx-onboarding-url">{{ public_url }}</div>
-
-    <button
-      type="button"
-      class="nyx-onboarding-copy-btn"
-      id="onboarding-copy-link"
-      data-public-url="{{ public_url }}"
-    >
-      <i class="bi bi-copy"></i>
-      Copiar link
-    </button>
-
-    <a
-      href="{% url 'service_list' salon.slug %}" data-no-scroll-restore
-      target="_blank"
-      class="nyx-onboarding-preview"
-    >
-      <i class="bi bi-box-arrow-up-right"></i>
-      Ver sitio público
-    </a>
-  </div>
-</section>
-
-<section class="nyx-onboarding-steps">
-  <article class="nyx-step-card {% if has_service_categories %}is-complete{% endif %}">
-    <div class="nyx-step-icon">
-      {% if has_service_categories %}
-        <i class="bi bi-check2"></i>
-      {% else %}
-        <i class="bi bi-grid-3x3-gap-fill"></i>
-      {% endif %}
-    </div>
-
-    <div class="nyx-step-body">
-      <div class="nyx-step-kicker">Paso 1</div>
-      <h2>Creá categorías</h2>
-      <p>
-        Organizá tu catálogo en secciones como Cabello, Manos, Pestañas o Barbería.
-      </p>
-
-      <div class="nyx-step-footer">
-        <div class="nyx-step-meta">
-          {{ service_categories_count }} categoría{% if service_categories_count != 1 %}s{% endif %} activa{% if service_categories_count != 1 %}s{% endif %}
-        </div>
-
-        <a href="{% url 'panel_service_categories' %}" class="nyx-step-link" data-no-scroll-restore>
-          {% if has_service_categories %}Revisar categorías{% else %}Crear categorías{% endif %}
-          <i class="bi bi-arrow-right"></i>
-        </a>
-      </div>
-    </div>
-  </article>
-
-  <article class="nyx-step-card {% if has_services %}is-complete{% endif %}">
-    <div class="nyx-step-icon">
-      {% if has_services %}
-        <i class="bi bi-check2"></i>
-      {% else %}
-        <i class="bi bi-scissors"></i>
-      {% endif %}
-    </div>
-
-    <div class="nyx-step-body">
-      <div class="nyx-step-kicker">Paso 2</div>
-      <h2>Cargá tus servicios</h2>
-      <p>
-        Agregá los servicios que ofrezcas y asignales una categoría para ordenar mejor tu página pública.
-      </p>
-
-      <div class="nyx-step-footer">
-        <div class="nyx-step-meta">
-          {{ active_services_count }} servicio{% if active_services_count != 1 %}s{% endif %} activo{% if active_services_count != 1 %}s{% endif %}
-        </div>
-
-        <a href="{% url 'panel_services' %}" class="nyx-step-link" data-no-scroll-restore>
-          {% if has_services %}Revisar servicios{% else %}Agregar servicios{% endif %}
-          <i class="bi bi-arrow-right"></i>
-        </a>
-      </div>
-    </div>
-  </article>
-
-  <article class="nyx-step-card {% if has_employees %}is-complete{% endif %}">
-    <div class="nyx-step-icon">
-      {% if has_employees %}
-        <i class="bi bi-check2"></i>
-      {% else %}
-        <i class="bi bi-people-fill"></i>
-      {% endif %}
-    </div>
-
-    <div class="nyx-step-body">
-      <div class="nyx-step-kicker">Paso 3</div>
-      <h2>Agregá tu equipo</h2>
-      <p>
-        Cargá quiénes atienden y qué servicios puede realizar cada persona.
-      </p>
-
-      <div class="nyx-step-footer">
-        <div class="nyx-step-meta">
-          {{ employees_count }} profesional{% if employees_count != 1 %}es{% endif %} activo{% if employees_count != 1 %}s{% endif %}
-        </div>
-
-        <a href="{% url 'panel_employees' %}" class="nyx-step-link" data-no-scroll-restore>
-          {% if has_employees %}Revisar equipo{% else %}Agregar equipo{% endif %}
-          <i class="bi bi-arrow-right"></i>
-        </a>
-      </div>
-    </div>
-  </article>
-
-  <article class="nyx-step-card {% if has_business_hours %}is-complete{% endif %}">
-    <div class="nyx-step-icon">
-      {% if has_business_hours %}
-        <i class="bi bi-check2"></i>
-      {% else %}
-        <i class="bi bi-clock-history"></i>
-      {% endif %}
-    </div>
-
-    <div class="nyx-step-body">
-      <div class="nyx-step-kicker">Paso 4</div>
-      <h2>Configurá tus horarios</h2>
-      <p>
-        Definí los días y franjas horarias en las que tu negocio acepta reservas.
-      </p>
-
-      <div class="nyx-step-footer">
-        <div class="nyx-step-meta">
-          {{ business_hours_count }} franja{% if business_hours_count != 1 %}s{% endif %} activa{% if business_hours_count != 1 %}s{% endif %}
-        </div>
-
-        <a href="{% url 'panel_business_hours' %}" class="nyx-step-link" data-no-scroll-restore>
-          {% if has_business_hours %}Revisar horarios{% else %}Configurar horarios{% endif %}
-          <i class="bi bi-arrow-right"></i>
-        </a>
-      </div>
-    </div>
-  </article>
-</section>
-
-<section class="nyx-onboarding-final nyx-card">
-  <div>
-    <h2>Cuando termines, compartí tu link de reservas.</h2>
-    <p>
-      Ese link es el que tus clientes van a usar para ver tus servicios y reservar turno.
-    </p>
-  </div>
-
-  <div class="nyx-onboarding-final-actions">
-    <button
-      type="button"
-      class="nyx-onboarding-secondary"
-      id="onboarding-copy-link-bottom"
-      data-public-url="{{ public_url }}"
-    >
-      <i class="bi bi-copy"></i>
-      Copiar link
-    </button>
-
-    <a href="{% url 'service_list' salon.slug %}" target="_blank" class="nyx-onboarding-primary" data-no-scroll-restore>
-      <i class="bi bi-box-arrow-up-right"></i>
-      Ver sitio público
-    </a>
+      <a href="{% url 'panel_integrations' %}" class="nyx-tutorial-secondary" data-no-scroll-restore>
+        Configurar integraciones
+      </a>
+    {% endif %}
   </div>
 </section>
 
 <style>
-  .nyx-recommended-step {
-    padding: 1.35rem;
-    margin-bottom: 1.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    background:
-      radial-gradient(circle at top left, rgba(140, 220, 223, .24), transparent 38%),
-      #ffffff;
-    border-color: rgba(118, 207, 210, .42);
-  }
-
-  .nyx-recommended-step h2 {
-    margin: .65rem 0 .3rem;
-    color: var(--nyx-text);
-    font-size: 1.35rem;
-    font-weight: 950;
-  }
-
-  .nyx-recommended-step p {
-    margin: 0;
-    color: var(--nyx-muted);
-  }
-
-  .nyx-recommended-actions {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    gap: .65rem;
-  }
-
-  .nyx-onboarding-hero {
+  .nyx-tutorial-hero {
+    padding: 1.5rem;
     display: grid;
-    grid-template-columns: minmax(0, 1.4fr) minmax(280px, .8fr);
+    grid-template-columns: minmax(0, 1.25fr) minmax(280px, .75fr);
     gap: 1.25rem;
+    align-items: stretch;
     margin-bottom: 1.5rem;
-  }
-
-  .nyx-onboarding-copy,
-  .nyx-onboarding-panel {
-    background: #ffffff;
-    border: 1px solid var(--nyx-border);
-    border-radius: var(--nyx-radius);
-    box-shadow: var(--nyx-shadow);
-    padding: 1.55rem;
-  }
-
-  .nyx-onboarding-copy {
     background:
       radial-gradient(circle at top left, rgba(140, 220, 223, .22), transparent 35%),
       linear-gradient(135deg, #ffffff 0%, #f8fbfb 100%);
   }
 
-  .nyx-onboarding-badge {
+  .nyx-tutorial-paused {
+    padding: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    background:
+      radial-gradient(circle at top left, rgba(140, 220, 223, .18), transparent 34%),
+      #ffffff;
+  }
+
+  .nyx-tutorial-paused h2 {
+    color: var(--nyx-text);
+    font-size: 1.15rem;
+    font-weight: 950;
+    margin: 0 0 .25rem;
+  }
+
+  .nyx-tutorial-paused p {
+    color: var(--nyx-muted);
+    margin: 0;
+  }
+
+  .nyx-tutorial-hero-copy,
+  .nyx-tutorial-next {
+    min-width: 0;
+  }
+
+  .nyx-tutorial-eyebrow,
+  .nyx-tutorial-next-label {
     display: inline-flex;
     align-items: center;
     gap: .45rem;
@@ -296,145 +269,98 @@
     margin-bottom: .85rem;
   }
 
-  .nyx-onboarding-copy h1 {
-    font-size: clamp(1.8rem, 4vw, 3rem);
-    line-height: 1.03;
-    letter-spacing: -.055em;
-    font-weight: 950;
+  .nyx-tutorial-hero h1 {
     color: var(--nyx-text);
+    font-size: clamp(2rem, 4vw, 3rem);
+    line-height: 1.04;
+    font-weight: 950;
+    letter-spacing: -.055em;
     margin: 0 0 .75rem;
   }
 
-  .nyx-onboarding-copy p {
-    max-width: 680px;
+  .nyx-tutorial-hero p,
+  .nyx-tutorial-step p,
+  .nyx-tutorial-finish p {
     color: var(--nyx-muted);
-    font-size: 1rem;
     line-height: 1.55;
-    margin: 0;
   }
 
-  .nyx-onboarding-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: .75rem;
+  .nyx-tutorial-progress {
+    max-width: 560px;
     margin-top: 1.25rem;
   }
 
-  .nyx-onboarding-primary,
-  .nyx-onboarding-secondary,
-  .nyx-onboarding-copy-btn,
-  .nyx-onboarding-preview {
-    min-height: 44px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: .5rem;
-    border-radius: 999px;
-    padding: .7rem 1.05rem;
-    font-weight: 850;
-    font-size: .92rem;
-    text-decoration: none;
-    transition: .2s ease;
-  }
-
-  .nyx-onboarding-primary {
-    border: 1px solid transparent;
-    background: linear-gradient(135deg, var(--nyx-primary), var(--nyx-primary-strong));
-    color: #ffffff !important;
-    box-shadow: 0 10px 22px rgba(118, 207, 210, .22);
-  }
-
-  .nyx-onboarding-primary:hover {
-    color: #ffffff !important;
-    transform: translateY(-1px);
-    opacity: .97;
-  }
-
-  .nyx-onboarding-secondary,
-  .nyx-onboarding-copy-btn,
-  .nyx-onboarding-preview {
-    border: 1px solid var(--nyx-border);
-    background: #ffffff;
-    color: #315558;
-  }
-
-  .nyx-onboarding-secondary:hover,
-  .nyx-onboarding-copy-btn:hover,
-  .nyx-onboarding-preview:hover {
-    background: #f8fbfb;
-    color: var(--nyx-text);
-    transform: translateY(-1px);
-  }
-
-  .nyx-onboarding-panel {
+  .nyx-tutorial-progress-text {
     display: flex;
-    flex-direction: column;
-    justify-content: center;
-  }
-
-  .nyx-onboarding-panel-title {
-    color: var(--nyx-muted);
-    font-weight: 800;
-    font-size: .85rem;
-    text-transform: uppercase;
-    letter-spacing: .04em;
+    justify-content: space-between;
+    gap: 1rem;
+    color: #315558;
+    font-size: .9rem;
     margin-bottom: .55rem;
   }
 
-  .nyx-onboarding-url {
-    background: #f2fbfb;
-    border: 1px solid var(--nyx-border);
-    color: var(--nyx-primary-dark);
-    border-radius: 1rem;
-    padding: .8rem;
-    font-size: .86rem;
-    font-weight: 750;
-    word-break: break-all;
-    margin-bottom: .8rem;
+  .nyx-tutorial-progress-track {
+    height: 10px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #e7f4f4;
+    border: 1px solid rgba(118, 207, 210, .25);
   }
 
-  .nyx-onboarding-copy-btn,
-  .nyx-onboarding-preview {
-    width: 100%;
-    margin-top: .55rem;
+  .nyx-tutorial-progress-bar {
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(135deg, var(--nyx-primary), var(--nyx-primary-strong));
   }
 
-  .nyx-onboarding-copy-btn {
-    cursor: pointer;
-  }
-
-  .nyx-onboarding-steps {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-    align-items: stretch;
-  }
-
-  @media (max-width: 1199.98px) {
-    .nyx-onboarding-steps {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-  }
-
-  .nyx-step-card {
+  .nyx-tutorial-next {
     background: #ffffff;
     border: 1px solid var(--nyx-border);
-    border-radius: var(--nyx-radius);
-    box-shadow: var(--nyx-shadow);
-    padding: 1.25rem;
-    display: flex;
-    gap: 1rem;
-    height: 100%;
+    border-radius: 1rem;
+    padding: 1.2rem;
+    box-shadow: 0 14px 32px rgba(24, 49, 49, .07);
   }
 
-  .nyx-step-card.is-complete {
+  .nyx-tutorial-next h2,
+  .nyx-tutorial-step h2,
+  .nyx-tutorial-finish h2 {
+    color: var(--nyx-text);
+    font-weight: 950;
+    letter-spacing: -.03em;
+  }
+
+  .nyx-tutorial-next h2 {
+    font-size: 1.25rem;
+    margin: 0 0 .5rem;
+  }
+
+  .nyx-tutorial-steps {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .nyx-tutorial-step {
+    padding: 1.2rem;
+    display: flex;
+    flex-direction: column;
+    gap: .85rem;
+  }
+
+  .nyx-tutorial-step.is-complete {
     background:
-      radial-gradient(circle at top right, rgba(140, 220, 223, .18), transparent 36%),
+      radial-gradient(circle at top right, rgba(140, 220, 223, .16), transparent 38%),
       #ffffff;
   }
 
-  .nyx-step-icon {
+  .nyx-tutorial-step-head {
+    display: flex;
+    gap: .8rem;
+    align-items: flex-start;
+  }
+
+  .nyx-tutorial-step-icon {
     width: 44px;
     height: 44px;
     flex: 0 0 44px;
@@ -445,236 +371,230 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.15rem;
+    font-size: 1.12rem;
   }
 
-  .nyx-step-card.is-complete .nyx-step-icon {
+  .nyx-tutorial-step.is-complete .nyx-tutorial-step-icon {
     background: linear-gradient(135deg, var(--nyx-primary), var(--nyx-primary-strong));
     border-color: transparent;
     color: #ffffff;
   }
 
-  .nyx-step-body {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .nyx-step-kicker {
+  .nyx-tutorial-step-kicker {
     color: var(--nyx-muted);
     font-size: .76rem;
     font-weight: 850;
     text-transform: uppercase;
     letter-spacing: .05em;
-    margin-bottom: .35rem;
+    margin-bottom: .25rem;
   }
 
-  .nyx-step-body h2 {
-    font-size: 1.08rem;
-    font-weight: 900;
-    color: var(--nyx-text);
-    margin: 0 0 .4rem;
-  }
-
-  .nyx-step-body p {
-    color: var(--nyx-muted);
-    font-size: .92rem;
-    line-height: 1.45;
-    margin: 0 0 .8rem;
-  }
-
-  .nyx-step-footer {
-    margin-top: auto;
-    padding-top: .85rem;
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: .55rem;
-  }
-
-  .nyx-step-meta {
-    min-height: 40px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: .28rem .6rem;
-    border-radius: 999px;
-    background: #f2fbfb;
-    border: 1px solid var(--nyx-border);
-    color: #48797d;
-    font-size: .78rem;
-    font-weight: 800;
+  .nyx-tutorial-step h2 {
+    font-size: 1rem;
     margin: 0;
   }
 
-  .nyx-step-link {
-    min-height: 40px;
-    width: fit-content;
+  .nyx-tutorial-step p {
+    font-size: .91rem;
+    margin: 0;
+  }
+
+  .nyx-tutorial-step-footer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    margin-top: auto;
+  }
+
+  .nyx-tutorial-status,
+  .nyx-tutorial-meta {
+    min-height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .35rem;
+    padding: .35rem .65rem;
+    border-radius: 999px;
+    border: 1px solid var(--nyx-border);
+    background: #f8fbfb;
+    color: #4f6f72;
+    font-size: .78rem;
+    font-weight: 850;
+  }
+
+  .nyx-tutorial-status.is-complete {
+    background: rgba(118, 207, 210, .14);
+    border-color: rgba(118, 207, 210, .35);
+    color: #2f6d71;
+  }
+
+  .nyx-tutorial-primary,
+  .nyx-tutorial-secondary,
+  .nyx-tutorial-step-link {
+    min-height: 42px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: .45rem;
     border-radius: 999px;
-    padding: .58rem .95rem;
-    background: #ffffff;
-    border: 1px solid var(--nyx-border);
-    color: var(--nyx-primary-dark);
-    font-weight: 900;
+    padding: .65rem 1rem;
+    font-weight: 850;
     font-size: .88rem;
     text-decoration: none;
     transition: .2s ease;
-    white-space: nowrap;
   }
 
-  .nyx-step-link:hover {
-    background: #f2fbfb;
-    color: #183234;
+  .nyx-tutorial-primary {
+    border: 1px solid transparent;
+    background: linear-gradient(135deg, var(--nyx-primary), var(--nyx-primary-strong));
+    color: #ffffff !important;
+    box-shadow: 0 10px 22px rgba(118, 207, 210, .22);
+  }
+
+  .nyx-tutorial-secondary,
+  .nyx-tutorial-step-link {
+    border: 1px solid var(--nyx-border);
+    background: #ffffff;
+    color: #315558;
+  }
+
+  .nyx-tutorial-primary:hover,
+  .nyx-tutorial-secondary:hover,
+  .nyx-tutorial-step-link:hover {
     transform: translateY(-1px);
   }
 
-  .nyx-onboarding-final {
-    padding: 1.35rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
+  .nyx-tutorial-step-link {
+    width: 100%;
+    margin-top: .2rem;
   }
 
-  .nyx-onboarding-final h2 {
-    font-size: 1.2rem;
-    font-weight: 900;
-    color: var(--nyx-text);
-    margin: 0 0 .25rem;
+  .nyx-tutorial-public-link {
+    background: #f2fbfb;
+    border: 1px solid var(--nyx-border);
+    color: var(--nyx-primary-dark);
+    border-radius: 1rem;
+    padding: .75rem;
+    font-size: .84rem;
+    font-weight: 750;
+    word-break: break-all;
   }
 
-  .nyx-onboarding-final p {
-    color: var(--nyx-muted);
-    margin: 0;
-  }
-
-  .nyx-onboarding-final-actions {
+  .nyx-tutorial-share-actions,
+  .nyx-tutorial-finish-actions {
     display: flex;
     flex-wrap: wrap;
     gap: .65rem;
   }
 
+  .nyx-tutorial-finish {
+    padding: 1.35rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .nyx-tutorial-finish h2 {
+    font-size: 1.2rem;
+    margin: 0 0 .25rem;
+  }
+
+  .nyx-tutorial-finish p {
+    margin: 0;
+  }
+
+  @media (max-width: 1399.98px) {
+    .nyx-tutorial-steps {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
   @media (max-width: 991.98px) {
-    .nyx-recommended-step {
-      align-items: flex-start;
-      flex-direction: column;
-    }
-
-    .nyx-recommended-actions {
-      width: 100%;
-      justify-content: flex-start;
-    }
-
-    .nyx-onboarding-hero,
-    .nyx-onboarding-steps {
+    .nyx-tutorial-hero,
+    .nyx-tutorial-steps {
       grid-template-columns: 1fr;
     }
 
-    .nyx-onboarding-final {
+    .nyx-tutorial-finish {
       align-items: flex-start;
       flex-direction: column;
     }
 
-    .nyx-onboarding-final-actions {
-      width: 100%;
+    .nyx-tutorial-paused {
+      align-items: flex-start;
+      flex-direction: column;
     }
   }
 
   @media (max-width: 575.98px) {
-    .nyx-recommended-step {
-      padding: 1rem;
-    }
-
-    .nyx-recommended-actions > * {
-      width: 100%;
-      justify-content: center;
-    }
-
-    .nyx-onboarding-copy,
-    .nyx-onboarding-panel,
-    .nyx-step-card,
-    .nyx-onboarding-final {
+    .nyx-tutorial-hero,
+    .nyx-tutorial-next,
+    .nyx-tutorial-step,
+    .nyx-tutorial-finish {
       border-radius: 1rem;
       padding: 1rem;
     }
 
-    .nyx-step-card {
-      height: auto;
-      min-height: auto;
+    .nyx-tutorial-progress-text {
       flex-direction: column;
-      gap: .85rem;
+      gap: .25rem;
     }
 
-    .nyx-step-icon {
-      width: 44px;
-      height: 44px;
-      flex: 0 0 44px;
-    }
-
-    .nyx-step-body {
-      height: auto;
-      min-height: auto;
-    }
-
-    .nyx-step-body h2 {
-      font-size: 1.05rem;
-    }
-
-    .nyx-step-body p {
-      font-size: .92rem;
-      line-height: 1.42;
-      margin-bottom: .75rem;
-    }
-
-    .nyx-step-footer {
-      margin-top: .85rem;
-      padding-top: 0;
+    .nyx-tutorial-step-head {
       flex-direction: column;
-      align-items: stretch;
-      gap: .6rem;
+      gap: .7rem;
     }
 
-    .nyx-step-meta,
-    .nyx-step-link {
+    .nyx-tutorial-share-actions,
+    .nyx-tutorial-share-actions > *,
+    .nyx-tutorial-finish-actions,
+    .nyx-tutorial-finish-actions > *,
+    .nyx-tutorial-finish-actions form,
+    .nyx-tutorial-finish-actions button,
+    .nyx-tutorial-paused form,
+    .nyx-tutorial-paused button {
       width: 100%;
-      min-height: 44px;
-    }
-
-    .nyx-step-link {
-      margin-top: 0;
-      justify-content: center;
-      white-space: normal;
-      text-align: center;
-    }
-
-    .nyx-onboarding-actions > *,
-    .nyx-onboarding-final-actions > * {
-      width: 100%;
-      flex: 0 0 auto;
     }
   }
 </style>
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-  const buttons = [
-    document.getElementById("onboarding-copy-link"),
-    document.getElementById("onboarding-copy-link-bottom"),
-    document.getElementById("onboarding-copy-link-recommended")
-  ].filter(Boolean);
+  const markUrl = "{% url 'panel_onboarding_mark_link_shared' %}";
+  const csrfToken = "{{ csrf_token }}";
 
-  buttons.forEach(function (button) {
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) {
+      return parts.pop().split(";").shift();
+    }
+    return "";
+  }
+
+  async function markLinkShared() {
+    try {
+      await fetch(markUrl, {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": csrfToken || getCookie("csrftoken"),
+          "X-Requested-With": "XMLHttpRequest"
+        }
+      });
+    } catch (error) {
+      return;
+    }
+  }
+
+  document.querySelectorAll(".js-onboarding-copy").forEach(function (button) {
     button.addEventListener("click", async function () {
       const publicUrl = this.dataset.publicUrl;
       const originalText = this.innerHTML;
 
       try {
         await navigator.clipboard.writeText(publicUrl);
+        await markLinkShared();
         this.innerHTML = '<i class="bi bi-check2"></i> Link copiado';
 
         setTimeout(() => {
@@ -682,7 +602,21 @@ document.addEventListener("DOMContentLoaded", function () {
         }, 1800);
       } catch (error) {
         window.prompt("Copiá el link de reservas:", publicUrl);
+        await markLinkShared();
       }
+    });
+  });
+
+  document.querySelectorAll(".js-onboarding-share").forEach(function (link) {
+    link.addEventListener("click", function () {
+      markLinkShared();
+    });
+  });
+
+  document.querySelectorAll(".js-onboarding-continue").forEach(function (button) {
+    button.addEventListener("click", async function () {
+      await markLinkShared();
+      window.location.href = this.dataset.continueUrl || "{% url 'panel_onboarding' %}";
     });
   });
 });

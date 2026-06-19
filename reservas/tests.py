@@ -3,8 +3,10 @@ from contextlib import nullcontext
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
+from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied, ValidationError
-from django.test import RequestFactory, SimpleTestCase, override_settings
+from django.test import Client, RequestFactory, SimpleTestCase, TestCase, override_settings
+from django.urls import reverse
 from django.utils import timezone
 
 from . import panel_views
@@ -14,7 +16,18 @@ from .services.google_calendar import (
     sync_booking_item_to_google_calendar,
 )
 from .panel_views import _create_manual_booking, _mercadopago_panel_context
-from .models import Booking, Employee, Salon, Service, SpecialAvailabilityBlock
+from .models import (
+    Booking,
+    BusinessHourBlock,
+    Employee,
+    EmployeeWorkingHour,
+    Salon,
+    SalonMembership,
+    SalonSubscription,
+    Service,
+    ServiceCategory,
+    SpecialAvailabilityBlock,
+)
 from .utils import (
     get_employee_working_ranges_for_date,
     get_special_block_ranges,
@@ -129,6 +142,357 @@ class MercadoPagoPanelContextTests(SimpleTestCase):
         self.assertTrue(context["mercadopago_visible_to_clients"])
         payment_settings.has_valid_mercadopago_connection.assert_called_once_with()
         payment_settings.save.assert_not_called()
+
+
+class GuidedOnboardingDecisionTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(
+            username="owner",
+            email="owner@example.com",
+            password="pass12345",
+        )
+        self.salon = Salon.objects.create(
+            name="Salon Test",
+            slug="salon-test",
+            email="salon@example.com",
+        )
+        SalonMembership.objects.create(
+            user=self.user,
+            salon=self.salon,
+            role="owner",
+            is_active=True,
+        )
+        SalonSubscription.objects.create(
+            salon=self.salon,
+            status=SalonSubscription.Status.TRIAL,
+            plan=SalonSubscription.Plan.BASIC,
+        )
+        self.client.login(username="owner", password="pass12345")
+
+    def activate_tutorial(self, step=1):
+        self.salon.onboarding_current_step = step
+        self.salon.onboarding_dismissed = False
+        self.salon.onboarding_completed = False
+        self.salon.save(update_fields=[
+            "onboarding_current_step",
+            "onboarding_dismissed",
+            "onboarding_completed",
+        ])
+        session = self.client.session
+        session["nyx_onboarding_active"] = True
+        session.save()
+
+    def test_new_salon_shows_initial_welcome_modal(self):
+        response = self.client.get(reverse("panel_dashboard"))
+
+        self.assertTrue(response.context["onboarding_show_prompt"])
+        self.assertContains(response, "Bienvenida a NYX")
+        self.assertContains(response, "Empezar tutorial")
+        self.assertContains(response, "Lo hago después")
+
+    def test_dismiss_welcome_does_not_show_it_again(self):
+        self.client.post(reverse("panel_onboarding_dismiss"))
+
+        response = self.client.get(reverse("panel_dashboard"))
+
+        self.salon.refresh_from_db()
+        self.assertTrue(self.salon.onboarding_dismissed)
+        self.assertFalse(response.context["onboarding_show_prompt"])
+        self.assertNotContains(response, "Bienvenida a NYX")
+
+    def test_start_tutorial_activates_onboarding(self):
+        response = self.client.post(
+            reverse("panel_onboarding_start"),
+            {"reset": "1"},
+            follow=True,
+        )
+
+        self.salon.refresh_from_db()
+        self.assertFalse(self.salon.onboarding_dismissed)
+        self.assertFalse(self.salon.onboarding_completed)
+        self.assertEqual(self.salon.onboarding_current_step, 1)
+        self.assertTrue(self.client.session["nyx_onboarding_active"])
+        self.assertIsNotNone(response.context["onboarding_modal"])
+
+    def test_cancel_category_creation_does_not_advance_tutorial(self):
+        ServiceCategory.objects.create(salon=self.salon, name="Existente")
+        self.activate_tutorial(step=1)
+
+        self.client.get(reverse("panel_service_category_create"))
+        response = self.client.get(reverse("panel_service_categories"))
+
+        self.salon.refresh_from_db()
+        modal = response.context["onboarding_modal"]
+        self.assertIsNotNone(modal)
+        self.assertNotEqual(modal["title"], "Categoría creada correctamente")
+        self.assertEqual(self.salon.onboarding_current_step, 1)
+        self.assertNotIn("nyx_onboarding_completed_step", self.client.session)
+
+    def test_create_category_shows_created_modal(self):
+        self.activate_tutorial(step=1)
+
+        response = self.client.post(
+            reverse("panel_service_category_create"),
+            {
+                "name": "Color",
+                "description": "",
+                "order": "0",
+                "is_active": "on",
+            },
+            follow=True,
+        )
+
+        modal = response.context["onboarding_modal"]
+        self.assertEqual(modal["title"], "Categoría creada correctamente")
+        self.assertEqual(ServiceCategory.objects.filter(salon=self.salon).count(), 1)
+
+    def test_duplicate_category_name_shows_form_error_without_success_modal(self):
+        ServiceCategory.objects.create(salon=self.salon, name="Color")
+        self.activate_tutorial(step=1)
+
+        response = self.client.post(
+            reverse("panel_service_category_create"),
+            {
+                "name": "Color",
+                "description": "",
+                "order": "0",
+                "is_active": "on",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFormError(
+            response.context["form"],
+            "name",
+            "Ya existe una categoría con ese nombre en tu salón.",
+        )
+        self.assertEqual(ServiceCategory.objects.filter(salon=self.salon).count(), 1)
+        self.assertNotIn("nyx_onboarding_completed_step", self.client.session)
+
+    def test_add_another_category_keeps_current_step(self):
+        self.activate_tutorial(step=1)
+        session = self.client.session
+        session["nyx_onboarding_completed_step"] = 1
+        session.save()
+
+        response = self.client.post(
+            reverse("panel_onboarding_decision"),
+            {
+                "decision": "repeat",
+                "step": "1",
+                "next": reverse("panel_service_category_create"),
+            },
+        )
+
+        self.salon.refresh_from_db()
+        self.assertRedirects(response, reverse("panel_service_category_create"))
+        self.assertEqual(self.salon.onboarding_current_step, 1)
+        self.assertNotIn("nyx_onboarding_completed_step", self.client.session)
+
+    def test_continue_with_services_advances_to_service_step(self):
+        self.activate_tutorial(step=1)
+        session = self.client.session
+        session["nyx_onboarding_completed_step"] = 1
+        session.save()
+
+        response = self.client.post(
+            reverse("panel_onboarding_decision"),
+            {
+                "decision": "continue",
+                "step": "2",
+                "next": reverse("panel_service_create"),
+            },
+        )
+
+        self.salon.refresh_from_db()
+        self.assertRedirects(response, reverse("panel_service_create"))
+        self.assertEqual(self.salon.onboarding_current_step, 2)
+        self.assertNotIn("nyx_onboarding_completed_step", self.client.session)
+
+    def test_employee_hours_screen_does_not_show_blocking_step_modal(self):
+        employee = Employee.objects.create(salon=self.salon, name="Lara")
+        self.activate_tutorial(step=5)
+
+        response = self.client.get(
+            reverse("panel_employee_working_hours", args=[employee.id])
+        )
+
+        self.assertIsNone(response.context.get("onboarding_modal"))
+        self.assertTrue(response.context["show_working_hours_decision"])
+        self.assertContains(response, "Horarios de trabajo")
+        self.assertNotIn("nyx_onboarding_completed_step", self.client.session)
+
+    def test_use_salon_hours_completes_step_without_creating_employee_hours(self):
+        employee = Employee.objects.create(salon=self.salon, name="Lara")
+        BusinessHourBlock.objects.create(
+            salon=self.salon,
+            weekday=0,
+            start_time=time(9, 0),
+            end_time=time(17, 0),
+            is_active=True,
+        )
+        self.activate_tutorial(step=5)
+
+        response = self.client.post(
+            reverse("panel_employee_working_hours_use_salon", args=[employee.id]),
+            follow=True,
+        )
+
+        self.assertEqual(EmployeeWorkingHour.objects.filter(employee=employee).count(), 0)
+        modal = response.context["onboarding_modal"]
+        self.assertEqual(modal["title"], "Horarios configurados")
+        self.assertEqual(self.client.session["nyx_onboarding_completed_step"], 5)
+
+    def test_custom_working_hours_mark_professional_hours_resolved(self):
+        employee = Employee.objects.create(salon=self.salon, name="Lara")
+        self.activate_tutorial(step=5)
+        session = self.client.session
+        session["nyx_onboarding_pending_employee_hours"] = [employee.id]
+        session.save()
+
+        response = self.client.post(
+            reverse("panel_employee_working_hour_create", args=[employee.id]),
+            {
+                "weekdays": ["0", "2"],
+                "start_time": "09:00",
+                "end_time": "13:00",
+                "is_active": "on",
+            },
+            follow=True,
+        )
+
+        self.assertEqual(EmployeeWorkingHour.objects.filter(employee=employee).count(), 2)
+        modal = response.context["onboarding_modal"]
+        self.assertEqual(modal["title"], "Horarios configurados")
+        self.assertNotIn(employee.id, self.client.session["nyx_onboarding_pending_employee_hours"])
+        self.assertEqual(self.client.session["nyx_onboarding_completed_step"], 5)
+
+    def test_created_professional_modal_requires_hours_decision(self):
+        self.activate_tutorial(step=3)
+
+        response = self.client.post(
+            reverse("panel_employee_create"),
+            {
+                "name": "Lara",
+                "phone": "",
+                "email": "",
+                "is_active": "on",
+            },
+            follow=True,
+        )
+
+        employee = Employee.objects.get(salon=self.salon, name="Lara")
+        modal = response.context["onboarding_modal"]
+        labels = [action["label"] for action in modal["actions"]]
+        self.assertEqual(modal["title"], "Profesional creado correctamente")
+        self.assertIn("Usar horarios del salón", labels)
+        self.assertIn("Definir horarios personalizados", labels)
+        self.assertIn(employee.id, self.client.session["nyx_onboarding_pending_employee_hours"])
+
+    def test_resolved_professional_hours_asks_to_add_another_or_continue(self):
+        self.activate_tutorial(step=3)
+        employee = Employee.objects.create(salon=self.salon, name="Lara")
+        session = self.client.session
+        session["nyx_onboarding_pending_employee_hours"] = [employee.id]
+        session.save()
+
+        response = self.client.post(
+            reverse("panel_employee_working_hours_use_salon", args=[employee.id]),
+            follow=True,
+        )
+
+        modal = response.context["onboarding_modal"]
+        labels = [action["label"] for action in modal["actions"]]
+        self.assertEqual(modal["title"], "Horarios configurados")
+        self.assertIn("Agregar otro profesional", labels)
+        self.assertIn("Continuar con el tutorial", labels)
+        self.assertNotIn(employee.id, self.client.session["nyx_onboarding_pending_employee_hours"])
+
+    def test_pending_professional_hours_prevents_tutorial_advance(self):
+        self.activate_tutorial(step=3)
+        employee = Employee.objects.create(salon=self.salon, name="Lara")
+        session = self.client.session
+        session["nyx_onboarding_pending_employee_hours"] = [employee.id]
+        session.save()
+
+        response = self.client.post(
+            reverse("panel_onboarding_decision"),
+            {
+                "decision": "continue",
+                "step": "6",
+                "next": reverse("panel_onboarding"),
+            },
+        )
+
+        self.assertRedirects(
+            response,
+            reverse("panel_employee_working_hours", args=[employee.id]),
+        )
+        self.salon.refresh_from_db()
+        self.assertEqual(self.salon.onboarding_current_step, 3)
+
+    def test_public_link_step_shows_explicit_actions_without_loop_url(self):
+        self.activate_tutorial(step=6)
+
+        response = self.client.get(reverse("panel_onboarding"))
+
+        modal = response.context["onboarding_modal"]
+        labels = [action["label"] for action in modal["actions"]]
+        self.assertEqual(modal["title"], "Paso 6 · Revisá tu sitio público")
+        self.assertIn("Ver sitio público", labels)
+        self.assertIn("Copiar link", labels)
+        self.assertIn("Ya revisé, continuar", labels)
+        continue_action = next(
+            action for action in modal["actions"]
+            if action["label"] == "Ya revisé, continuar"
+        )
+        self.assertEqual(continue_action["step"], 7)
+
+    def test_public_link_continue_marks_link_reviewed_and_advances_to_finish(self):
+        self.activate_tutorial(step=6)
+
+        response = self.client.post(
+            reverse("panel_onboarding_decision"),
+            {
+                "decision": "continue",
+                "step": "7",
+                "next": reverse("panel_onboarding"),
+            },
+        )
+
+        self.salon.refresh_from_db()
+        self.assertRedirects(response, reverse("panel_onboarding"))
+        self.assertEqual(self.salon.onboarding_current_step, 7)
+        self.assertTrue(self.salon.onboarding_link_shared)
+
+    def test_complete_onboarding_from_final_step_marks_completed(self):
+        self.activate_tutorial(step=7)
+
+        response = self.client.post(
+            reverse("panel_onboarding_complete"),
+            {"next": reverse("panel_dashboard")},
+        )
+
+        self.salon.refresh_from_db()
+        self.assertRedirects(response, reverse("panel_dashboard"))
+        self.assertTrue(self.salon.onboarding_completed)
+        self.assertFalse(self.client.session.get("nyx_onboarding_active", False))
+
+    def test_completed_onboarding_does_not_show_initial_welcome_modal(self):
+        self.salon.onboarding_completed = True
+        self.salon.onboarding_dismissed = False
+        self.salon.onboarding_current_step = 7
+        self.salon.save(update_fields=[
+            "onboarding_completed",
+            "onboarding_dismissed",
+            "onboarding_current_step",
+        ])
+
+        response = self.client.get(reverse("panel_dashboard"))
+
+        self.assertFalse(response.context["onboarding_show_prompt"])
+        self.assertNotContains(response, "Bienvenida a NYX")
 
 
 class EmployeeWorkingHoursAvailabilityTests(SimpleTestCase):
