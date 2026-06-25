@@ -97,17 +97,26 @@
   .nyx-feature-card h3{ font-size:1rem; font-weight:900; margin-bottom:.6rem; }
   .nyx-feature-card p{ color:var(--nyx-landing-muted); font-size:.9rem; line-height:1.55; margin:0; }
 
-  .nyx-demo-section{ padding:3.5rem 0 4rem; }
-  .nyx-demo-panel{ display:grid; grid-template-columns:.75fr 1.25fr; gap:2.5rem; align-items:center; background:rgba(255,255,255,.82); border:1px solid var(--nyx-landing-border); border-radius:24px; padding:2rem; box-shadow:var(--nyx-landing-shadow); }
+  .nyx-demo-section{ padding:2.6rem 0 3rem; }
+  .nyx-demo-panel{ display:grid; grid-template-columns:1.05fr .95fr; gap:1.75rem; align-items:center; background:rgba(255,255,255,.86); border:1px solid var(--nyx-landing-border); border-radius:22px; padding:1.45rem; box-shadow:0 16px 44px rgba(24,49,49,.09); }
   .nyx-demo-eyebrow{ display:inline-flex; align-items:center; gap:.45rem; margin-bottom:1rem; color:var(--nyx-landing-primary); font-size:.82rem; font-weight:900; text-transform:uppercase; letter-spacing:.08em; }
-  .nyx-demo-copy h2{ font-size:clamp(1.85rem, 3vw, 2.45rem); line-height:1.14; font-weight:800; letter-spacing:-.045em; margin-bottom:1rem; }
-  .nyx-demo-copy p{ color:var(--nyx-landing-muted); line-height:1.7; margin-bottom:1.5rem; max-width:520px; }
-  .nyx-demo-video-frame{ position:relative; width:100%; max-width:420px; aspect-ratio:9 / 16; justify-self:center; margin:0 auto; overflow:hidden; border-radius:22px; border:1px solid rgba(64,136,136,.18); background:linear-gradient(135deg, rgba(24,49,49,.08), rgba(140,220,223,.18)); box-shadow:0 20px 55px rgba(24,49,49,.14); }
+  .nyx-demo-copy h2{ font-size:clamp(1.65rem, 2.5vw, 2.2rem); line-height:1.12; font-weight:850; letter-spacing:-.045em; margin-bottom:.85rem; max-width:620px; }
+  .nyx-demo-copy p{ color:var(--nyx-landing-muted); line-height:1.62; margin-bottom:1.15rem; max-width:560px; }
+  .nyx-demo-benefits{ display:grid; gap:.55rem; margin:0 0 1.25rem; padding:0; list-style:none; }
+  .nyx-demo-benefits li{ display:flex; align-items:center; gap:.55rem; color:#426464; font-weight:800; font-size:.92rem; }
+  .nyx-demo-benefits i{ color:var(--nyx-landing-primary); font-size:1rem; }
+  .nyx-demo-video-frame{ position:relative; width:min(100%, 310px); aspect-ratio:9 / 16; justify-self:center; margin:0 auto; overflow:hidden; border-radius:20px; border:1px solid rgba(64,136,136,.18); background:linear-gradient(135deg, rgba(24,49,49,.08), rgba(140,220,223,.18)); box-shadow:0 18px 42px rgba(24,49,49,.13); }
   .nyx-demo-video-frame video{ position:absolute; inset:0; width:100%; height:100%; display:block; object-fit:cover; background:#183131; }
 
-  .nyx-showcase{ display:grid; grid-template-columns:.8fr 1.4fr; gap:3rem; align-items:center; padding:3rem 0; }
-  .nyx-showcase h2{ font-size:2rem; line-height:1.2; font-weight:750; letter-spacing:-.04em; margin-bottom:1rem; }
-  .nyx-showcase p{ color:var(--nyx-landing-muted); line-height:1.7; margin-bottom:1.4rem; }
+  .nyx-benefits-section{ padding:2.5rem 0 3rem; }
+  .nyx-benefits-header{ max-width:760px; margin:0 auto 1.45rem; text-align:center; }
+  .nyx-benefits-header h2{ font-size:clamp(1.8rem, 3vw, 2.35rem); line-height:1.12; font-weight:850; letter-spacing:-.045em; margin-bottom:.7rem; }
+  .nyx-benefits-header p{ color:var(--nyx-landing-muted); line-height:1.65; margin:0; }
+  .nyx-benefits-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:1rem; }
+  .nyx-benefit-card{ background:#fff; border:1px solid var(--nyx-landing-border); border-radius:18px; padding:1.2rem; box-shadow:0 12px 30px rgba(24,49,49,.06); }
+  .nyx-benefit-card i{ width:40px; height:40px; border-radius:14px; display:inline-flex; align-items:center; justify-content:center; margin-bottom:.8rem; background:rgba(140,220,223,.2); color:var(--nyx-landing-primary); font-size:1.1rem; }
+  .nyx-benefit-card h3{ font-size:1rem; font-weight:900; margin-bottom:.45rem; color:var(--nyx-landing-primary-dark); }
+  .nyx-benefit-card p{ color:var(--nyx-landing-muted); line-height:1.5; font-size:.9rem; margin:0; }
 
   .nyx-real-screenshots{ display:grid; grid-template-columns:1fr 1fr; gap:1.25rem; margin-top:2rem; }
   .nyx-real-shot{ background:#fff; border:1px solid var(--nyx-landing-border); border-radius:22px; overflow:hidden; box-shadow:var(--nyx-landing-shadow); }
@@ -173,11 +182,13 @@
   @media (max-width: 991.98px){
     .nyx-landing-menu{ display:none; }
     .nyx-hero,
-    .nyx-showcase,
     .nyx-app-access,
     .nyx-demo-panel{ grid-template-columns:1fr; gap:2rem; }
     .nyx-demo-copy{ text-align:center; }
     .nyx-demo-copy p{ margin-left:auto; margin-right:auto; }
+    .nyx-demo-benefits{ max-width:360px; margin-left:auto; margin-right:auto; text-align:left; }
+    .nyx-demo-video-frame{ width:min(100%, 300px); }
+    .nyx-benefits-grid{ grid-template-columns:repeat(2, 1fr); }
     .nyx-feature-grid{ grid-template-columns:repeat(2, 1fr); }
     .nyx-business-grid{ grid-template-columns:repeat(3, 1fr); }
     .nyx-pricing-grid,
@@ -203,9 +214,11 @@
     .nyx-stat-item:last-child{ border-bottom:0; }
     .nyx-app-access{ padding:1.35rem; border-radius:20px; }
     .nyx-app-step{ grid-template-columns:1fr; }
-    .nyx-demo-section{ padding:2.5rem 0 3rem; }
-    .nyx-demo-panel{ padding:1rem; border-radius:20px; }
-    .nyx-demo-video-frame{ max-width:360px; border-radius:18px; }
+    .nyx-demo-section{ padding:2rem 0 2.4rem; }
+    .nyx-demo-panel{ padding:1rem; border-radius:20px; gap:1.4rem; }
+    .nyx-demo-video-frame{ width:min(100%, 275px); border-radius:18px; }
+    .nyx-benefits-section{ padding:2rem 0 2.5rem; }
+    .nyx-benefits-grid{ grid-template-columns:1fr; }
     .nyx-landing-footer{ padding:52px 0 24px; }
     .nyx-landing-footer-grid{ grid-template-columns:1fr; gap:32px; }
     .nyx-landing-footer-bottom{ flex-direction:column; }
@@ -315,7 +328,12 @@
         <div class="nyx-demo-copy">
           <div class="nyx-demo-eyebrow"><i class="bi bi-play-circle"></i> Demo rápida</div>
           <h2>Mirá cómo funciona NYX en menos de un minuto</h2>
-          <p>Un recorrido simple por el sistema para ver cómo tus clientes reservan turnos.</p>
+          <p>Un recorrido simple para ver cómo tus clientes reservan turnos y cómo gestionás tu salón desde el panel.</p>
+          <ul class="nyx-demo-benefits">
+            <li><i class="bi bi-check2-circle"></i> Reservas online 24/7</li>
+            <li><i class="bi bi-check2-circle"></i> Agenda clara para tu equipo</li>
+            <li><i class="bi bi-check2-circle"></i> Link público para compartir</li>
+          </ul>
           <a href="{% url 'trial_signup' %}" class="nyx-btn-solid">Empezar prueba gratis</a>
         </div>
         <div class="nyx-demo-video-frame">
@@ -327,12 +345,44 @@
       </div>
     </section>
 
-    <section id="como-funciona" class="nyx-landing-container nyx-showcase">
-      <div>
-        <div class="nyx-pill">Diseñado para ser simple</div>
-        <h2>Un sistema intuitivo para vos y tus clientes</h2>
-        <p>Interfaz limpia, rápida y pensada para que gestiones tu negocio sin complicaciones. Tus clientes reservan fácil y tu equipo trabaja con una agenda clara.</p>
-        <a href="{% url 'trial_signup' %}" class="nyx-btn-outline">Crear cuenta gratis</a>
+    <section id="como-funciona" class="nyx-landing-container nyx-benefits-section">
+      <div class="nyx-benefits-header">
+        <div class="nyx-pill">Diseñado para salones</div>
+        <h2>Todo lo que necesitás para organizar tu salón</h2>
+        <p>NYX te ayuda a recibir reservas, organizar profesionales y evitar mensajes desordenados por WhatsApp.</p>
+      </div>
+
+      <div class="nyx-benefits-grid">
+        <article class="nyx-benefit-card">
+          <i class="bi bi-calendar2-check"></i>
+          <h3>Reservas online</h3>
+          <p>Tus clientas eligen servicio, profesional, día y horario desde tu link.</p>
+        </article>
+        <article class="nyx-benefit-card">
+          <i class="bi bi-layout-text-sidebar-reverse"></i>
+          <h3>Agenda simple</h3>
+          <p>Visualizá turnos, bloqueos y reservas manuales desde el panel.</p>
+        </article>
+        <article class="nyx-benefit-card">
+          <i class="bi bi-person-workspace"></i>
+          <h3>Profesionales y horarios</h3>
+          <p>Configurá quién trabaja, qué servicios hace y en qué horarios.</p>
+        </article>
+        <article class="nyx-benefit-card">
+          <i class="bi bi-calendar-x"></i>
+          <h3>Bloqueos y ausencias</h3>
+          <p>Cargá feriados, vacaciones o horarios no disponibles.</p>
+        </article>
+        <article class="nyx-benefit-card">
+          <i class="bi bi-credit-card"></i>
+          <h3>Pagos integrados</h3>
+          <p>Conectá Mercado Pago para cobrar reservas online.</p>
+        </article>
+        <article class="nyx-benefit-card">
+          <i class="bi bi-calendar-week"></i>
+          <h3>Google Calendar</h3>
+          <p>Sincronizá turnos confirmados con tu calendario.</p>
+        </article>
       </div>
     </section>
 

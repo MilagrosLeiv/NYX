@@ -93,9 +93,22 @@
                           Editar
                         </a>
 
-                        <a href="{% url 'panel_business_hour_block_toggle_active' block.id %}" class="nyx-filter-btn" data-no-scroll-restore>
-                          {% if block.is_active %}Desactivar{% else %}Activar{% endif %}
-                        </a>
+                        <form
+                          method="post"
+                          action="{% url 'panel_business_hour_block_toggle_active' block.id %}"
+                          class="d-inline"
+                          {% if block.is_active %}
+                            data-confirm-title="¿Desactivar esta franja horaria?"
+                            data-confirm-text="La franja dejará de usarse para calcular horarios disponibles."
+                            data-confirm-confirm="Sí, desactivar franja"
+                            data-confirm-cancel="No, volver"
+                          {% endif %}
+                        >
+                          {% csrf_token %}
+                          <button type="submit" class="nyx-filter-btn border-0">
+                            {% if block.is_active %}Desactivar{% else %}Activar{% endif %}
+                          </button>
+                        </form>
                       </div>
                     </td>
                   </tr>

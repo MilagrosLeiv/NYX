@@ -1,3 +1,4 @@
+{% load tz %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -95,7 +96,7 @@
 
                       <p style="margin:0; color:#315f5f; font-size:14px;">
                         <strong>Horario actualizado:</strong>
-                        {{ item.start_datetime|date:"d/m/Y H:i" }} a {{ item.end_datetime|date:"H:i" }}
+                        {{ item.start_datetime|localtime|date:"d/m/Y H:i" }} a {{ item.end_datetime|localtime|date:"H:i" }}
                       </p>
                     </td>
                   </tr>

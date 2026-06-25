@@ -481,9 +481,20 @@
                   </a>
 
                   {% if booking.status != 'cancelled' %}
-                    <a href="{% url 'panel_booking_cancel' booking.id %}" class="nyx-filter-btn">
-                      Cancelar
-                    </a>
+                    <form
+                      method="post"
+                      action="{% url 'panel_booking_cancel' booking.id %}"
+                      class="d-inline"
+                      data-confirm-title="¿Cancelar este turno?"
+                      data-confirm-text="La reserva se cancelará y el horario quedará disponible nuevamente."
+                      data-confirm-confirm="Sí, cancelar turno"
+                      data-confirm-cancel="No, volver"
+                    >
+                      {% csrf_token %}
+                      <button type="submit" class="nyx-filter-btn border-0">
+                        Cancelar
+                      </button>
+                    </form>
                   {% endif %}
                 </div>
               </td>

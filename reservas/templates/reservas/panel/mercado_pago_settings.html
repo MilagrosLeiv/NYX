@@ -54,7 +54,14 @@
       </div>
     {% endif %}
 
-    <form method="post" action="{% url 'mercadopago_oauth_disconnect' salon.id %}">
+    <form
+      method="post"
+      action="{% url 'mercadopago_oauth_disconnect' salon.id %}"
+      data-confirm-title="¿Desconectar Mercado Pago?"
+      data-confirm-text="Tus clientes no podrán pagar online hasta que vuelvas a conectar la cuenta."
+      data-confirm-confirm="Sí, desconectar"
+      data-confirm-cancel="No, volver"
+    >
       {% csrf_token %}
       <button type="submit" class="btn btn-outline-danger rounded-pill px-4">
         Desconectar Mercado Pago

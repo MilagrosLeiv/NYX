@@ -1,8 +1,9 @@
-from datetime import date, datetime, time, timedelta
+from datetime import date, datetime, time, timedelta, timezone as datetime_timezone
 from contextlib import nullcontext
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
+from django.core import mail
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.test import Client, RequestFactory, SimpleTestCase, TestCase, override_settings
@@ -10,6 +11,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from . import panel_views
+from .mail_utils import send_booking_confirmed_email
 from .panel_forms import ManualBookingForm
 from .services.google_calendar import (
     delete_booking_item_from_google_calendar,
@@ -18,6 +20,7 @@ from .services.google_calendar import (
 from .panel_views import _create_manual_booking, _mercadopago_panel_context
 from .models import (
     Booking,
+    BookingItem,
     BusinessHourBlock,
     Employee,
     EmployeeWorkingHour,
@@ -32,6 +35,45 @@ from .utils import (
     get_employee_working_ranges_for_date,
     get_special_block_ranges,
 )
+
+
+@override_settings(
+    DEFAULT_FROM_EMAIL="turnos@example.com",
+    EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
+    TIME_ZONE="America/Argentina/Buenos_Aires",
+)
+class BookingEmailTimezoneTests(TestCase):
+    def test_confirmation_email_formats_booking_item_in_local_timezone(self):
+        salon = Salon.objects.create(name="Salon Test", slug="salon-email-test")
+        service = Service.objects.create(
+            salon=salon,
+            name="Corte",
+            price=1000,
+            duration_minutes=60,
+        )
+        employee = Employee.objects.create(salon=salon, name="Ana")
+        booking = Booking.objects.create(
+            salon=salon,
+            customer_name="Cliente",
+            customer_phone="3415550000",
+            customer_email="cliente@example.com",
+            status="confirmed",
+        )
+        BookingItem.objects.create(
+            booking=booking,
+            service=service,
+            employee=employee,
+            start_datetime=datetime(2026, 6, 22, 12, 0, tzinfo=datetime_timezone.utc),
+            end_datetime=datetime(2026, 6, 22, 13, 0, tzinfo=datetime_timezone.utc),
+        )
+
+        sent = send_booking_confirmed_email(booking)
+
+        self.assertTrue(sent)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn("Hora de inicio: 09:00", mail.outbox[0].body)
+        self.assertIn("09:00", mail.outbox[0].alternatives[0].content)
+        self.assertNotIn("Hora de inicio: 12:00", mail.outbox[0].body)
 
 
 @override_settings(

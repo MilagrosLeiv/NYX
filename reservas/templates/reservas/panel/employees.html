@@ -117,7 +117,17 @@
                     </a>
                   {% endif %}
 
-                  <form method="post" action="{% url 'panel_employee_toggle_active' employee.id %}" class="d-inline">
+                  <form
+                    method="post"
+                    action="{% url 'panel_employee_toggle_active' employee.id %}"
+                    class="d-inline"
+                    {% if employee.is_active %}
+                      data-confirm-title="¿Desactivar este profesional?"
+                      data-confirm-text="El profesional dejará de estar disponible para nuevas reservas y, si tiene acceso al panel, también quedará bloqueado."
+                      data-confirm-confirm="Sí, desactivar profesional"
+                      data-confirm-cancel="No, volver"
+                    {% endif %}
+                  >
                     {% csrf_token %}
                     <button type="submit" class="nyx-filter-btn border-0">
                       {% if employee.is_active %}

@@ -1,4 +1,4 @@
-Nuevo turno asignado - {{ salon.name }}
+{% load tz %}Nuevo turno asignado - {{ salon.name }}
 
 Hola {{ employee.name }},
 
@@ -11,7 +11,7 @@ Teléfono: {{ booking.customer_phone }}
 
 Servicios asignados:
 {% for item in items %}
-- {{ item.service.name }}: {{ item.start_datetime|date:"d/m/Y H:i" }} a {{ item.end_datetime|date:"H:i" }}
+- {{ item.service.name }}: {{ item.start_datetime|localtime|date:"d/m/Y H:i" }} a {{ item.end_datetime|localtime|date:"H:i" }}
 {% endfor %}
 
 Duración asignada: {{ total_duration }} minutos

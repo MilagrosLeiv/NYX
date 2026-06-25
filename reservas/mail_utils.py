@@ -2,7 +2,17 @@ from django.conf import settings
 from django.core.mail import send_mail, EmailMultiAlternatives
 from django.urls import reverse
 from django.template.loader import render_to_string
+from django.utils import timezone
 from collections import defaultdict
+
+
+def format_local_datetime(datetime_value, format_string="%d/%m/%Y %H:%M"):
+    """Format an aware datetime in Django's currently configured timezone."""
+    return timezone.localtime(datetime_value).strftime(format_string)
+
+
+def format_local_time(datetime_value):
+    return format_local_datetime(datetime_value, "%H:%M")
 
 
 def send_booking_confirmed_email(booking, request=None):
@@ -30,8 +40,8 @@ def send_booking_confirmed_email(booking, request=None):
     if not first_item:
         return False
 
-    fecha_formateada = first_item.start_datetime.strftime("%d/%m/%Y")
-    hora_inicio = first_item.start_datetime.strftime("%H:%M")
+    fecha_formateada = format_local_datetime(first_item.start_datetime, "%d/%m/%Y")
+    hora_inicio = format_local_time(first_item.start_datetime)
 
     manage_url = ""
 
@@ -251,8 +261,8 @@ def send_booking_payment_pending_email(booking, request=None):
     if not first_item:
         return False
 
-    fecha_formateada = first_item.start_datetime.strftime("%d/%m/%Y")
-    hora_inicio = first_item.start_datetime.strftime("%H:%M")
+    fecha_formateada = format_local_datetime(first_item.start_datetime, "%d/%m/%Y")
+    hora_inicio = format_local_time(first_item.start_datetime)
 
     manage_url = ""
 
@@ -402,7 +412,7 @@ def send_booking_payment_pending_email(booking, request=None):
     expiration_html = ""
 
     if booking.payment_expires_at:
-        expiration_local = booking.payment_expires_at.strftime("%d/%m/%Y %H:%M")
+        expiration_local = format_local_datetime(booking.payment_expires_at)
 
         expiration_text = f"- Vence: {expiration_local}\n"
 
@@ -519,7 +529,7 @@ def send_booking_payment_pending_email(booking, request=None):
 
                         {f"""
                         <div style="font-size:13px; line-height:1.6; color:#8a5a12; margin-top:14px;">
-                            Este pago vence el {booking.payment_expires_at.strftime("%d/%m/%Y %H:%M")}.
+                            Este pago vence el {format_local_datetime(booking.payment_expires_at)}.
                         </div>
                         """ if booking.payment_expires_at else ""}
                     </div>
@@ -629,8 +639,8 @@ def send_booking_cancelled_email(booking):
     if not first_item:
         return False
 
-    fecha_formateada = first_item.start_datetime.strftime("%d/%m/%Y")
-    hora_inicio = first_item.start_datetime.strftime("%H:%M")
+    fecha_formateada = format_local_datetime(first_item.start_datetime, "%d/%m/%Y")
+    hora_inicio = format_local_time(first_item.start_datetime)
 
     total_formatted = f"{int(booking.get_total_price()):,}".replace(",", ".")
 
@@ -881,8 +891,8 @@ def send_booking_rescheduled_email(booking, request=None):
     )
 
     first_item = booking_items.first()
-    fecha_formateada = first_item.start_datetime.strftime("%d/%m/%Y")
-    hora_inicio = first_item.start_datetime.strftime("%H:%M")
+    fecha_formateada = format_local_datetime(first_item.start_datetime, "%d/%m/%Y")
+    hora_inicio = format_local_time(first_item.start_datetime)
 
     manage_url = ""
 
@@ -1184,7 +1194,7 @@ def send_staff_invitation_email(invitation, request=None):
         f"Te invitaron a acceder al panel de NYX para {invitation.salon.name}.\n\n"
         f"Para activar tu cuenta y crear tu contraseña, entrá al siguiente link:\n"
         f"{accept_url}\n\n"
-        f"Este enlace vence el {invitation.expires_at.strftime('%d/%m/%Y %H:%M')}.\n\n"
+        f"Este enlace vence el {format_local_datetime(invitation.expires_at)}.\n\n"
         f"Si no esperabas esta invitación, podés ignorar este correo.\n\n"
         f"NYX"
     )
@@ -1231,7 +1241,7 @@ def send_staff_invitation_email(invitation, request=None):
                     </div>
 
                     <p style="margin:22px 0 0; font-size:13px; line-height:1.6; color:#6b7280; text-align:center;">
-                        Este enlace vence el {invitation.expires_at.strftime('%d/%m/%Y %H:%M')}.
+                        Este enlace vence el {format_local_datetime(invitation.expires_at)}.
                     </p>
                 </div>
 

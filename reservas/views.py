@@ -46,6 +46,7 @@ from .mail_utils import (
     send_salon_new_booking_email,
     send_salon_booking_rescheduled_email,
     send_staff_new_booking_emails,
+    format_local_datetime,
 )
 from .services.google_calendar import sync_booking_to_google_calendar
 
@@ -227,7 +228,7 @@ def create_appointment(request):
                     f'Resumen de tu reserva:\n'
                     f'- Servicios: {services_text}\n'
                     f'- Profesional: {appointment.employee.name}\n'
-                    f'- Fecha y hora: {appointment.appointment_datetime.strftime("%d/%m/%Y %H:%M")}\n'
+                    f'- Fecha y hora: {format_local_datetime(appointment.appointment_datetime)}\n'
                     f'- Teléfono: {appointment.customer_phone}\n\n'
                     f'Gracias por reservar con nosotros.\n'
                     f'Si necesitás modificar tu turno, comunicate con anticipación.'
@@ -271,7 +272,7 @@ def create_appointment(request):
                                         </tr>
                                         <tr>
                                             <td style="padding:8px 0; font-size:14px; color:#6b7280;">Fecha y hora</td>
-                                            <td style="padding:8px 0; font-size:14px; color:#111827; font-weight:600;">{appointment.appointment_datetime.strftime("%d/%m/%Y %H:%M")}</td>
+                                            <td style="padding:8px 0; font-size:14px; color:#111827; font-weight:600;">{format_local_datetime(appointment.appointment_datetime)}</td>
                                         </tr>
                                         <tr>
                                             <td style="padding:8px 0; font-size:14px; color:#6b7280;">Teléfono</td>
@@ -1097,7 +1098,7 @@ def confirm_appointment(request):
                         f'Resumen de tu reserva:\n'
                         f'- Servicios: {services_text}\n'
                         f'- Profesional: {appointment.employee.name}\n'
-                        f'- Fecha y hora: {appointment.appointment_datetime.strftime("%d/%m/%Y %H:%M")}\n'
+                        f'- Fecha y hora: {format_local_datetime(appointment.appointment_datetime)}\n'
                         f'- Teléfono: {appointment.customer_phone}\n\n'
                         f'Gracias por reservar con nosotros.\n'
                         f'Si necesitás modificar tu turno, comunicate con anticipación.'
@@ -1143,7 +1144,7 @@ def confirm_appointment(request):
                                             </tr>
                                             <tr>
                                                 <td style="padding:8px 0; font-size:14px; color:#6b7280;">Fecha y hora</td>
-                                                <td style="padding:8px 0; font-size:14px; color:#111827; font-weight:600;">{appointment.appointment_datetime.strftime("%d/%m/%Y %H:%M")}</td>
+                                                <td style="padding:8px 0; font-size:14px; color:#111827; font-weight:600;">{format_local_datetime(appointment.appointment_datetime)}</td>
                                             </tr>
                                             <tr>
                                                 <td style="padding:8px 0; font-size:14px; color:#6b7280;">Teléfono</td>

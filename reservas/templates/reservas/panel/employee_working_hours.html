@@ -110,7 +110,16 @@
                         <a href="{% url 'panel_employee_working_hour_edit' employee.id block.id %}" class="nyx-filter-btn">
                           Editar
                         </a>
-                        <form method="post" action="{% url 'panel_employee_working_hour_toggle_active' employee.id block.id %}">
+                        <form
+                          method="post"
+                          action="{% url 'panel_employee_working_hour_toggle_active' employee.id block.id %}"
+                          {% if block.is_active %}
+                            data-confirm-title="¿Eliminar este horario personalizado?"
+                            data-confirm-text="La franja dejará de usarse para calcular los turnos disponibles de este profesional."
+                            data-confirm-confirm="Sí, eliminar horario"
+                            data-confirm-cancel="No, volver"
+                          {% endif %}
+                        >
                           {% csrf_token %}
                           <button type="submit" class="nyx-filter-btn border-0">
                             {% if block.is_active %}Desactivar{% else %}Activar{% endif %}

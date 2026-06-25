@@ -256,18 +256,18 @@
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content rounded-4 border-0">
         <div class="modal-header border-0">
-          <h2 class="modal-title h5 fw-bold">Eliminar bloqueo</h2>
+          <h2 class="modal-title h5 fw-bold">¿Eliminar este bloqueo?</h2>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
         </div>
         <div class="modal-body pt-0">
-          <p class="text-muted">Ese rango volverá a estar disponible para reservas.</p>
+          <p class="text-muted">El horario volverá a estar disponible para reservas.</p>
           <div class="nyx-confirm-detail" id="deleteBlockLabel"></div>
         </div>
         <div class="modal-footer border-0">
-          <button type="button" class="nyx-filter-btn" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="nyx-filter-btn" data-bs-dismiss="modal">No, volver</button>
           <form method="post" id="deleteBlockForm">
             {% csrf_token %}
-            <button type="submit" class="nyx-danger-btn">Sí, eliminar</button>
+            <button type="submit" class="nyx-danger-btn">Sí, eliminar bloqueo</button>
           </form>
         </div>
       </div>

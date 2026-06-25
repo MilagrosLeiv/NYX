@@ -1,4 +1,4 @@
-Nuevo turno reservado - {{ salon.name }}
+{% load tz %}Nuevo turno reservado - {{ salon.name }}
 
 {% if booking.requires_payment %}
 Pago pendiente: {{ booking.get_payment_status_display }}
@@ -12,7 +12,7 @@ Teléfono: {{ booking.customer_phone }}
 
 Servicios:
 {% for item in items %}
-- {{ item.service.name }} con {{ item.employee.name }}: {{ item.start_datetime|date:"d/m/Y H:i" }} a {{ item.end_datetime|date:"H:i" }}
+- {{ item.service.name }} con {{ item.employee.name }}: {{ item.start_datetime|localtime|date:"d/m/Y H:i" }} a {{ item.end_datetime|localtime|date:"H:i" }}
 {% endfor %}
 
 Duración total: {{ total_duration }} minutos

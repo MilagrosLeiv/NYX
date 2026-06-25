@@ -219,6 +219,120 @@
     transform:translateY(-1px);
   }
 
+  .nyx-confirm-backdrop{
+    position:fixed;
+    inset:0;
+    z-index:1070;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:1.25rem;
+    background:rgba(24,50,52,.42);
+    backdrop-filter:blur(5px);
+  }
+
+  .nyx-confirm-backdrop.is-visible{
+    display:flex;
+  }
+
+  .nyx-confirm-modal{
+    width:min(520px, 100%);
+    padding:1.35rem;
+    display:grid;
+    gap:1rem;
+    border:1px solid rgba(239,68,68,.16);
+    border-radius:1.25rem;
+    background:
+      radial-gradient(circle at top left, rgba(255,235,235,.72), transparent 34%),
+      linear-gradient(135deg, #ffffff 0%, #fbfafa 100%);
+    box-shadow:0 26px 80px rgba(24,50,52,.28);
+  }
+
+  .nyx-confirm-icon{
+    width:52px;
+    height:52px;
+    border-radius:18px;
+    background:#fff0f0;
+    color:#b42318;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:1.35rem;
+    border:1px solid #ffd0d0;
+  }
+
+  .nyx-confirm-kicker{
+    display:inline-flex;
+    align-items:center;
+    gap:.45rem;
+    padding:.28rem .65rem;
+    border-radius:999px;
+    background:#fff0f0;
+    border:1px solid #ffd0d0;
+    color:#9f1f16;
+    font-size:.75rem;
+    font-weight:850;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    margin-bottom:.45rem;
+  }
+
+  .nyx-confirm-modal h2{
+    margin:0;
+    color:var(--nyx-text);
+    font-size:1.18rem;
+    font-weight:950;
+    letter-spacing:-.025em;
+  }
+
+  .nyx-confirm-modal p{
+    margin:.25rem 0 0;
+    color:var(--nyx-muted);
+    line-height:1.45;
+  }
+
+  .nyx-confirm-actions{
+    display:flex;
+    align-items:center;
+    justify-content:flex-start;
+    flex-wrap:wrap;
+    gap:.65rem;
+  }
+
+  .nyx-confirm-secondary,
+  .nyx-confirm-primary{
+    min-height:42px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:.45rem;
+    border-radius:999px;
+    padding:.65rem 1rem;
+    font-weight:850;
+    font-size:.88rem;
+    text-decoration:none;
+    transition:.2s ease;
+    white-space:nowrap;
+  }
+
+  .nyx-confirm-secondary{
+    background:#ffffff;
+    border:1px solid var(--nyx-border);
+    color:#315558;
+  }
+
+  .nyx-confirm-primary{
+    border:1px solid #c53a31;
+    background:#c9342b;
+    color:#ffffff;
+    box-shadow:0 10px 22px rgba(201,52,43,.2);
+  }
+
+  .nyx-confirm-secondary:hover,
+  .nyx-confirm-primary:hover{
+    transform:translateY(-1px);
+  }
+
   @media (max-width:575.98px){
     .nyx-message{
       border-radius:1rem;
@@ -242,6 +356,16 @@
     .nyx-onboarding-modal-actions > *,
     .nyx-onboarding-modal-actions form,
     .nyx-onboarding-modal-actions button{
+      width:100%;
+    }
+
+    .nyx-confirm-modal{
+      border-radius:1rem;
+      padding:1rem;
+    }
+
+    .nyx-confirm-actions,
+    .nyx-confirm-actions button{
       width:100%;
     }
   }
@@ -1327,9 +1451,89 @@ document.addEventListener('DOMContentLoaded', function () {
       </div>
     </div>
   </div>
+
+  <div class="nyx-confirm-backdrop" id="nyxConfirmBackdrop" hidden>
+    <section class="nyx-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="nyxConfirmTitle" aria-describedby="nyxConfirmText">
+      <div class="nyx-confirm-icon">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+      </div>
+
+      <div>
+        <span class="nyx-confirm-kicker">Confirmar acción</span>
+        <h2 id="nyxConfirmTitle">Confirmar acción</h2>
+        <p id="nyxConfirmText">Esta acción modificará información del panel.</p>
+      </div>
+
+      <div class="nyx-confirm-actions">
+        <button type="button" class="nyx-confirm-secondary" id="nyxConfirmCancel">No, volver</button>
+        <button type="button" class="nyx-confirm-primary" id="nyxConfirmSubmit">Confirmar acción</button>
+      </div>
+    </section>
+  </div>
+
   <script>
   document.addEventListener("DOMContentLoaded", function () {
     const STORAGE_KEY = "nyxScrollRestore";
+    const confirmBackdrop = document.getElementById("nyxConfirmBackdrop");
+    const confirmTitle = document.getElementById("nyxConfirmTitle");
+    const confirmText = document.getElementById("nyxConfirmText");
+    const confirmCancel = document.getElementById("nyxConfirmCancel");
+    const confirmSubmit = document.getElementById("nyxConfirmSubmit");
+    let pendingConfirmForm = null;
+
+    function hideConfirmModal() {
+      if (!confirmBackdrop) return;
+      confirmBackdrop.classList.remove("is-visible");
+      confirmBackdrop.hidden = true;
+      pendingConfirmForm = null;
+    }
+
+    function showConfirmModal(form) {
+      if (!confirmBackdrop) return;
+
+      pendingConfirmForm = form;
+      confirmTitle.textContent = form.dataset.confirmTitle || "Confirmar acción";
+      confirmText.textContent = form.dataset.confirmText || "Esta acción modificará información del panel.";
+      confirmCancel.textContent = form.dataset.confirmCancel || "No, volver";
+      confirmSubmit.textContent = form.dataset.confirmConfirm || "Confirmar acción";
+      confirmBackdrop.hidden = false;
+      confirmBackdrop.classList.add("is-visible");
+      confirmCancel.focus();
+    }
+
+    if (confirmCancel) {
+      confirmCancel.addEventListener("click", hideConfirmModal);
+    }
+
+    if (confirmBackdrop) {
+      confirmBackdrop.addEventListener("click", function (event) {
+        if (event.target === confirmBackdrop) {
+          hideConfirmModal();
+        }
+      });
+    }
+
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape" && confirmBackdrop && !confirmBackdrop.hidden) {
+        hideConfirmModal();
+      }
+    });
+
+    if (confirmSubmit) {
+      confirmSubmit.addEventListener("click", function () {
+        if (!pendingConfirmForm) return;
+
+        const form = pendingConfirmForm;
+        form.dataset.confirmed = "true";
+        hideConfirmModal();
+
+        if (typeof form.requestSubmit === "function") {
+          form.requestSubmit();
+        } else {
+          form.submit();
+        }
+      });
+    }
 
     function getPageKey(url) {
       return url.pathname + url.search;
@@ -1406,7 +1610,17 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     document.querySelectorAll("form").forEach(function (form) {
-      form.addEventListener("submit", function () {
+      form.addEventListener("submit", function (event) {
+        if (form.dataset.confirmTitle && form.dataset.confirmed !== "true") {
+          event.preventDefault();
+          showConfirmModal(form);
+          return;
+        }
+
+        if (form.dataset.confirmed === "true") {
+          delete form.dataset.confirmed;
+        }
+
         if (form.hasAttribute("data-no-scroll-restore")) return;
 
         const method = (form.getAttribute("method") || "get").toLowerCase();

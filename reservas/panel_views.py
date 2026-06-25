@@ -1612,6 +1612,9 @@ def panel_service_toggle_active(request, service_id):
     if not salon or not is_owner_user(request.user):
         raise PermissionDenied("Solo la dueña puede modificar servicios.")
 
+    if request.method != "POST":
+        return redirect('panel_services')
+
     service = get_object_or_404(Service, pk=service_id, salon=salon)
     service.is_active = not service.is_active
     service.save(update_fields=['is_active'])
@@ -1743,6 +1746,9 @@ def panel_service_category_toggle_active(request, category_id):
 
     if not salon or not is_owner_user(request.user):
         raise PermissionDenied("Solo la dueña puede modificar categorías.")
+
+    if request.method != "POST":
+        return redirect("panel_service_categories")
 
     category = get_object_or_404(
         ServiceCategory,
@@ -2722,6 +2728,9 @@ def panel_business_hour_block_toggle_active(request, block_id):
     if not salon or not is_owner_user(request.user):
         raise PermissionDenied("Solo la dueña puede modificar horarios.")
 
+    if request.method != "POST":
+        return redirect('panel_business_hours')
+
     block = get_object_or_404(
         BusinessHourBlock,
         pk=block_id,
@@ -2752,14 +2761,14 @@ def panel_bloqueo_delete(request, block_id):
     if not is_owner_user(request.user):
         raise PermissionDenied("Solo la dueña puede eliminar bloqueos.")
 
+    if request.method != "POST":
+        return redirect("panel_bloqueos")
+
     block = get_object_or_404(
         EmployeeTimeOff,
         pk=block_id,
         employee__salon=salon,
     )
-
-    if request.method != "POST":
-        return redirect("panel_bloqueos")
 
     block.delete()
     messages.success(request, "Bloqueo eliminado correctamente.")
@@ -3184,6 +3193,9 @@ def panel_booking_cancel(request, booking_id):
 
     if not salon or not is_owner_user(request.user):
         raise PermissionDenied("Solo la dueña puede cancelar reservas.")
+
+    if request.method != "POST":
+        return redirect('panel_bookings')
 
     booking = get_object_or_404(Booking, pk=booking_id, salon=salon)
 

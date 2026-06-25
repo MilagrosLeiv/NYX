@@ -39,7 +39,14 @@
       </span>
     </div>
 
-    <form method="post" action="{% url 'panel_google_calendar_disconnect' %}">
+    <form
+      method="post"
+      action="{% url 'panel_google_calendar_disconnect' %}"
+      data-confirm-title="¿Desconectar Google Calendar?"
+      data-confirm-text="Los nuevos turnos dejarán de sincronizarse con tu calendario hasta que vuelvas a conectar la cuenta."
+      data-confirm-confirm="Sí, desconectar"
+      data-confirm-cancel="No, volver"
+    >
       {% csrf_token %}
       <button type="submit" class="nyx-google-calendar-disconnect">
         <i class="bi bi-link-45deg"></i>

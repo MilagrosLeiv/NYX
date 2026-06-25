@@ -89,9 +89,22 @@
                     Editar
                   </a>
 
-                  <a href="{% url 'panel_service_category_toggle_active' category.id %}" class="nyx-filter-btn">
-                    {% if category.is_active %}Desactivar{% else %}Activar{% endif %}
-                  </a>
+                  <form
+                    method="post"
+                    action="{% url 'panel_service_category_toggle_active' category.id %}"
+                    class="d-inline"
+                    {% if category.is_active %}
+                      data-confirm-title="¿Desactivar esta categoría?"
+                      data-confirm-text="La categoría dejará de mostrarse como opción activa para organizar servicios."
+                      data-confirm-confirm="Sí, desactivar categoría"
+                      data-confirm-cancel="No, volver"
+                    {% endif %}
+                  >
+                    {% csrf_token %}
+                    <button type="submit" class="nyx-filter-btn border-0">
+                      {% if category.is_active %}Desactivar{% else %}Activar{% endif %}
+                    </button>
+                  </form>
                 </div>
               </td>
             </tr>

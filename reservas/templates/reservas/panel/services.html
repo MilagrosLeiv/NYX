@@ -107,9 +107,22 @@
                     Editar
                   </a>
 
-                  <a href="{% url 'panel_service_toggle_active' service.id %}" class="nyx-filter-btn">
-                    {% if service.is_active %}Desactivar{% else %}Activar{% endif %}
-                  </a>
+                  <form
+                    method="post"
+                    action="{% url 'panel_service_toggle_active' service.id %}"
+                    class="d-inline"
+                    {% if service.is_active %}
+                      data-confirm-title="¿Desactivar este servicio?"
+                      data-confirm-text="El servicio dejará de estar disponible para nuevas reservas."
+                      data-confirm-confirm="Sí, desactivar servicio"
+                      data-confirm-cancel="No, volver"
+                    {% endif %}
+                  >
+                    {% csrf_token %}
+                    <button type="submit" class="nyx-filter-btn border-0">
+                      {% if service.is_active %}Desactivar{% else %}Activar{% endif %}
+                    </button>
+                  </form>
                 </div>
               </td>
             </tr>
