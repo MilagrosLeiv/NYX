@@ -385,7 +385,9 @@ class PanelEmployeeAccessForm(forms.Form):
         email = self.cleaned_data["email"].strip().lower()
 
         if User.objects.filter(email__iexact=email).exists():
-            raise forms.ValidationError("Ya existe un usuario con ese email.")
+            raise forms.ValidationError(
+                "Ese email ya pertenece a otro usuario. Usá el email real del profesional o corregí el usuario existente antes de crear el acceso."
+            )
 
         return email
     
@@ -425,11 +427,14 @@ class NyxPasswordResetForm(PasswordResetForm):
     def get_users(self, email):
         UserModel = get_user_model()
 
-        users = UserModel._default_manager.filter(
+        users = list(UserModel._default_manager.filter(
             email__iexact=email,
             is_active=True,
             salon_memberships__is_active=True,
-        ).distinct()
+        ).exclude(email="").distinct())
+
+        if len(users) != 1:
+            return
 
         for user in users:
             if user.has_usable_password():

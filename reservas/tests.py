@@ -5,14 +5,17 @@ from unittest.mock import Mock, patch
 
 from django.core import mail
 from django.contrib.auth.models import User
+from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.test import Client, RequestFactory, SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
 
 from . import panel_views
 from .mail_utils import send_booking_confirmed_email
-from .panel_forms import ManualBookingForm
+from .panel_forms import ManualBookingForm, NyxPasswordResetForm, PanelEmployeeAccessForm
 from .services.google_calendar import (
     delete_booking_item_from_google_calendar,
     sync_booking_item_to_google_calendar,
@@ -184,6 +187,188 @@ class MercadoPagoPanelContextTests(SimpleTestCase):
         self.assertTrue(context["mercadopago_visible_to_clients"])
         payment_settings.has_valid_mercadopago_connection.assert_called_once_with()
         payment_settings.save.assert_not_called()
+
+
+class PanelLoginAndStaffAccessTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.salon = Salon.objects.create(
+            name="Lux Salon",
+            slug="lux-salon-auth",
+            is_active=True,
+        )
+        SalonSubscription.objects.create(
+            salon=self.salon,
+            status=SalonSubscription.Status.TRIAL,
+            plan=SalonSubscription.Plan.BASIC,
+        )
+
+    def create_staff_user(self, username="manuel", email="manuel@example.com"):
+        user = User.objects.create_user(
+            username=username,
+            email=email,
+            password="pass12345",
+        )
+        SalonMembership.objects.create(
+            user=user,
+            salon=self.salon,
+            role="staff",
+            is_active=True,
+        )
+        Employee.objects.create(
+            salon=self.salon,
+            user=user,
+            name=username.title(),
+            email=email,
+        )
+        return user
+
+    def test_staff_with_active_membership_logs_in_to_allowed_panel(self):
+        self.create_staff_user()
+
+        response = self.client.post(reverse("panel_login"), {
+            "username": "manuel",
+            "password": "pass12345",
+        })
+
+        self.assertRedirects(
+            response,
+            reverse("panel_agenda"),
+            fetch_redirect_response=False,
+        )
+
+    def test_authenticated_login_redirects_staff_without_403(self):
+        self.create_staff_user()
+        self.client.login(username="manuel", password="pass12345")
+
+        response = self.client.get(reverse("panel_login"))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response["Location"], reverse("panel_agenda"))
+
+    def test_authenticated_login_logs_out_user_without_active_membership(self):
+        User.objects.create_user(
+            username="sin_salon",
+            email="sin-salon@example.com",
+            password="pass12345",
+        )
+        self.client.login(username="sin_salon", password="pass12345")
+
+        response = self.client.get(reverse("panel_login"), follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "reservas/panel/login.html")
+        self.assertFalse(response.wsgi_request.user.is_authenticated)
+        self.assertContains(
+            response,
+            "Tu usuario no tiene una membresía activa en ninguna peluquería.",
+        )
+
+    def test_staff_access_form_rejects_email_used_by_another_user(self):
+        User.objects.create_user(
+            username="nux",
+            email="milicentral2004@gmail.com",
+            password="pass12345",
+        )
+
+        form = PanelEmployeeAccessForm(data={
+            "username": "manuel",
+            "email": "milicentral2004@gmail.com",
+        })
+
+        self.assertFalse(form.is_valid())
+        self.assertIn("email", form.errors)
+        self.assertIn("ya pertenece a otro usuario", form.errors["email"][0])
+
+
+@override_settings(
+    DEFAULT_FROM_EMAIL="turnos@example.com",
+    EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
+)
+class PanelPasswordResetTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.salon = Salon.objects.create(
+            name="Lux Salon",
+            slug="lux-salon-reset",
+            is_active=True,
+        )
+
+    def add_membership(self, user, role="staff"):
+        SalonMembership.objects.create(
+            user=user,
+            salon=self.salon,
+            role=role,
+            is_active=True,
+        )
+
+    def test_password_reset_confirm_changes_user_that_owns_email(self):
+        manuel = User.objects.create_user(
+            username="Manuel",
+            email="",
+            password="oldpass12345",
+        )
+        nux = User.objects.create_user(
+            username="nux",
+            email="milicentral2004@gmail.com",
+            password="oldpass12345",
+        )
+        self.add_membership(manuel)
+        self.add_membership(nux)
+
+        uid = urlsafe_base64_encode(force_bytes(nux.pk))
+        token = default_token_generator.make_token(nux)
+        response = self.client.get(
+            reverse("password_reset_confirm", kwargs={
+                "uidb64": uid,
+                "token": token,
+            })
+        )
+        self.assertEqual(response.status_code, 302)
+
+        response = self.client.post(
+            response["Location"],
+            {
+                "new_password1": "newpass12345",
+                "new_password2": "newpass12345",
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        manuel.refresh_from_db()
+        nux.refresh_from_db()
+        self.assertTrue(nux.check_password("newpass12345"))
+        self.assertTrue(manuel.check_password("oldpass12345"))
+
+    def test_password_reset_form_ignores_users_without_email(self):
+        manuel = User.objects.create_user(
+            username="Manuel",
+            email="",
+            password="oldpass12345",
+        )
+        self.add_membership(manuel)
+
+        form = NyxPasswordResetForm()
+
+        self.assertEqual(list(form.get_users("")), [])
+
+    def test_password_reset_form_does_not_choose_between_duplicate_emails(self):
+        first = User.objects.create_user(
+            username="staff1",
+            email="duplicado@example.com",
+            password="pass12345",
+        )
+        second = User.objects.create_user(
+            username="staff2",
+            email="duplicado@example.com",
+            password="pass12345",
+        )
+        self.add_membership(first)
+        self.add_membership(second)
+
+        form = NyxPasswordResetForm()
+
+        self.assertEqual(list(form.get_users("duplicado@example.com")), [])
 
 
 class GuidedOnboardingDecisionTests(TestCase):

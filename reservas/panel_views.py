@@ -131,6 +131,20 @@ def is_staff_user(user):
     return bool(membership and membership.role == 'staff')
 
 
+def get_panel_entrypoint_for_user(user):
+    if user.is_superuser:
+        return '/admin/'
+
+    membership = get_user_membership(user)
+    if not membership:
+        return None
+
+    if membership.role == 'staff':
+        return 'panel_agenda'
+
+    return 'panel_dashboard'
+
+
 def get_user_employee(user):
     return getattr(user, 'employee_profile', None)
 
@@ -3212,9 +3226,16 @@ def panel_booking_cancel(request, booking_id):
 
 def panel_login(request):
     if request.user.is_authenticated:
-        if request.user.is_superuser:
-            return redirect('/admin/')
-        return redirect('panel_dashboard')
+        entrypoint = get_panel_entrypoint_for_user(request.user)
+        if entrypoint:
+            return redirect(entrypoint)
+
+        messages.error(
+            request,
+            'Tu usuario no tiene una membresía activa en ninguna peluquería.'
+        )
+        logout(request)
+        return redirect('panel_login')
 
     if request.method == 'POST':
         username = request.POST.get('username', '').strip()
@@ -3237,7 +3258,7 @@ def panel_login(request):
                 messages.error(request, 'Tu usuario no está vinculado a ninguna peluquería.')
             else:
                 login(request, user)
-                return redirect('panel_dashboard')
+                return redirect(get_panel_entrypoint_for_user(user))
 
     return render(request, 'reservas/panel/login.html')
 
