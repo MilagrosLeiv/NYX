@@ -1,4 +1,5 @@
 from datetime import timedelta, datetime, timezone as datetime_timezone
+import logging
 
 
 from django.conf import settings
@@ -60,7 +61,14 @@ from .booking_utils import (
     expire_unpaid_bookings,
 )
 from .utils import get_available_slots
-from .services.google_calendar import GOOGLE_CALENDAR_SCOPES
+from .services.google_calendar import (
+    GOOGLE_CALENDAR_SCOPES,
+    delete_booking_item_from_google_calendar,
+    sync_booking_item_to_google_calendar,
+)
+
+
+logger = logging.getLogger(__name__)
 
 
 
@@ -1279,7 +1287,7 @@ def panel_manual_booking_create(request):
         form = ManualBookingForm(request.POST, salon=salon)
         if form.is_valid():
             try:
-                _create_manual_booking(salon, form.cleaned_data)
+                booking = _create_manual_booking(salon, form.cleaned_data)
             except ValidationError as error:
                 form.add_error(
                     None,
@@ -1288,6 +1296,11 @@ def panel_manual_booking_create(request):
                     ),
                 )
             else:
+                transaction.on_commit(
+                    lambda booking_id=booking.id: sync_manual_booking_to_google_calendar(
+                        booking_id
+                    )
+                )
                 messages.success(
                     request,
                     'Turno manual cargado correctamente.',
@@ -1305,6 +1318,85 @@ def panel_manual_booking_create(request):
         'salon': salon,
         'form': form,
     })
+
+
+def salon_should_sync_confirmed_bookings_to_google_calendar(salon):
+    try:
+        integration = salon.google_calendar_integration
+    except GoogleCalendarIntegration.DoesNotExist:
+        return False
+
+    return bool(
+        integration.is_active
+        and integration.is_connected()
+        and integration.sync_confirmed_bookings
+    )
+
+
+def sync_manual_booking_to_google_calendar(booking_id):
+    booking = Booking.objects.select_related("salon").prefetch_related(
+        "items__service",
+        "items__employee",
+    ).get(pk=booking_id)
+
+    if booking.status != "confirmed":
+        return False
+
+    if not salon_should_sync_confirmed_bookings_to_google_calendar(booking.salon):
+        return False
+
+    synced_any = False
+
+    for item in booking.items.all():
+        item.refresh_from_db(fields=[
+            "google_calendar_event_id",
+            "google_calendar_synced_at",
+        ])
+
+        if item.google_calendar_event_id:
+            continue
+
+        synced = sync_booking_item_to_google_calendar(item)
+        synced_any = synced_any or synced
+
+        if not synced:
+            logger.warning(
+                "No se pudo sincronizar el turno manual %s item %s con Google Calendar.",
+                booking.id,
+                item.id,
+            )
+
+    return synced_any
+
+
+def delete_manual_booking_from_google_calendar(booking_id):
+    booking = Booking.objects.select_related("salon").prefetch_related(
+        "items__service",
+        "items__employee",
+    ).get(pk=booking_id)
+
+    deleted_any = False
+
+    for item in booking.items.all():
+        item.refresh_from_db(fields=[
+            "google_calendar_event_id",
+            "google_calendar_synced_at",
+        ])
+
+        if not item.google_calendar_event_id:
+            continue
+
+        deleted = delete_booking_item_from_google_calendar(item)
+        deleted_any = deleted_any or deleted
+
+        if not deleted:
+            logger.warning(
+                "No se pudo eliminar de Google Calendar el turno manual %s item %s.",
+                booking.id,
+                item.id,
+            )
+
+    return deleted_any
 
 
 def _create_manual_booking(salon, cleaned_data):
@@ -1522,13 +1614,11 @@ def panel_services(request):
         raise PermissionDenied("Solo la dueña puede gestionar servicios.")
 
     services = Service.objects.filter(salon=salon).order_by('name')
-    has_active_services = services.filter(is_active=True).exists()
-
     context = {
         'panel_role': 'owner',
         'salon': salon,
         'services': services,
-        'show_next_step': has_active_services,
+        'show_next_step': False,
     }
     context.update(get_onboarding_guidance_context(request, salon))
     return render(request, 'reservas/panel/services.html', context)
@@ -1657,13 +1747,11 @@ def panel_service_categories(request):
         .filter(salon=salon)
         .order_by("order", "name")
     )
-    has_categories = categories.exists()
-
     context = {
         "panel_role": "owner",
         "salon": salon,
         "categories": categories,
-        "show_next_step": has_categories,
+        "show_next_step": False,
     }
     context.update(get_onboarding_guidance_context(request, salon))
 
@@ -1814,7 +1902,7 @@ def panel_employees(request):
         'panel_role': 'owner',
         'salon': salon,
         'employees': employees,
-        'show_next_step': any(employee.is_active for employee in employees),
+        'show_next_step': False,
     }
     context.update(get_onboarding_guidance_context(request, salon))
     return render(request, 'reservas/panel/employees.html', context)
@@ -2520,10 +2608,6 @@ def panel_business_hours(request):
             'active_blocks_count': len(active_blocks),
         })
 
-    has_active_blocks = any(
-        day['active_blocks_count'] > 0
-        for day in blocks_by_weekday
-    )
     public_url = request.build_absolute_uri(
         reverse("service_list", kwargs={"salon_slug": salon.slug})
     )
@@ -2532,7 +2616,7 @@ def panel_business_hours(request):
         'panel_role': 'owner',
         'salon': salon,
         'blocks_by_weekday': blocks_by_weekday,
-        'show_next_step': has_active_blocks,
+        'show_next_step': False,
         'public_url': public_url,
     }
 
@@ -3216,6 +3300,11 @@ def panel_booking_cancel(request, booking_id):
     if booking.status != 'cancelled':
         booking.status = 'cancelled'
         booking.save(update_fields=['status'])
+        transaction.on_commit(
+            lambda booking_id=booking.id: delete_manual_booking_from_google_calendar(
+                booking_id
+            )
+        )
         messages.success(request, f'Reserva #{booking.id} cancelada correctamente.')
     else:
         messages.info(request, f'La reserva #{booking.id} ya estaba cancelada.')

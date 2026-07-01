@@ -27,6 +27,7 @@ from .models import (
     BusinessHourBlock,
     Employee,
     EmployeeWorkingHour,
+    GoogleCalendarIntegration,
     Salon,
     SalonMembership,
     SalonSubscription,
@@ -721,6 +722,38 @@ class GuidedOnboardingDecisionTests(TestCase):
         self.assertFalse(response.context["onboarding_show_prompt"])
         self.assertNotContains(response, "Bienvenida a NYX")
 
+    def test_normal_panel_pages_do_not_show_fixed_next_step_cards(self):
+        category = ServiceCategory.objects.create(salon=self.salon, name="Color")
+        Service.objects.create(
+            salon=self.salon,
+            category=category,
+            name="Corte",
+            price=1000,
+            duration_minutes=30,
+            is_active=True,
+        )
+        Employee.objects.create(salon=self.salon, name="Lara", is_active=True)
+        BusinessHourBlock.objects.create(
+            salon=self.salon,
+            weekday=0,
+            start_time=time(9, 0),
+            end_time=time(17, 0),
+            is_active=True,
+        )
+
+        for url_name in [
+            "panel_service_categories",
+            "panel_services",
+            "panel_employees",
+            "panel_business_hours",
+        ]:
+            with self.subTest(url_name=url_name):
+                response = self.client.get(reverse(url_name))
+
+                self.assertEqual(response.status_code, 200)
+                self.assertFalse(response.context["show_next_step"])
+                self.assertNotContains(response, "Siguiente paso")
+
 
 class EmployeeWorkingHoursAvailabilityTests(SimpleTestCase):
     selected_date = date(2026, 6, 15)  # Lunes
@@ -1086,6 +1119,238 @@ class ManualBookingCreationTests(SimpleTestCase):
             'Ese horario ya no está disponible. Elegí otro horario.',
         ):
             self.run_create([])
+
+
+class ManualBookingGoogleCalendarTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.owner = User.objects.create_user(
+            username="owner-calendar",
+            email="owner-calendar@example.com",
+            password="pass12345",
+        )
+        self.salon = Salon.objects.create(
+            name="Phoenix Hair Salon",
+            slug="phoenix-calendar",
+            is_active=True,
+        )
+        SalonMembership.objects.create(
+            user=self.owner,
+            salon=self.salon,
+            role="owner",
+            is_active=True,
+        )
+        SalonSubscription.objects.create(
+            salon=self.salon,
+            status=SalonSubscription.Status.ACTIVE,
+            plan=SalonSubscription.Plan.BASIC,
+        )
+        self.employee = Employee.objects.create(
+            salon=self.salon,
+            name="Lara",
+            is_active=True,
+        )
+        self.service = Service.objects.create(
+            salon=self.salon,
+            name="Corte",
+            price=1000,
+            duration_minutes=60,
+            is_active=True,
+        )
+        self.employee.services.add(self.service)
+        BusinessHourBlock.objects.create(
+            salon=self.salon,
+            weekday=0,
+            start_time=time(9, 0),
+            end_time=time(18, 0),
+            is_active=True,
+        )
+        self.client.login(username="owner-calendar", password="pass12345")
+        self.post_data = {
+            "customer_name": "Ana",
+            "customer_phone": "3415550000",
+            "customer_email": "",
+            "employee": str(self.employee.id),
+            "service": str(self.service.id),
+            "appointment_date": "2026-07-06",
+            "appointment_time": "10:00",
+            "notes": "Cliente habitual",
+        }
+
+    def connect_google_calendar(self):
+        return GoogleCalendarIntegration.objects.create(
+            salon=self.salon,
+            calendar_id="primary",
+            access_token="access-token",
+            refresh_token="refresh-token",
+            is_active=True,
+            sync_confirmed_bookings=True,
+        )
+
+    def google_service_mock(self, event_id="google-event-1"):
+        calendar_service = Mock()
+        calendar_service.events.return_value.insert.return_value.execute.return_value = {
+            "id": event_id,
+        }
+        credentials = SimpleNamespace(token="access-token", expiry=None)
+        return calendar_service, credentials
+
+    def post_manual_booking(self):
+        return self.client.post(reverse("panel_manual_booking_create"), self.post_data)
+
+    @patch("reservas.signals.sync_booking_to_google_calendar", return_value=True)
+    @patch("reservas.panel_views.get_available_slots", return_value=["10:00"])
+    @patch("reservas.panel_forms.get_available_slots", return_value=["10:00"])
+    @patch("reservas.services.google_calendar.get_calendar_service")
+    def test_confirmed_manual_booking_syncs_to_google_calendar(
+        self,
+        get_calendar_service,
+        _form_slots,
+        _view_slots,
+        _signal_sync,
+    ):
+        self.connect_google_calendar()
+        calendar_service, credentials = self.google_service_mock()
+        get_calendar_service.return_value = (calendar_service, credentials)
+
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.post_manual_booking()
+
+        self.assertEqual(response.status_code, 302)
+        booking = Booking.objects.get(customer_name="Ana")
+        item = booking.items.get()
+        self.assertEqual(booking.status, "confirmed")
+        self.assertEqual(item.google_calendar_event_id, "google-event-1")
+        self.assertIsNotNone(item.google_calendar_synced_at)
+        calendar_service.events.return_value.insert.assert_called_once()
+
+    @patch("reservas.signals.sync_booking_to_google_calendar", return_value=True)
+    @patch("reservas.panel_views.logger.warning")
+    @patch("reservas.services.google_calendar.logger.exception")
+    @patch("reservas.panel_views.get_available_slots", return_value=["10:00"])
+    @patch("reservas.panel_forms.get_available_slots", return_value=["10:00"])
+    @patch(
+        "reservas.services.google_calendar.get_calendar_service",
+        side_effect=RuntimeError("Google unavailable"),
+    )
+    def test_manual_booking_is_created_when_google_calendar_sync_fails(
+        self,
+        _get_calendar_service,
+        _form_slots,
+        _view_slots,
+        _logger_exception,
+        logger_warning,
+        _signal_sync,
+    ):
+        self.connect_google_calendar()
+
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.post_manual_booking()
+
+        self.assertEqual(response.status_code, 302)
+        booking = Booking.objects.get(customer_name="Ana")
+        item = booking.items.get()
+        self.assertEqual(booking.status, "confirmed")
+        self.assertIsNone(item.google_calendar_event_id)
+        logger_warning.assert_called_once()
+
+    @patch("reservas.signals.sync_booking_to_google_calendar", return_value=True)
+    @patch("reservas.panel_views.sync_booking_item_to_google_calendar")
+    @patch("reservas.panel_views.get_available_slots", return_value=["10:00"])
+    @patch("reservas.panel_forms.get_available_slots", return_value=["10:00"])
+    def test_manual_booking_without_google_calendar_connection_does_not_fail(
+        self,
+        _form_slots,
+        _view_slots,
+        sync_item,
+        _signal_sync,
+    ):
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.post_manual_booking()
+
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(Booking.objects.filter(customer_name="Ana").exists())
+        sync_item.assert_not_called()
+
+    @patch("reservas.signals.delete_booking_from_google_calendar", return_value=True)
+    @patch("reservas.panel_views.delete_booking_item_from_google_calendar", return_value=True)
+    def test_cancel_manual_booking_deletes_google_calendar_event(
+        self,
+        delete_item,
+        _signal_delete,
+    ):
+        booking = Booking.objects.create(
+            salon=self.salon,
+            customer_name="Ana",
+            customer_phone="3415550000",
+            booking_mode="consecutive",
+            status="confirmed",
+            payment_choice="none",
+            payment_status="not_required",
+            payment_required_amount=0,
+            selected_payment_method="none",
+        )
+        item = BookingItem.objects.create(
+            booking=booking,
+            service=self.service,
+            employee=self.employee,
+            start_datetime=timezone.make_aware(
+                datetime(2026, 7, 6, 10, 0),
+                timezone.get_current_timezone(),
+            ),
+            end_datetime=timezone.make_aware(
+                datetime(2026, 7, 6, 11, 0),
+                timezone.get_current_timezone(),
+            ),
+            google_calendar_event_id="google-event-1",
+        )
+
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.client.post(reverse("panel_booking_cancel", args=[booking.id]))
+
+        self.assertEqual(response.status_code, 302)
+        booking.refresh_from_db()
+        self.assertEqual(booking.status, "cancelled")
+        delete_item.assert_called_once()
+        self.assertEqual(delete_item.call_args.args[0].id, item.id)
+
+    @patch("reservas.panel_views.sync_booking_item_to_google_calendar")
+    def test_manual_booking_sync_skips_items_that_already_have_google_event(
+        self,
+        sync_item,
+    ):
+        self.connect_google_calendar()
+        booking = Booking.objects.create(
+            salon=self.salon,
+            customer_name="Ana",
+            customer_phone="3415550000",
+            booking_mode="consecutive",
+            status="confirmed",
+            payment_choice="none",
+            payment_status="not_required",
+            payment_required_amount=0,
+            selected_payment_method="none",
+        )
+        BookingItem.objects.create(
+            booking=booking,
+            service=self.service,
+            employee=self.employee,
+            start_datetime=timezone.make_aware(
+                datetime(2026, 7, 6, 10, 0),
+                timezone.get_current_timezone(),
+            ),
+            end_datetime=timezone.make_aware(
+                datetime(2026, 7, 6, 11, 0),
+                timezone.get_current_timezone(),
+            ),
+            google_calendar_event_id="google-event-1",
+            google_calendar_synced_at=timezone.now(),
+        )
+
+        result = panel_views.sync_manual_booking_to_google_calendar(booking.id)
+
+        self.assertFalse(result)
+        sync_item.assert_not_called()
 
 
 class ManualBookingPermissionTests(SimpleTestCase):
