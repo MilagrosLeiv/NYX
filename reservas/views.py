@@ -94,6 +94,27 @@ def filter_past_slots_for_today(slots, selected_date):
 
     return filtered_slots
 
+
+def build_public_business_hours(blocks):
+    hours_by_weekday = []
+    current_weekday = None
+    current_day = None
+
+    for block in blocks:
+        if block.weekday != current_weekday:
+            current_weekday = block.weekday
+            current_day = {
+                "weekday": block.weekday,
+                "weekday_label": block.get_weekday_display(),
+                "blocks": [],
+            }
+            hours_by_weekday.append(current_day)
+
+        current_day["blocks"].append(block)
+
+    return hours_by_weekday
+
+
 def service_list(request, salon_slug):
     expire_unpaid_bookings()
 
@@ -161,6 +182,7 @@ def service_list(request, salon_slug):
         )
         .order_by('weekday', 'start_time')
     )
+    public_hours = build_public_business_hours(active_blocks)
 
     context = {
         'services': services,
@@ -168,6 +190,7 @@ def service_list(request, salon_slug):
         'uncategorized_services': uncategorized_services,
         'employees': employees,
         'active_blocks': active_blocks,
+        'public_hours': public_hours,
         'salon': salon,
         'deposit_enabled': salon.deposit_enabled,
         'deposit_percentage': salon.deposit_percentage,
@@ -227,7 +250,7 @@ def create_appointment(request):
                     f'Hola {appointment.customer_name}, tu turno fue reservado con éxito.\n\n'
                     f'Resumen de tu reserva:\n'
                     f'- Servicios: {services_text}\n'
-                    f'- Profesional: {appointment.employee.name}\n'
+                    f'- Profesional: {appointment.employee.public_name}\n'
                     f'- Fecha y hora: {format_local_datetime(appointment.appointment_datetime)}\n'
                     f'- Teléfono: {appointment.customer_phone}\n\n'
                     f'Gracias por reservar con nosotros.\n'
@@ -268,7 +291,7 @@ def create_appointment(request):
                                         </tr>
                                         <tr>
                                             <td style="padding:8px 0; font-size:14px; color:#6b7280;">Profesional</td>
-                                            <td style="padding:8px 0; font-size:14px; color:#111827; font-weight:600;">{appointment.employee.name}</td>
+                                            <td style="padding:8px 0; font-size:14px; color:#111827; font-weight:600;">{appointment.employee.public_name}</td>
                                         </tr>
                                         <tr>
                                             <td style="padding:8px 0; font-size:14px; color:#6b7280;">Fecha y hora</td>
@@ -419,7 +442,7 @@ def create_split_appointments(request):
                 continue
 
             if not employee.services.filter(pk=service.pk).exists():
-                errors[f'employee_{service.id}'] = f'{employee.name} no realiza {service.name}.'
+                errors[f'employee_{service.id}'] = f'{employee.public_name} no realiza {service.name}.'
                 continue
 
             try:
@@ -529,7 +552,7 @@ def employees_by_services(request):
 
     data = {
         'employees': [
-            {'id': employee.id, 'name': employee.name}
+            {'id': employee.id, 'name': employee.public_name}
             for employee in employees
         ]
     }
@@ -615,14 +638,14 @@ def employees_by_salon(request):
     employees = []
 
     if salon_id:
-        employees = list(
-            Employee.objects.filter(
+        employees = [
+            {"id": employee.id, "name": employee.public_name}
+            for employee in Employee.objects.filter(
                 salon_id=salon_id,
                 is_active=True
             )
             .order_by('name')
-            .values('id', 'name')
-        )
+        ]
 
     return JsonResponse({'employees': employees})
 
@@ -645,7 +668,7 @@ def employees_by_salon_and_services(request):
 
     data = {
         'employees': [
-            {'id': employee.id, 'name': employee.name}
+            {'id': employee.id, 'name': employee.public_name}
             for employee in employees
         ]
     }
@@ -1097,7 +1120,7 @@ def confirm_appointment(request):
                         f'Hola {appointment.customer_name}, tu turno fue reservado con éxito.\n\n'
                         f'Resumen de tu reserva:\n'
                         f'- Servicios: {services_text}\n'
-                        f'- Profesional: {appointment.employee.name}\n'
+                        f'- Profesional: {appointment.employee.public_name}\n'
                         f'- Fecha y hora: {format_local_datetime(appointment.appointment_datetime)}\n'
                         f'- Teléfono: {appointment.customer_phone}\n\n'
                         f'Gracias por reservar con nosotros.\n'
@@ -1140,7 +1163,7 @@ def confirm_appointment(request):
                                             </tr>
                                             <tr>
                                                 <td style="padding:8px 0; font-size:14px; color:#6b7280;">Profesional</td>
-                                                <td style="padding:8px 0; font-size:14px; color:#111827; font-weight:600;">{appointment.employee.name}</td>
+                                                <td style="padding:8px 0; font-size:14px; color:#111827; font-weight:600;">{appointment.employee.public_name}</td>
                                             </tr>
                                             <tr>
                                                 <td style="padding:8px 0; font-size:14px; color:#6b7280;">Fecha y hora</td>

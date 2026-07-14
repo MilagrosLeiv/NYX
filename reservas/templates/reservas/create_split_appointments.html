@@ -101,7 +101,7 @@
                                                 value="{{ employee.id }}"
                                                 {% if values|get_item:employee_key == employee.id|stringformat:'s' %}selected{% endif %}
                                             >
-                                                {{ employee.name }}
+                                                {{ employee.public_name }}
                                             </option>
                                         {% endfor %}
                                     {% endwith %}

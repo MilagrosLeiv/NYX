@@ -1,6 +1,6 @@
 {% load tz %}Nuevo turno asignado - {{ salon.name }}
 
-Hola {{ employee.name }},
+Hola {{ employee.public_name }},
 
 Tenés un nuevo turno asignado.
 

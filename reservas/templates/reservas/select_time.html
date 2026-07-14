@@ -268,7 +268,7 @@
                   Vamos a mostrarte horarios disponibles para atenderte seguido.
                 </div>
               {% elif employee %}
-                <div class="fw-semibold fs-5 mb-1">{{ employee.name }}</div>
+                <div class="fw-semibold fs-5 mb-1">{{ employee.public_name }}</div>
                 <div class="nyx-text-muted small">
                   Profesional seleccionado
                 </div>
@@ -471,7 +471,7 @@
               </div>
             {% elif employee %}
               <div class="mb-4">
-                <div class="fw-semibold">{{ employee.name }}</div>
+                <div class="fw-semibold">{{ employee.public_name }}</div>
                 <div class="nyx-text-muted small">Profesional</div>
               </div>
             {% elif mode == 'auto' %}

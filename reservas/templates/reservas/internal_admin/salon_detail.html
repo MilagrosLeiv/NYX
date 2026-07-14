@@ -1,0 +1,170 @@
+{% extends "reservas/internal_admin/base.html" %}
+
+{% block title %}{{ salon.name }} | Admin NYX{% endblock %}
+{% block heading %}{{ salon.name }}{% endblock %}
+
+{% block content %}
+<section class="row g-3 mb-4">
+  <div class="col-lg-4">
+    <div class="nyx-admin-card p-3 h-100">
+      <h2 class="nyx-admin-section-title">Datos principales</h2>
+      <dl class="mb-0">
+        <dt>ID</dt>
+        <dd>{{ salon.id }}</dd>
+        <dt>Slug</dt>
+        <dd>{{ salon.slug }}</dd>
+        <dt>Email</dt>
+        <dd>{{ salon.email|default:"Sin email" }}</dd>
+        <dt>Telefono</dt>
+        <dd>{{ salon.phone|default:"Sin telefono" }}</dd>
+        <dt>Activo</dt>
+        <dd>{% if salon.is_active %}Si{% else %}No{% endif %}</dd>
+        <dt>Creado</dt>
+        <dd>{{ salon.created_at|date:"d/m/Y H:i" }}</dd>
+      </dl>
+      <a href="{{ public_url }}" target="_blank" rel="noopener" class="btn btn-outline-dark btn-sm mt-2">Abrir link publico</a>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="nyx-admin-card p-3 h-100">
+      <h2 class="nyx-admin-section-title">Mercado Pago</h2>
+      <p>
+        <span class="nyx-admin-badge {% if not payment.connected %}is-off{% endif %}">
+          {% if payment.connected %}Conectado{% else %}Desconectado{% endif %}
+        </span>
+      </p>
+      <dl class="mb-0">
+        <dt>Configuracion creada</dt>
+        <dd>{% if payment.exists %}Si{% else %}No{% endif %}</dd>
+        <dt>Habilitado</dt>
+        <dd>{% if payment.enabled %}Si{% else %}No{% endif %}</dd>
+        <dt>MP user ID</dt>
+        <dd>{{ payment.mp_user_id|default:"No informado" }}</dd>
+        <dt>Vencimiento token</dt>
+        <dd>{{ payment.token_expires_at|date:"d/m/Y H:i"|default:"No informado" }}</dd>
+      </dl>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="nyx-admin-card p-3 h-100">
+      <h2 class="nyx-admin-section-title">Google Calendar</h2>
+      <p>
+        <span class="nyx-admin-badge {% if not calendar.connected %}is-off{% endif %}">
+          {% if calendar.connected %}Conectado{% else %}Desconectado{% endif %}
+        </span>
+      </p>
+      <dl class="mb-0">
+        <dt>Integracion creada</dt>
+        <dd>{% if calendar.exists %}Si{% else %}No{% endif %}</dd>
+        <dt>Activo</dt>
+        <dd>{% if calendar.is_active %}Si{% else %}No{% endif %}</dd>
+        <dt>Calendar ID</dt>
+        <dd>{{ calendar.calendar_id|default:"No informado" }}</dd>
+        <dt>Sync confirmadas</dt>
+        <dd>{% if calendar.sync_confirmed_bookings %}Si{% else %}No{% endif %}</dd>
+        <dt>Sync pendientes</dt>
+        <dd>{% if calendar.sync_pending_bookings %}Si{% else %}No{% endif %}</dd>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<section class="row g-3 mb-4">
+  <div class="col-lg-6">
+    <div class="nyx-admin-card p-3 h-100">
+      <h2 class="nyx-admin-section-title">Usuarios y memberships</h2>
+      <div class="table-responsive">
+        <table class="table nyx-admin-table">
+          <thead><tr><th>Username</th><th>Email</th><th>Rol</th><th>Activo</th></tr></thead>
+          <tbody>
+            {% for membership in memberships %}
+              <tr>
+                <td>{{ membership.user.username }}</td>
+                <td>{{ membership.user.email|default:"Sin email" }}</td>
+                <td>{{ membership.get_role_display }}</td>
+                <td>{% if membership.is_active %}Si{% else %}No{% endif %}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="4">Sin memberships.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="nyx-admin-card p-3 h-100">
+      <h2 class="nyx-admin-section-title">Profesionales</h2>
+      <div class="table-responsive">
+        <table class="table nyx-admin-table">
+          <thead><tr><th>ID</th><th>Nombre</th><th>Usuario</th><th>Activo</th></tr></thead>
+          <tbody>
+            {% for employee in employees %}
+              <tr>
+                <td>{{ employee.id }}</td>
+                <td>{{ employee.name }}</td>
+                <td>{% if employee.user %}{{ employee.user.username }}{% else %}-{% endif %}</td>
+                <td>{% if employee.is_active %}Si{% else %}No{% endif %}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="4">Sin profesionales.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="row g-3">
+  <div class="col-lg-5">
+    <div class="nyx-admin-card p-3 h-100">
+      <h2 class="nyx-admin-section-title">Servicios</h2>
+      <div class="table-responsive">
+        <table class="table nyx-admin-table">
+          <thead><tr><th>ID</th><th>Nombre</th><th>Activo</th><th>Precio</th></tr></thead>
+          <tbody>
+            {% for service in services %}
+              <tr>
+                <td>{{ service.id }}</td>
+                <td>{{ service.name }}</td>
+                <td>{% if service.is_active %}Si{% else %}No{% endif %}</td>
+                <td>${{ service.price }}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="4">Sin servicios.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-7">
+    <div class="nyx-admin-card p-3 h-100">
+      <h2 class="nyx-admin-section-title">Reservas recientes</h2>
+      <div class="table-responsive">
+        <table class="table nyx-admin-table">
+          <thead><tr><th>ID</th><th>Cliente</th><th>Estado</th><th>Pago</th><th>Creada</th></tr></thead>
+          <tbody>
+            {% for booking in recent_bookings %}
+              <tr>
+                <td>#{{ booking.id }}</td>
+                <td>{{ booking.customer_name }}</td>
+                <td>{{ booking.get_status_display }}</td>
+                <td>{{ booking.get_payment_status_display }}</td>
+                <td>{{ booking.created_at|date:"d/m/Y H:i" }}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="5">Sin reservas.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

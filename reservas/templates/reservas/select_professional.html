@@ -72,10 +72,10 @@
                   <div class="card-body p-4">
                     <div class="booking-option-main">
                       <div class="booking-avatar">
-                        {{ employee.name|slice:":1" }}
+                        {{ employee.public_name|slice:":1" }}
                       </div>
                       <div>
-                        <div class="fw-semibold fs-5">{{ employee.name }}</div>
+                        <div class="fw-semibold fs-5">{{ employee.public_name }}</div>
                         <div class="nyx-text-muted small">Disponible para este servicio.</div>
                       </div>
                     </div>
@@ -148,10 +148,10 @@
                         <div class="nyx-suboption-card p-3 d-flex justify-content-between align-items-center gap-3 flex-wrap">
                           <div class="d-flex align-items-center gap-3">
                             <div class="booking-avatar">
-                              {{ employee.name|slice:":1" }}
+                              {{ employee.public_name|slice:":1" }}
                             </div>
                             <div>
-                              <div class="fw-semibold">{{ employee.name }}</div>
+                              <div class="fw-semibold">{{ employee.public_name }}</div>
                               <div class="nyx-text-muted small">Puede realizar todos los servicios elegidos.</div>
                             </div>
                           </div>

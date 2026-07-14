@@ -1,0 +1,193 @@
+{% extends "reservas/panel/base_panel.html" %}
+
+{% block title %}Clientes | NYX{% endblock %}
+{% block panel_title %}Clientes{% endblock %}
+{% block panel_subtitle %}Historial de clientas y clientes de {{ salon.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .nyx-customer-search{
+    display: flex;
+    flex-wrap: wrap;
+    gap: .75rem;
+    align-items: end;
+  }
+
+  .nyx-customer-search label{
+    display: block;
+    font-weight: 800;
+    margin-bottom: .4rem;
+  }
+
+  .nyx-customer-search input{
+    width: min(420px, 100%);
+    border: 1px solid var(--nyx-border);
+    border-radius: 1rem;
+    padding: .8rem 1rem;
+    background: #fff;
+  }
+
+  .nyx-customer-mobile-list{
+    display: none;
+  }
+
+  .nyx-customer-card{
+    border: 1px solid var(--nyx-border);
+    border-radius: 8px;
+    padding: 1rem;
+    background: #fff;
+  }
+
+  .nyx-customer-meta{
+    color: var(--nyx-text-muted);
+    font-size: .9rem;
+    line-height: 1.35;
+  }
+
+  .nyx-customer-stat{
+    font-weight: 850;
+    color: var(--nyx-text);
+  }
+
+  @media (max-width: 767.98px){
+    .nyx-customer-search{
+      display: grid;
+      grid-template-columns: 1fr;
+    }
+
+    .nyx-customer-search input,
+    .nyx-customer-search .nyx-primary-btn,
+    .nyx-customer-search .nyx-filter-btn{
+      width: 100%;
+      justify-content: center;
+    }
+
+    .nyx-customer-table-wrap{
+      display: none;
+    }
+
+    .nyx-customer-mobile-list{
+      display: grid;
+      gap: .9rem;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block panel_content %}
+<div class="nyx-card p-4 mb-4">
+  <form method="get" class="nyx-customer-search">
+    <div>
+      <label for="q">Buscar cliente</label>
+      <input
+        type="search"
+        id="q"
+        name="q"
+        value="{{ query }}"
+        placeholder="Nombre, telefono o email"
+      >
+    </div>
+
+    <button type="submit" class="nyx-primary-btn">Buscar</button>
+    {% if query %}
+      <a href="{% url 'panel_customers' %}" class="nyx-filter-btn">Limpiar</a>
+    {% endif %}
+  </form>
+</div>
+
+<div class="nyx-card p-4">
+  {% if customers %}
+    <div class="nyx-customer-table-wrap table-responsive">
+      <table class="table nyx-table align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Cliente</th>
+            <th>Contacto</th>
+            <th>Turnos</th>
+            <th>Ultimo turno</th>
+            <th>Proximo turno</th>
+            <th>Servicio frecuente</th>
+            <th>Resumen</th>
+            <th class="text-end">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for customer in customers %}
+            <tr>
+              <td class="fw-bold">{{ customer.name }}</td>
+              <td>
+                <div>{{ customer.phone|default:"-" }}</div>
+                <div class="text-secondary small">{{ customer.email|default:"Sin email" }}</div>
+              </td>
+              <td class="fw-semibold">{{ customer.total_bookings }}</td>
+              <td>
+                {% if customer.last_item %}
+                  {{ customer.last_item.start_datetime|date:"d/m/Y H:i" }}
+                {% else %}
+                  -
+                {% endif %}
+              </td>
+              <td>
+                {% if customer.next_item %}
+                  {{ customer.next_item.start_datetime|date:"d/m/Y H:i" }}
+                {% else %}
+                  -
+                {% endif %}
+              </td>
+              <td>{{ customer.most_frequent_service|default:"-" }}</td>
+              <td><span class="nyx-badge">{{ customer.status_summary }}</span></td>
+              <td class="text-end">
+                <a href="{% url 'panel_customer_detail' customer.key %}" class="nyx-filter-btn">Ver historial</a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="nyx-customer-mobile-list">
+      {% for customer in customers %}
+        <article class="nyx-customer-card">
+          <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
+            <div>
+              <h2 class="h6 fw-bold mb-1">{{ customer.name }}</h2>
+              <div class="nyx-customer-meta">{{ customer.phone|default:"Sin telefono" }}</div>
+              <div class="nyx-customer-meta">{{ customer.email|default:"Sin email" }}</div>
+            </div>
+            <span class="nyx-badge">{{ customer.total_bookings }} turnos</span>
+          </div>
+
+          <div class="row g-2 my-2">
+            <div class="col-6">
+              <div class="nyx-customer-meta">Ultimo</div>
+              <div class="nyx-customer-stat">
+                {% if customer.last_item %}{{ customer.last_item.start_datetime|date:"d/m H:i" }}{% else %}-{% endif %}
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="nyx-customer-meta">Proximo</div>
+              <div class="nyx-customer-stat">
+                {% if customer.next_item %}{{ customer.next_item.start_datetime|date:"d/m H:i" }}{% else %}-{% endif %}
+              </div>
+            </div>
+          </div>
+
+          <div class="nyx-customer-meta mb-3">
+            Servicio frecuente: {{ customer.most_frequent_service|default:"-" }}
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center gap-2">
+            <span class="nyx-badge">{{ customer.status_summary }}</span>
+            <a href="{% url 'panel_customer_detail' customer.key %}" class="nyx-filter-btn">Ver</a>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="text-center py-5">
+      <h2 class="h5 fw-bold">Todavia no hay clientes para mostrar</h2>
+      <p class="text-secondary mb-0">Cuando haya reservas, NYX va a agruparlas aca por contacto.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,252 @@
+{% extends "reservas/panel/base_panel.html" %}
+{% load custom_filters %}
+
+{% block title %}{{ customer.name }} | Clientes | NYX{% endblock %}
+{% block panel_title %}{{ customer.name }}{% endblock %}
+{% block panel_subtitle %}Historial y notas internas del cliente{% endblock %}
+
+{% block extra_css %}
+<style>
+  .nyx-detail-grid{
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(300px, .85fr);
+    gap: 1rem;
+  }
+
+  .nyx-summary-grid{
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .75rem;
+  }
+
+  .nyx-summary-item{
+    border: 1px solid var(--nyx-border);
+    border-radius: 8px;
+    padding: .9rem;
+    background: #fff;
+  }
+
+  .nyx-summary-label{
+    color: var(--nyx-text-muted);
+    font-size: .82rem;
+    font-weight: 800;
+  }
+
+  .nyx-summary-value{
+    color: var(--nyx-text);
+    font-size: 1.25rem;
+    font-weight: 900;
+  }
+
+  .nyx-note-form textarea{
+    width: 100%;
+    min-height: 118px;
+    resize: vertical;
+    border: 1px solid var(--nyx-border);
+    border-radius: 8px;
+    padding: .85rem 1rem;
+  }
+
+  .nyx-note-item{
+    border: 1px solid var(--nyx-border);
+    border-radius: 8px;
+    padding: .9rem;
+    background: #fff;
+  }
+
+  .nyx-history-mobile{
+    display: none;
+  }
+
+  @media (max-width: 991.98px){
+    .nyx-detail-grid{
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 767.98px){
+    .nyx-summary-grid{
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .nyx-history-table{
+      display: none;
+    }
+
+    .nyx-history-mobile{
+      display: grid;
+      gap: .85rem;
+    }
+
+    .nyx-history-card{
+      border: 1px solid var(--nyx-border);
+      border-radius: 8px;
+      padding: 1rem;
+      background: #fff;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block panel_content %}
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+  <a href="{% url 'panel_customers' %}" class="nyx-filter-btn" data-no-scroll-restore>Volver a clientes</a>
+</div>
+
+<div class="nyx-detail-grid">
+  <section class="nyx-card p-4">
+    <h2 class="h5 fw-bold mb-3">Datos principales</h2>
+    <div class="row g-3 mb-4">
+      <div class="col-md-4">
+        <div class="text-secondary small">Nombre</div>
+        <div class="fw-semibold">{{ customer.name }}</div>
+      </div>
+      <div class="col-md-4">
+        <div class="text-secondary small">Telefono</div>
+        <div class="fw-semibold">{{ customer.phone|default:"-" }}</div>
+      </div>
+      <div class="col-md-4">
+        <div class="text-secondary small">Email</div>
+        <div class="fw-semibold">{{ customer.email|default:"-" }}</div>
+      </div>
+      {% if customer.also_known_as %}
+        <div class="col-md-6">
+          <div class="text-secondary small">Tambien registrado como</div>
+          <div class="fw-semibold">{{ customer.also_known_as|join:", " }}</div>
+        </div>
+      {% endif %}
+      {% if customer.other_phones %}
+        <div class="col-md-6">
+          <div class="text-secondary small">Otros telefonos</div>
+          <div class="fw-semibold">{{ customer.other_phones|join:", " }}</div>
+        </div>
+      {% endif %}
+    </div>
+
+    <h2 class="h5 fw-bold mb-3">Resumen</h2>
+    <div class="nyx-summary-grid">
+      <div class="nyx-summary-item">
+        <div class="nyx-summary-label">Total</div>
+        <div class="nyx-summary-value">{{ customer.total_bookings }}</div>
+      </div>
+      <div class="nyx-summary-item">
+        <div class="nyx-summary-label">Finalizados</div>
+        <div class="nyx-summary-value">{{ customer.completed_count }}</div>
+      </div>
+      <div class="nyx-summary-item">
+        <div class="nyx-summary-label">Confirmados/futuros</div>
+        <div class="nyx-summary-value">{{ customer.future_confirmed_count }}</div>
+      </div>
+      <div class="nyx-summary-item">
+        <div class="nyx-summary-label">Cancelados</div>
+        <div class="nyx-summary-value">{{ customer.cancelled_count }}</div>
+      </div>
+      <div class="nyx-summary-item">
+        <div class="nyx-summary-label">Ultimo turno</div>
+        <div class="fw-bold">
+          {% if customer.last_item %}{{ customer.last_item.start_datetime|date:"d/m/Y H:i" }}{% else %}-{% endif %}
+        </div>
+      </div>
+      <div class="nyx-summary-item">
+        <div class="nyx-summary-label">Proximo turno</div>
+        <div class="fw-bold">
+          {% if customer.next_item %}{{ customer.next_item.start_datetime|date:"d/m/Y H:i" }}{% else %}-{% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-4">
+      <h3 class="h6 fw-bold mb-2">Servicios mas tomados</h3>
+      <div class="d-flex flex-wrap gap-2">
+        {% for service_name, count in customer.top_services %}
+          <span class="nyx-badge">{{ service_name }} &middot; {{ count }}</span>
+        {% empty %}
+          <span class="text-secondary">Sin servicios registrados.</span>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <aside class="nyx-card p-4">
+    <h2 class="h5 fw-bold mb-3">Notas internas</h2>
+    <form method="post" class="nyx-note-form mb-4">
+      {% csrf_token %}
+      <label for="note" class="form-label fw-bold">Nueva nota</label>
+      <textarea id="note" name="note" placeholder="Ej: Prefiere turno por la manana"></textarea>
+      <button type="submit" class="nyx-primary-btn mt-2">Guardar nota</button>
+    </form>
+
+    <div class="d-grid gap-2">
+      {% for note in notes %}
+        <article class="nyx-note-item">
+          <div class="small text-secondary mb-1">
+            {{ note.created_at|date:"d/m/Y H:i" }}
+            {% if note.author %}&middot; {{ note.author.get_username }}{% endif %}
+          </div>
+          <div>{{ note.note|linebreaksbr }}</div>
+        </article>
+      {% empty %}
+        <p class="text-secondary mb-0">Todavia no hay notas internas para este cliente.</p>
+      {% endfor %}
+    </div>
+  </aside>
+</div>
+
+<section class="nyx-card p-4 mt-4">
+  <h2 class="h5 fw-bold mb-3">Historial de turnos</h2>
+
+  <div class="nyx-history-table table-responsive">
+    <table class="table nyx-table align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Hora</th>
+          <th>Servicio</th>
+          <th>Profesional</th>
+          <th>Estado</th>
+          <th>Pago</th>
+          <th>Precio / sena</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for entry in history_entries %}
+          <tr>
+            <td>{{ entry.item.start_datetime|date:"d/m/Y" }}</td>
+            <td>{{ entry.item.start_datetime|date:"H:i" }}</td>
+            <td class="fw-semibold">{{ entry.item.service.name }}</td>
+            <td>{{ entry.item.employee.name }}</td>
+            <td><span class="nyx-badge">{{ entry.booking.get_status_display }}</span></td>
+            <td>{{ entry.payment_method }}</td>
+            <td>
+              ${{ entry.price|miles_punto }}
+              {% if entry.required_amount %}
+                <div class="small text-secondary">Sena: ${{ entry.required_amount|miles_punto }}</div>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="nyx-history-mobile">
+    {% for entry in history_entries %}
+      <article class="nyx-history-card">
+        <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+          <div>
+            <div class="fw-bold">{{ entry.item.start_datetime|date:"d/m/Y" }} &middot; {{ entry.item.start_datetime|date:"H:i" }}</div>
+            <div class="text-secondary small">{{ entry.item.employee.name }}</div>
+          </div>
+          <span class="nyx-badge">{{ entry.booking.get_status_display }}</span>
+        </div>
+        <div class="fw-semibold mb-1">{{ entry.item.service.name }}</div>
+        <div class="small text-secondary">{{ entry.payment_method }}</div>
+        <div class="small text-secondary">
+          ${{ entry.price|miles_punto }}
+          {% if entry.required_amount %}&middot; Sena: ${{ entry.required_amount|miles_punto }}{% endif %}
+        </div>
+      </article>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

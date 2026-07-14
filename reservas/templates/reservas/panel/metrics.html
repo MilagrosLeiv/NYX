@@ -1,0 +1,274 @@
+{% extends "reservas/panel/base_panel.html" %}
+
+{% block title %}Metricas | NYX{% endblock %}
+{% block panel_title %}Metricas{% endblock %}
+{% block panel_subtitle %}Turnos agendados por fecha de inicio para {{ salon.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .nyx-metrics-filter{
+    display: flex;
+    flex-wrap: wrap;
+    gap: .75rem;
+    align-items: end;
+  }
+
+  .nyx-metrics-filter label{
+    display: block;
+    font-weight: 800;
+    margin-bottom: .4rem;
+  }
+
+  .nyx-metrics-filter select,
+  .nyx-metrics-filter input{
+    border: 1px solid var(--nyx-border);
+    border-radius: 1rem;
+    padding: .8rem 1rem;
+    background: #fff;
+    min-height: 46px;
+  }
+
+  .nyx-metrics-grid{
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .nyx-metric-card{
+    border: 1px solid var(--nyx-border);
+    border-radius: 8px;
+    padding: 1rem;
+    background: #fff;
+    box-shadow: var(--nyx-shadow);
+  }
+
+  .nyx-metric-label{
+    color: var(--nyx-muted);
+    font-size: .82rem;
+    font-weight: 850;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+
+  .nyx-metric-value{
+    color: var(--nyx-text);
+    font-size: 1.85rem;
+    font-weight: 950;
+    line-height: 1.05;
+    margin-top: .45rem;
+  }
+
+  .nyx-metric-note{
+    color: var(--nyx-muted);
+    font-size: .88rem;
+    margin-top: .35rem;
+  }
+
+  .nyx-summary-strip{
+    border: 1px solid var(--nyx-border);
+    border-radius: 8px;
+    padding: 1rem;
+    background: linear-gradient(135deg, #ffffff 0%, #f2fbfb 100%);
+  }
+
+  .nyx-ranking-grid{
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .nyx-ranking-row{
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: .75rem;
+    align-items: center;
+    padding: .75rem 0;
+    border-bottom: 1px solid var(--nyx-border);
+  }
+
+  .nyx-ranking-row:last-child{
+    border-bottom: 0;
+  }
+
+  .nyx-ranking-name{
+    font-weight: 850;
+    color: var(--nyx-text);
+  }
+
+  .nyx-ranking-meta{
+    color: var(--nyx-muted);
+    font-size: .88rem;
+  }
+
+  @media (max-width: 991.98px){
+    .nyx-metrics-grid{
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .nyx-ranking-grid{
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 575.98px){
+    .nyx-metrics-filter{
+      display: grid;
+      grid-template-columns: 1fr;
+    }
+
+    .nyx-metrics-filter select,
+    .nyx-metrics-filter input,
+    .nyx-metrics-filter .nyx-primary-btn{
+      width: 100%;
+    }
+
+    .nyx-metrics-grid{
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block panel_content %}
+<section class="nyx-card p-4 mb-4">
+  <form method="get" class="nyx-metrics-filter">
+    <div>
+      <label for="period">Periodo</label>
+      <select name="period" id="period">
+        <option value="last_7" {% if period == "last_7" %}selected{% endif %}>Ultimos 7 dias</option>
+        <option value="last_30" {% if period == "last_30" %}selected{% endif %}>Ultimos 30 dias</option>
+        <option value="this_month" {% if period == "this_month" %}selected{% endif %}>Este mes</option>
+        <option value="previous_month" {% if period == "previous_month" %}selected{% endif %}>Mes anterior</option>
+        <option value="custom" {% if period == "custom" %}selected{% endif %}>Personalizado</option>
+      </select>
+    </div>
+
+    <div>
+      <label for="start">Desde</label>
+      <input type="date" id="start" name="start" value="{{ start_date|date:'Y-m-d' }}">
+    </div>
+
+    <div>
+      <label for="end">Hasta</label>
+      <input type="date" id="end" name="end" value="{{ end_date|date:'Y-m-d' }}">
+    </div>
+
+    <button type="submit" class="nyx-primary-btn">Aplicar</button>
+  </form>
+</section>
+
+<section class="nyx-summary-strip mb-4">
+  <div class="fw-bold">
+    En {{ period_label }} tuviste {{ metrics.total_turns }} turnos,
+    {{ metrics.unique_customers_count }} clientes unicos y
+    {{ metrics.cancellation_rate }}% de cancelacion.
+  </div>
+  <div class="text-secondary small mt-1">
+    La evolucion diaria usa turnos agendados para ese dia segun start_datetime.
+  </div>
+</section>
+
+<section class="nyx-metrics-grid mb-4">
+  <article class="nyx-metric-card">
+    <div class="nyx-metric-label">Reservas totales</div>
+    <div class="nyx-metric-value">{{ metrics.total_turns }}</div>
+    <div class="nyx-metric-note">Turnos del periodo</div>
+  </article>
+
+  <article class="nyx-metric-card">
+    <div class="nyx-metric-label">Confirmadas</div>
+    <div class="nyx-metric-value">{{ metrics.confirmed_count }}</div>
+    <div class="nyx-metric-note">Status confirmed</div>
+  </article>
+
+  <article class="nyx-metric-card">
+    <div class="nyx-metric-label">Finalizadas</div>
+    <div class="nyx-metric-value">{{ metrics.completed_count }}</div>
+    <div class="nyx-metric-note">Status completed</div>
+  </article>
+
+  <article class="nyx-metric-card">
+    <div class="nyx-metric-label">Canceladas</div>
+    <div class="nyx-metric-value">{{ metrics.cancelled_count }}</div>
+    <div class="nyx-metric-note">{{ metrics.cancellation_rate }}% del total</div>
+  </article>
+
+  <article class="nyx-metric-card">
+    <div class="nyx-metric-label">Clientes unicos</div>
+    <div class="nyx-metric-value">{{ metrics.unique_customers_count }}</div>
+    <div class="nyx-metric-note">Agrupados por email/telefono</div>
+  </article>
+
+  <article class="nyx-metric-card">
+    <div class="nyx-metric-label">Clientes nuevos</div>
+    <div class="nyx-metric-value">{{ metrics.new_customers_count }}</div>
+    <div class="nyx-metric-note">Primer turno historico</div>
+  </article>
+
+  <article class="nyx-metric-card">
+    <div class="nyx-metric-label">Recurrentes</div>
+    <div class="nyx-metric-value">{{ metrics.recurrent_customers_count }}</div>
+    <div class="nyx-metric-note">Mas de un turno historico</div>
+  </article>
+
+  <article class="nyx-metric-card">
+    <div class="nyx-metric-label">Proximos turnos</div>
+    <div class="nyx-metric-value">{{ metrics.upcoming_turns_count }}</div>
+    <div class="nyx-metric-note">Pendientes o confirmados</div>
+  </article>
+</section>
+
+<section class="nyx-ranking-grid mb-4">
+  <div class="nyx-card p-4">
+    <h2 class="h5 fw-bold mb-3">Servicios mas elegidos</h2>
+    {% for row in metrics.service_ranking %}
+      <div class="nyx-ranking-row">
+        <div>
+          <div class="nyx-ranking-name">{{ row.name }}</div>
+          <div class="nyx-ranking-meta">{{ row.percentage }}% del total</div>
+        </div>
+        <span class="nyx-badge">{{ row.count }}</span>
+      </div>
+    {% empty %}
+      <p class="text-secondary mb-0">Sin turnos en este periodo.</p>
+    {% endfor %}
+  </div>
+
+  <div class="nyx-card p-4">
+    <h2 class="h5 fw-bold mb-3">Profesionales con mas turnos</h2>
+    {% for row in metrics.employee_ranking %}
+      <div class="nyx-ranking-row">
+        <div>
+          <div class="nyx-ranking-name">{{ row.name }}</div>
+          <div class="nyx-ranking-meta">{{ row.percentage }}% del total</div>
+        </div>
+        <span class="nyx-badge">{{ row.count }}</span>
+      </div>
+    {% empty %}
+      <p class="text-secondary mb-0">Sin turnos en este periodo.</p>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="nyx-card p-4">
+  <h2 class="h5 fw-bold mb-3">Evolucion por dia</h2>
+  <div class="table-responsive">
+    <table class="table nyx-table align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th class="text-end">Turnos agendados</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in metrics.evolution_by_day %}
+          <tr>
+            <td>{{ row.date|date:"d/m/Y" }}</td>
+            <td class="text-end fw-bold">{{ row.count }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

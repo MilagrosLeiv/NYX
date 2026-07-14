@@ -1,0 +1,212 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Admin NYX{% endblock %}</title>
+  <link rel="icon" href="{% static 'reservas/img/favicon.ico' %}">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <style>
+    :root {
+      --nyx-admin-bg: #f3f7f7;
+      --nyx-admin-surface: #ffffff;
+      --nyx-admin-border: #cfe2e3;
+      --nyx-admin-text: #183234;
+      --nyx-admin-muted: #6d8789;
+      --nyx-admin-accent: #4aaeb4;
+      --nyx-admin-dark: #102b30;
+    }
+
+    body {
+      min-height: 100vh;
+      background: var(--nyx-admin-bg);
+      color: var(--nyx-admin-text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .nyx-admin-shell {
+      display: grid;
+      grid-template-columns: 260px minmax(0, 1fr);
+      min-height: 100vh;
+    }
+
+    .nyx-admin-sidebar {
+      background: var(--nyx-admin-dark);
+      color: #ffffff;
+      padding: 1.5rem;
+    }
+
+    .nyx-admin-brand {
+      font-weight: 950;
+      font-size: 1.35rem;
+      letter-spacing: .02em;
+      margin-bottom: .25rem;
+    }
+
+    .nyx-admin-subtitle {
+      color: rgba(255, 255, 255, .72);
+      font-size: .86rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .nyx-admin-nav {
+      display: grid;
+      gap: .45rem;
+    }
+
+    .nyx-admin-nav a {
+      color: rgba(255, 255, 255, .82);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: .65rem;
+      padding: .75rem .85rem;
+      border-radius: .55rem;
+      font-weight: 760;
+    }
+
+    .nyx-admin-nav a:hover,
+    .nyx-admin-nav a.is-active {
+      background: rgba(118, 207, 210, .16);
+      color: #ffffff;
+    }
+
+    .nyx-admin-main {
+      padding: 1.5rem;
+    }
+
+    .nyx-admin-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .nyx-admin-eyebrow {
+      color: var(--nyx-admin-accent);
+      font-weight: 900;
+      font-size: .78rem;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .nyx-admin-title {
+      font-size: clamp(1.55rem, 2vw, 2.2rem);
+      font-weight: 950;
+      margin: .15rem 0 0;
+    }
+
+    .nyx-admin-card {
+      background: var(--nyx-admin-surface);
+      border: 1px solid var(--nyx-admin-border);
+      border-radius: .5rem;
+      box-shadow: 0 10px 26px rgba(16, 43, 48, .06);
+    }
+
+    .nyx-admin-stat {
+      padding: 1rem;
+    }
+
+    .nyx-admin-stat span,
+    .nyx-admin-muted {
+      color: var(--nyx-admin-muted);
+    }
+
+    .nyx-admin-stat strong {
+      display: block;
+      font-size: 1.65rem;
+      font-weight: 950;
+    }
+
+    .nyx-admin-table {
+      margin: 0;
+      vertical-align: middle;
+    }
+
+    .nyx-admin-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: .28rem .5rem;
+      border-radius: 999px;
+      background: #e9f7f7;
+      color: #20696f;
+      font-weight: 850;
+      font-size: .78rem;
+    }
+
+    .nyx-admin-badge.is-off {
+      background: #f4f5f5;
+      color: #718184;
+    }
+
+    .nyx-admin-section-title {
+      font-weight: 920;
+      font-size: 1rem;
+      margin: 0 0 .85rem;
+    }
+
+    @media (max-width: 900px) {
+      .nyx-admin-shell {
+        display: block;
+      }
+
+      .nyx-admin-sidebar {
+        position: static;
+      }
+
+      .nyx-admin-nav {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 560px) {
+      .nyx-admin-main {
+        padding: 1rem;
+      }
+
+      .nyx-admin-nav {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="nyx-admin-shell">
+    <aside class="nyx-admin-sidebar">
+      <div class="nyx-admin-brand">Admin NYX</div>
+      <div class="nyx-admin-subtitle">Panel interno solo lectura</div>
+      <nav class="nyx-admin-nav">
+        <a href="{% url 'internal_admin_dashboard' %}" class="{% if request.resolver_match.url_name == 'internal_admin_dashboard' %}is-active{% endif %}">
+          <i class="bi bi-speedometer2"></i>
+          Dashboard
+        </a>
+        <a href="{% url 'internal_admin_salon_list' %}" class="{% if request.resolver_match.url_name == 'internal_admin_salon_list' or request.resolver_match.url_name == 'internal_admin_salon_detail' %}is-active{% endif %}">
+          <i class="bi bi-shop"></i>
+          Salones
+        </a>
+        <a href="{% url 'internal_admin_user_list' %}" class="{% if request.resolver_match.url_name == 'internal_admin_user_list' %}is-active{% endif %}">
+          <i class="bi bi-people"></i>
+          Usuarios
+        </a>
+      </nav>
+    </aside>
+
+    <main class="nyx-admin-main">
+      <header class="nyx-admin-header">
+        <div>
+          <div class="nyx-admin-eyebrow">{% block eyebrow %}Panel interno{% endblock %}</div>
+          <h1 class="nyx-admin-title">{% block heading %}Admin NYX{% endblock %}</h1>
+        </div>
+        <a href="{% url 'admin:index' %}" class="btn btn-outline-dark btn-sm">
+          Django Admin
+        </a>
+      </header>
+
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</body>
+</html>

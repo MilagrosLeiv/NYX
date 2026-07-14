@@ -1,5 +1,8 @@
+from collections import Counter, defaultdict
 from datetime import timedelta, datetime, timezone as datetime_timezone
 import logging
+import re
+import unicodedata
 
 
 from django.conf import settings
@@ -14,6 +17,7 @@ from django.shortcuts import get_object_or_404, render, redirect
 from django.http import JsonResponse
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.text import slugify
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 from google_auth_oauthlib.flow import Flow
@@ -36,6 +40,7 @@ from .models import (
     StaffInvitation,
     SalonPaymentSettings,
     SalonSubscription,
+    CustomerNote,
     GoogleCalendarIntegration,
     SpecialAvailabilityBlock,
 )
@@ -155,6 +160,418 @@ def get_panel_entrypoint_for_user(user):
 
 def get_user_employee(user):
     return getattr(user, 'employee_profile', None)
+
+
+def _normalize_customer_text(value):
+    value = unicodedata.normalize("NFKD", value or "")
+    value = "".join(character for character in value if not unicodedata.combining(character))
+    value = re.sub(r"\s+", " ", value).strip().lower()
+    return value
+
+
+def _normalize_customer_phone(value):
+    digits = "".join(character for character in (value or "") if character.isdigit())
+    if digits.startswith("549") and len(digits) > 10:
+        digits = digits[3:]
+    elif digits.startswith("54") and len(digits) > 10:
+        digits = digits[2:]
+    if digits.startswith("0") and len(digits) > 10:
+        digits = digits[1:]
+    return digits
+
+
+def _normalize_customer_email(value):
+    email = (value or "").strip().lower()
+    if not email or "@" not in email:
+        return ""
+    return email
+
+
+def _customer_key_from_values(name="", phone="", email=""):
+    email_key = _normalize_customer_email(email)
+    if email_key:
+        return f"email-{email_key}"
+
+    phone_key = _normalize_customer_phone(phone)
+    if phone_key:
+        return f"phone-{phone_key}"
+
+    name_key = _normalize_customer_text(name)
+    return f"name-{slugify(name_key) or 'sin-datos'}"
+
+
+def _customer_key_for_booking(booking):
+    return _customer_key_from_values(
+        booking.customer_name,
+        booking.customer_phone,
+        booking.customer_email,
+    )
+
+
+def _legacy_customer_keys_for_booking(booking):
+    keys = []
+    phone_key = _normalize_customer_phone(booking.customer_phone)
+    if phone_key:
+        keys.append(f"phone-{phone_key}")
+
+    email_key = _normalize_customer_email(booking.customer_email)
+    if email_key:
+        keys.append(f"email-{email_key}")
+
+    name_key = _normalize_customer_text(booking.customer_name)
+    keys.append(f"name-{slugify(name_key) or 'sin-datos'}")
+    return keys
+
+
+def _payment_method_label(booking):
+    if booking.selected_payment_method == "transfer":
+        return "Transferencia"
+    if booking.selected_payment_method == "integrated":
+        return "Mercado Pago"
+    if booking.selected_payment_method:
+        return booking.selected_payment_method
+    if booking.payment_choice == "none":
+        return "Sin pago"
+    return booking.get_payment_choice_display()
+
+
+def _customer_status_summary(customer):
+    if customer["next_item"]:
+        return "Tiene un proximo turno"
+    if customer["last_booking"] and customer["last_booking"].status == "completed":
+        return "Ultimo turno finalizado"
+    if customer["last_booking"] and customer["last_booking"].status == "cancelled":
+        return "Ultimo turno cancelado"
+    if customer["total_bookings"] == 1:
+        return "Primer turno registrado"
+    return "Sin turnos futuros"
+
+
+def _build_panel_customers(salon):
+    now = timezone.now()
+    bookings = Booking.objects.filter(salon=salon).prefetch_related(
+        "items__service",
+        "items__employee",
+    ).order_by("created_at")
+
+    customers = {}
+
+    for booking in bookings:
+        key = _customer_key_for_booking(booking)
+        first_item = booking.get_first_item()
+
+        if key not in customers:
+            customers[key] = {
+                "key": key,
+                "name": "Cliente",
+                "phone": "",
+                "email": "",
+                "name_candidates": [],
+                "phone_candidates": [],
+                "email_candidates": [],
+                "legacy_note_keys": set(),
+                "bookings": [],
+                "items": [],
+                "services_counter": Counter(),
+                "total_bookings": 0,
+                "completed_count": 0,
+                "future_confirmed_count": 0,
+                "cancelled_count": 0,
+                "last_booking": None,
+                "last_item": None,
+                "next_item": None,
+            }
+
+        customer = customers[key]
+        customer["bookings"].append(booking)
+        customer["total_bookings"] += 1
+        customer["legacy_note_keys"].update(_legacy_customer_keys_for_booking(booking))
+
+        booking_sort_datetime = booking.created_at
+        display_name = (booking.customer_name or "").strip()
+        display_phone = (booking.customer_phone or "").strip()
+        display_email = (booking.customer_email or "").strip()
+
+        if display_name:
+            customer["name_candidates"].append({
+                "value": display_name,
+                "normalized": _normalize_customer_text(display_name),
+                "sort_datetime": booking_sort_datetime,
+            })
+        if display_phone:
+            customer["phone_candidates"].append({
+                "value": display_phone,
+                "normalized": _normalize_customer_phone(display_phone),
+                "sort_datetime": booking_sort_datetime,
+            })
+        if display_email:
+            customer["email_candidates"].append({
+                "value": display_email,
+                "normalized": _normalize_customer_email(display_email),
+                "sort_datetime": booking_sort_datetime,
+            })
+
+        if booking.status == "completed":
+            customer["completed_count"] += 1
+        if booking.status == "cancelled":
+            customer["cancelled_count"] += 1
+        if booking.status in ["pending", "confirmed"] and first_item and first_item.start_datetime >= now:
+            customer["future_confirmed_count"] += 1
+
+        for item in booking.items.all():
+            customer["items"].append(item)
+            customer["services_counter"][item.service.name] += 1
+
+            if item.start_datetime < now:
+                if not customer["last_item"] or item.start_datetime > customer["last_item"].start_datetime:
+                    customer["last_item"] = item
+                    customer["last_booking"] = booking
+            elif booking.status in ["pending", "confirmed"]:
+                if not customer["next_item"] or item.start_datetime < customer["next_item"].start_datetime:
+                    customer["next_item"] = item
+
+    for customer in customers.values():
+        if not customer["last_item"] and customer["items"]:
+            customer["last_item"] = max(customer["items"], key=lambda item: item.start_datetime)
+            customer["last_booking"] = customer["last_item"].booking
+
+        customer["top_services"] = customer["services_counter"].most_common(5)
+        customer["most_frequent_service"] = (
+            customer["top_services"][0][0] if customer["top_services"] else ""
+        )
+        if customer["name_candidates"]:
+            best_name = sorted(
+                customer["name_candidates"],
+                key=lambda candidate: (
+                    candidate["sort_datetime"],
+                    len(candidate["value"]),
+                ),
+                reverse=True,
+            )[0]["value"]
+            customer["name"] = best_name or "Cliente"
+
+        unique_names = {}
+        for candidate in customer["name_candidates"]:
+            unique_names.setdefault(candidate["normalized"], candidate["value"])
+        customer["also_known_as"] = [
+            value
+            for normalized, value in unique_names.items()
+            if normalized and normalized != _normalize_customer_text(customer["name"])
+        ]
+
+        if customer["phone_candidates"]:
+            latest_phone = sorted(
+                customer["phone_candidates"],
+                key=lambda candidate: candidate["sort_datetime"],
+                reverse=True,
+            )[0]
+            customer["phone"] = latest_phone["value"]
+            other_phones = {}
+            for candidate in customer["phone_candidates"]:
+                if candidate["normalized"] and candidate["normalized"] != latest_phone["normalized"]:
+                    other_phones.setdefault(candidate["normalized"], candidate["value"])
+            customer["other_phones"] = list(other_phones.values())
+        else:
+            customer["other_phones"] = []
+
+        if customer["email_candidates"]:
+            latest_email = sorted(
+                customer["email_candidates"],
+                key=lambda candidate: candidate["sort_datetime"],
+                reverse=True,
+            )[0]
+            customer["email"] = latest_email["value"].strip().lower()
+
+        customer["status_summary"] = _customer_status_summary(customer)
+        customer["search_blob"] = " ".join([
+            _normalize_customer_text(customer["name"]),
+            " ".join(candidate["normalized"] for candidate in customer["name_candidates"]),
+            _normalize_customer_phone(customer["phone"]),
+            " ".join(candidate["normalized"] for candidate in customer["phone_candidates"]),
+            _normalize_customer_email(customer["email"]),
+            " ".join(candidate["normalized"] for candidate in customer["email_candidates"]),
+        ])
+        customer["items"].sort(key=lambda item: item.start_datetime, reverse=True)
+        customer["bookings"].sort(
+            key=lambda booking: booking.get_start_datetime() or booking.created_at,
+            reverse=True,
+        )
+
+    return sorted(
+        customers.values(),
+        key=lambda customer: (
+            customer["next_item"].start_datetime if customer["next_item"] else datetime.min.replace(tzinfo=datetime_timezone.utc),
+            customer["last_item"].start_datetime if customer["last_item"] else datetime.min.replace(tzinfo=datetime_timezone.utc),
+        ),
+        reverse=True,
+    )
+
+
+def _get_metrics_period(request):
+    today = timezone.localdate()
+    period = request.GET.get("period", "last_30")
+
+    if period == "last_7":
+        start_date = today - timedelta(days=6)
+        end_date = today
+        label = "ultimos 7 dias"
+    elif period == "this_month":
+        start_date = today.replace(day=1)
+        end_date = today
+        label = "este mes"
+    elif period == "previous_month":
+        first_this_month = today.replace(day=1)
+        previous_month_end = first_this_month - timedelta(days=1)
+        start_date = previous_month_end.replace(day=1)
+        end_date = previous_month_end
+        label = "mes anterior"
+    elif period == "custom":
+        start_raw = request.GET.get("start")
+        end_raw = request.GET.get("end")
+        try:
+            start_date = datetime.strptime(start_raw, "%Y-%m-%d").date()
+            end_date = datetime.strptime(end_raw, "%Y-%m-%d").date()
+            if start_date > end_date:
+                start_date, end_date = end_date, start_date
+            label = f"{start_date.strftime('%d/%m/%Y')} al {end_date.strftime('%d/%m/%Y')}"
+        except (TypeError, ValueError):
+            period = "last_30"
+            start_date = today - timedelta(days=29)
+            end_date = today
+            label = "ultimos 30 dias"
+    else:
+        period = "last_30"
+        start_date = today - timedelta(days=29)
+        end_date = today
+        label = "ultimos 30 dias"
+
+    current_tz = timezone.get_current_timezone()
+    start_datetime = timezone.make_aware(
+        datetime.combine(start_date, datetime.min.time()),
+        current_tz,
+    )
+    end_datetime = timezone.make_aware(
+        datetime.combine(end_date + timedelta(days=1), datetime.min.time()),
+        current_tz,
+    )
+    return {
+        "period": period,
+        "start_date": start_date,
+        "end_date": end_date,
+        "start_datetime": start_datetime,
+        "end_datetime": end_datetime,
+        "label": label,
+    }
+
+
+def _percentage(part, total):
+    if not total:
+        return 0
+    return round((part / total) * 100, 1)
+
+
+def _build_panel_metrics(salon, period_context):
+    start_datetime = period_context["start_datetime"]
+    end_datetime = period_context["end_datetime"]
+    now = timezone.now()
+
+    period_items = list(BookingItem.objects.select_related(
+        "booking",
+        "service",
+        "employee",
+    ).filter(
+        booking__salon=salon,
+        start_datetime__gte=start_datetime,
+        start_datetime__lt=end_datetime,
+    ).order_by("start_datetime"))
+
+    total_turns = len(period_items)
+    status_counts = Counter(item.booking.status for item in period_items)
+    cancelled_count = status_counts["cancelled"]
+    completed_count = status_counts["completed"]
+    confirmed_count = status_counts["confirmed"]
+    cancellation_rate = _percentage(cancelled_count, total_turns)
+
+    period_customer_keys = {
+        _customer_key_for_booking(item.booking)
+        for item in period_items
+    }
+
+    historical_items = list(BookingItem.objects.select_related(
+        "booking",
+    ).filter(
+        booking__salon=salon,
+    ).order_by("start_datetime"))
+
+    customer_history = defaultdict(list)
+    for item in historical_items:
+        customer_history[_customer_key_for_booking(item.booking)].append(item)
+
+    new_customers_count = 0
+    recurrent_customers_count = 0
+    for customer_key in period_customer_keys:
+        items = customer_history.get(customer_key, [])
+        if not items:
+            continue
+        first_item = min(items, key=lambda item: item.start_datetime)
+        if start_datetime <= first_item.start_datetime < end_datetime:
+            new_customers_count += 1
+        if len(items) > 1:
+            recurrent_customers_count += 1
+
+    upcoming_turns_count = BookingItem.objects.filter(
+        booking__salon=salon,
+        booking__status__in=["pending", "confirmed"],
+        start_datetime__gte=now,
+    ).count()
+
+    service_counts = Counter(item.service.name for item in period_items)
+    service_ranking = [
+        {
+            "name": name,
+            "count": count,
+            "percentage": _percentage(count, total_turns),
+        }
+        for name, count in service_counts.most_common()
+    ]
+
+    employee_counts = Counter(item.employee.public_name for item in period_items)
+    employee_ranking = [
+        {
+            "name": name,
+            "count": count,
+            "percentage": _percentage(count, total_turns),
+        }
+        for name, count in employee_counts.most_common()
+    ]
+
+    day_counts = Counter(
+        timezone.localtime(item.start_datetime).date()
+        for item in period_items
+    )
+    evolution_by_day = []
+    current_date = period_context["start_date"]
+    while current_date <= period_context["end_date"]:
+        evolution_by_day.append({
+            "date": current_date,
+            "count": day_counts[current_date],
+        })
+        current_date += timedelta(days=1)
+
+    return {
+        "total_turns": total_turns,
+        "confirmed_count": confirmed_count,
+        "completed_count": completed_count,
+        "cancelled_count": cancelled_count,
+        "cancellation_rate": cancellation_rate,
+        "unique_customers_count": len(period_customer_keys),
+        "new_customers_count": new_customers_count,
+        "recurrent_customers_count": recurrent_customers_count,
+        "upcoming_turns_count": upcoming_turns_count,
+        "service_ranking": service_ranking,
+        "employee_ranking": employee_ranking,
+        "evolution_by_day": evolution_by_day,
+    }
 
 
 def is_onboarding_active(salon, request=None):
@@ -3189,6 +3606,141 @@ def panel_settings(request):
     }
 
     return render(request, 'reservas/panel/settings.html', context)
+
+
+@login_required
+@subscription_required
+def panel_metrics(request):
+    if request.user.is_superuser:
+        return redirect('/admin/')
+
+    salon = get_user_salon(request.user)
+
+    if not salon:
+        raise PermissionDenied("Tu usuario no esta asociado a ninguna peluqueria.")
+
+    expire_unpaid_bookings()
+    mark_completed_bookings()
+    mark_completed_appointments()
+
+    period_context = _get_metrics_period(request)
+    metrics = _build_panel_metrics(salon, period_context)
+
+    context = {
+        "panel_role": "owner" if is_owner_user(request.user) else "staff",
+        "salon": salon,
+        "period": period_context["period"],
+        "period_label": period_context["label"],
+        "start_date": period_context["start_date"],
+        "end_date": period_context["end_date"],
+        "metrics": metrics,
+    }
+    return render(request, "reservas/panel/metrics.html", context)
+
+
+@login_required
+@subscription_required
+def panel_customers(request):
+    if request.user.is_superuser:
+        return redirect('/admin/')
+
+    salon = get_user_salon(request.user)
+
+    if not salon:
+        raise PermissionDenied("Tu usuario no esta asociado a ninguna peluqueria.")
+
+    expire_unpaid_bookings()
+    mark_completed_bookings()
+    mark_completed_appointments()
+
+    query = (request.GET.get("q") or "").strip()
+    customers = _build_panel_customers(salon)
+
+    if query:
+        normalized_query = _normalize_customer_text(query)
+        phone_query = _normalize_customer_phone(query)
+        email_query = _normalize_customer_email(query)
+        customers = [
+            customer
+            for customer in customers
+            if (
+                normalized_query and normalized_query in customer["search_blob"]
+            ) or (
+                phone_query and phone_query in customer["search_blob"]
+            ) or (
+                email_query and email_query in customer["search_blob"]
+            )
+        ]
+
+    context = {
+        "panel_role": "owner" if is_owner_user(request.user) else "staff",
+        "salon": salon,
+        "customers": customers,
+        "query": query,
+    }
+    return render(request, "reservas/panel/customers.html", context)
+
+
+@login_required
+@subscription_required
+def panel_customer_detail(request, cliente_id):
+    if request.user.is_superuser:
+        return redirect('/admin/')
+
+    salon = get_user_salon(request.user)
+
+    if not salon:
+        raise PermissionDenied("Tu usuario no esta asociado a ninguna peluqueria.")
+
+    customers = _build_panel_customers(salon)
+    customer = next(
+        (candidate for candidate in customers if candidate["key"] == cliente_id),
+        None,
+    )
+
+    if not customer:
+        raise PermissionDenied("El cliente no pertenece a tu salon o no existe.")
+
+    if request.method == "POST":
+        note_text = (request.POST.get("note") or "").strip()
+        if note_text:
+            CustomerNote.objects.create(
+                salon=salon,
+                customer_key=customer["key"],
+                author=request.user,
+                note=note_text,
+            )
+            messages.success(request, "Nota interna guardada.")
+        else:
+            messages.error(request, "Escribi una nota antes de guardarla.")
+        return redirect("panel_customer_detail", cliente_id=customer["key"])
+
+    note_keys = set(customer["legacy_note_keys"])
+    note_keys.add(customer["key"])
+    notes = CustomerNote.objects.select_related("author").filter(
+        salon=salon,
+        customer_key__in=note_keys,
+    )
+
+    history_entries = []
+    for item in customer["items"]:
+        booking = item.booking
+        history_entries.append({
+            "booking": booking,
+            "item": item,
+            "payment_method": _payment_method_label(booking),
+            "price": item.service.price,
+            "required_amount": booking.payment_required_amount,
+        })
+
+    context = {
+        "panel_role": "owner" if is_owner_user(request.user) else "staff",
+        "salon": salon,
+        "customer": customer,
+        "notes": notes,
+        "history_entries": history_entries,
+    }
+    return render(request, "reservas/panel/customer_detail.html", context)
 
 
 @login_required

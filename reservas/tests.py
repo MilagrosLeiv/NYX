@@ -25,11 +25,13 @@ from .models import (
     Booking,
     BookingItem,
     BusinessHourBlock,
+    CustomerNote,
     Employee,
     EmployeeWorkingHour,
     GoogleCalendarIntegration,
     Salon,
     SalonMembership,
+    SalonPaymentSettings,
     SalonSubscription,
     Service,
     ServiceCategory,
@@ -78,6 +80,151 @@ class BookingEmailTimezoneTests(TestCase):
         self.assertIn("Hora de inicio: 09:00", mail.outbox[0].body)
         self.assertIn("09:00", mail.outbox[0].alternatives[0].content)
         self.assertNotIn("Hora de inicio: 12:00", mail.outbox[0].body)
+
+
+@override_settings(
+    DEFAULT_FROM_EMAIL="turnos@example.com",
+    EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
+    TIME_ZONE="America/Argentina/Buenos_Aires",
+)
+class PublicProfessionalNameTests(TestCase):
+    def setUp(self):
+        self.salon = Salon.objects.create(
+            name="Phoenix Hair Salon",
+            slug="phoenix-public-names",
+            is_active=True,
+        )
+        self.service = Service.objects.create(
+            salon=self.salon,
+            name="Corte",
+            price=1000,
+            duration_minutes=60,
+            is_active=True,
+        )
+        self.staff_user = User.objects.create_user(
+            username="lujanleiva",
+            password="pass12345",
+            first_name="Luján",
+            last_name="Leiva",
+        )
+        self.employee = Employee.objects.create(
+            salon=self.salon,
+            user=self.staff_user,
+            name="lujanleiva",
+            is_active=True,
+        )
+        self.employee.services.add(self.service)
+        BusinessHourBlock.objects.create(
+            salon=self.salon,
+            weekday=0,
+            start_time=time(9, 0),
+            end_time=time(18, 0),
+            is_active=True,
+        )
+
+    def create_confirmed_booking(self):
+        booking = Booking.objects.create(
+            salon=self.salon,
+            customer_name="Cliente",
+            customer_phone="3415550000",
+            customer_email="cliente@example.com",
+            status="confirmed",
+            booking_mode="consecutive",
+        )
+        BookingItem.objects.create(
+            booking=booking,
+            service=self.service,
+            employee=self.employee,
+            start_datetime=timezone.make_aware(
+                datetime(2026, 7, 6, 10, 0),
+                timezone.get_current_timezone(),
+            ),
+            end_datetime=timezone.make_aware(
+                datetime(2026, 7, 6, 11, 0),
+                timezone.get_current_timezone(),
+            ),
+        )
+        return booking
+
+    def test_public_site_uses_salon_name_and_professional_public_name(self):
+        response = self.client.get(reverse("service_list", args=[self.salon.slug]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Phoenix Hair Salon")
+        self.assertContains(response, "Luján Leiva")
+        self.assertNotContains(response, "lujanleiva")
+
+    def test_public_hours_group_multiple_blocks_by_weekday(self):
+        BusinessHourBlock.objects.create(
+            salon=self.salon,
+            weekday=1,
+            start_time=time(9, 0),
+            end_time=time(12, 0),
+            is_active=True,
+        )
+        BusinessHourBlock.objects.create(
+            salon=self.salon,
+            weekday=1,
+            start_time=time(16, 0),
+            end_time=time(20, 0),
+            is_active=True,
+        )
+
+        response = self.client.get(reverse("service_list", args=[self.salon.slug]))
+        content = response.content.decode()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Martes", count=1)
+        self.assertContains(response, "09:00 - 12:00")
+        self.assertContains(response, "16:00 - 20:00")
+        self.assertLess(
+            content.index("09:00 - 12:00"),
+            content.index("16:00 - 20:00"),
+        )
+
+    def test_public_professional_selector_does_not_show_username(self):
+        with patch("builtins.print"):
+            response = self.client.get(
+                reverse("select_professional"),
+                {"services": [str(self.service.id)]},
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Luján Leiva")
+        self.assertNotContains(response, "lujanleiva")
+
+    def test_public_name_falls_back_to_profesional_without_username(self):
+        anonymous_user = User.objects.create_user(
+            username="staffinterno",
+            password="pass12345",
+        )
+        employee = Employee.objects.create(
+            salon=self.salon,
+            user=anonymous_user,
+            name="staffinterno",
+            is_active=True,
+        )
+
+        self.assertEqual(employee.public_name, "Profesional")
+        self.assertEqual(str(employee), "Profesional")
+
+    def test_confirmation_page_and_customer_email_do_not_show_username(self):
+        booking = self.create_confirmed_booking()
+
+        response = self.client.get(reverse("booking_success_booking", args=[booking.id]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Luján Leiva")
+        self.assertNotContains(response, "lujanleiva")
+
+        sent = send_booking_confirmed_email(booking)
+
+        self.assertTrue(sent)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn("Luján Leiva", mail.outbox[0].body)
+        self.assertNotIn("lujanleiva", mail.outbox[0].body)
+        self.assertIn("Luján Leiva", mail.outbox[0].alternatives[0].content)
+        self.assertNotIn("lujanleiva", mail.outbox[0].alternatives[0].content)
 
 
 @override_settings(
@@ -370,6 +517,809 @@ class PanelPasswordResetTests(TestCase):
         form = NyxPasswordResetForm()
 
         self.assertEqual(list(form.get_users("duplicado@example.com")), [])
+
+
+class InternalAdminReadOnlyTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.superuser = User.objects.create_superuser(
+            username="adminnyx",
+            email="admin@nyx.test",
+            password="pass12345",
+        )
+        self.owner = User.objects.create_user(
+            username="owner-interno",
+            email="owner-interno@example.com",
+            password="pass12345",
+        )
+        self.staff_user = User.objects.create_user(
+            username="staff-interno",
+            email="staff-interno@example.com",
+            password="pass12345",
+            is_staff=True,
+        )
+        self.salon = Salon.objects.create(
+            name="Salon Interno",
+            slug="salon-interno",
+            is_active=True,
+        )
+        SalonMembership.objects.create(
+            user=self.owner,
+            salon=self.salon,
+            role="owner",
+            is_active=True,
+        )
+        SalonMembership.objects.create(
+            user=self.staff_user,
+            salon=self.salon,
+            role="staff",
+            is_active=True,
+        )
+        SalonSubscription.objects.create(
+            salon=self.salon,
+            status=SalonSubscription.Status.TRIAL,
+            plan=SalonSubscription.Plan.BASIC,
+        )
+        self.employee = Employee.objects.create(
+            salon=self.salon,
+            user=self.staff_user,
+            name="Staff Publico",
+            is_active=True,
+        )
+        self.service = Service.objects.create(
+            salon=self.salon,
+            name="Corte",
+            price=1000,
+            duration_minutes=30,
+            is_active=True,
+        )
+        self.booking = Booking.objects.create(
+            salon=self.salon,
+            customer_name="Cliente Interno",
+            customer_phone="3415550000",
+            customer_email="cliente@example.com",
+            status="confirmed",
+            booking_mode="consecutive",
+        )
+        BookingItem.objects.create(
+            booking=self.booking,
+            service=self.service,
+            employee=self.employee,
+            start_datetime=timezone.make_aware(
+                datetime(2026, 7, 6, 10, 0),
+                timezone.get_current_timezone(),
+            ),
+            end_datetime=timezone.make_aware(
+                datetime(2026, 7, 6, 10, 30),
+                timezone.get_current_timezone(),
+            ),
+        )
+        SalonPaymentSettings.objects.create(
+            salon=self.salon,
+            mercadopago_enabled=True,
+            mercadopago_connected=True,
+            mp_user_id="mp-user-1",
+            mp_access_token="SECRET_MP_ACCESS_TOKEN",
+            mp_refresh_token="SECRET_MP_REFRESH_TOKEN",
+        )
+        GoogleCalendarIntegration.objects.create(
+            salon=self.salon,
+            calendar_id="primary",
+            access_token="SECRET_GOOGLE_ACCESS_TOKEN",
+            refresh_token="SECRET_GOOGLE_REFRESH_TOKEN",
+            is_active=True,
+        )
+
+    def test_superuser_can_access_internal_admin_dashboard(self):
+        self.client.login(username="adminnyx", password="pass12345")
+
+        response = self.client.get(reverse("internal_admin_dashboard"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Admin NYX")
+        self.assertContains(response, "Salon Interno")
+
+    def test_owner_cannot_access_internal_admin(self):
+        self.client.login(username="owner-interno", password="pass12345")
+
+        response = self.client.get(reverse("internal_admin_dashboard"))
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_staff_cannot_access_internal_admin(self):
+        self.client.login(username="staff-interno", password="pass12345")
+
+        response = self.client.get(reverse("internal_admin_dashboard"))
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_anonymous_user_redirects_to_login(self):
+        response = self.client.get(reverse("internal_admin_dashboard"))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(reverse("panel_login"), response["Location"])
+
+    def test_internal_admin_does_not_expose_tokens(self):
+        self.client.login(username="adminnyx", password="pass12345")
+
+        response = self.client.get(
+            reverse("internal_admin_salon_detail", args=[self.salon.id])
+        )
+
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertNotIn("SECRET_MP_ACCESS_TOKEN", content)
+        self.assertNotIn("SECRET_MP_REFRESH_TOKEN", content)
+        self.assertNotIn("SECRET_GOOGLE_ACCESS_TOKEN", content)
+        self.assertNotIn("SECRET_GOOGLE_REFRESH_TOKEN", content)
+        self.assertNotIn("access_token", content)
+        self.assertNotIn("refresh_token", content)
+
+    def test_salon_detail_shows_memberships_and_recent_bookings(self):
+        self.client.login(username="adminnyx", password="pass12345")
+
+        response = self.client.get(
+            reverse("internal_admin_salon_detail", args=[self.salon.id])
+        )
+
+        self.assertContains(response, "owner-interno")
+        self.assertContains(response, "staff-interno")
+        self.assertContains(response, "Cliente Interno")
+        self.assertContains(response, "primary")
+        self.assertContains(response, "mp-user-1")
+
+    def test_user_list_searches_by_username_and_email(self):
+        self.client.login(username="adminnyx", password="pass12345")
+
+        username_response = self.client.get(
+            reverse("internal_admin_user_list"),
+            {"q": "staff-interno"},
+        )
+        email_response = self.client.get(
+            reverse("internal_admin_user_list"),
+            {"q": "owner-interno@example.com"},
+        )
+
+        self.assertContains(username_response, "staff-interno@example.com")
+        self.assertContains(username_response, "Salon Interno")
+        self.assertContains(email_response, "owner-interno")
+        self.assertContains(email_response, "Salon Interno")
+
+
+@override_settings(
+    DEFAULT_FROM_EMAIL="turnos@example.com",
+    EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
+    TIME_ZONE="America/Argentina/Buenos_Aires",
+)
+class PanelCustomersTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.owner = User.objects.create_user(
+            username="owner-clientes",
+            email="owner-clientes@example.com",
+            password="pass12345",
+        )
+        self.staff_user = User.objects.create_user(
+            username="staff-clientes",
+            email="staff-clientes@example.com",
+            password="pass12345",
+        )
+        self.other_owner = User.objects.create_user(
+            username="owner-otro-clientes",
+            email="owner-otro-clientes@example.com",
+            password="pass12345",
+        )
+        self.no_membership_user = User.objects.create_user(
+            username="sin-membership",
+            email="sin-membership@example.com",
+            password="pass12345",
+        )
+        self.salon = Salon.objects.create(
+            name="Salon Clientes",
+            slug="salon-clientes",
+            is_active=True,
+        )
+        self.other_salon = Salon.objects.create(
+            name="Otro Salon Clientes",
+            slug="otro-salon-clientes",
+            is_active=True,
+        )
+        SalonMembership.objects.create(
+            user=self.owner,
+            salon=self.salon,
+            role="owner",
+            is_active=True,
+        )
+        SalonMembership.objects.create(
+            user=self.staff_user,
+            salon=self.salon,
+            role="staff",
+            is_active=True,
+        )
+        SalonMembership.objects.create(
+            user=self.other_owner,
+            salon=self.other_salon,
+            role="owner",
+            is_active=True,
+        )
+        SalonSubscription.objects.create(
+            salon=self.salon,
+            status=SalonSubscription.Status.TRIAL,
+            plan=SalonSubscription.Plan.BASIC,
+        )
+        SalonSubscription.objects.create(
+            salon=self.other_salon,
+            status=SalonSubscription.Status.TRIAL,
+            plan=SalonSubscription.Plan.BASIC,
+        )
+        self.service = Service.objects.create(
+            salon=self.salon,
+            name="Corte",
+            price=1000,
+            duration_minutes=30,
+            is_active=True,
+        )
+        self.color_service = Service.objects.create(
+            salon=self.salon,
+            name="Color",
+            price=3000,
+            duration_minutes=60,
+            is_active=True,
+        )
+        self.other_service = Service.objects.create(
+            salon=self.other_salon,
+            name="Peinado",
+            price=2000,
+            duration_minutes=45,
+            is_active=True,
+        )
+        self.employee = Employee.objects.create(
+            salon=self.salon,
+            user=self.staff_user,
+            name="Ana Profesional",
+            is_active=True,
+        )
+        self.other_employee = Employee.objects.create(
+            salon=self.other_salon,
+            name="Otra Profesional",
+            is_active=True,
+        )
+        self.booking = self.create_booking(
+            salon=self.salon,
+            service=self.service,
+            employee=self.employee,
+            name="Maria Perez",
+            phone="341 555-0000",
+            email="maria@example.com",
+            status="confirmed",
+            start=timezone.now() + timedelta(days=4),
+            selected_payment_method="transfer",
+            payment_choice="deposit",
+            payment_required_amount=500,
+        )
+        self.create_booking(
+            salon=self.salon,
+            service=self.color_service,
+            employee=self.employee,
+            name="Maria Perez Completa",
+            phone="+54 9 341 555 0000",
+            email=" MARIA@example.com ",
+            status="completed",
+            start=timezone.now() - timedelta(days=10),
+        )
+        self.other_booking = self.create_booking(
+            salon=self.other_salon,
+            service=self.other_service,
+            employee=self.other_employee,
+            name="Cliente Otro Salon",
+            phone="3419990000",
+            email="otro@example.com",
+            status="confirmed",
+            start=timezone.now() + timedelta(days=5),
+        )
+
+    def create_booking(
+        self,
+        salon,
+        service,
+        employee,
+        name,
+        phone,
+        email,
+        status,
+        start,
+        selected_payment_method="",
+        payment_choice="none",
+        payment_required_amount=0,
+    ):
+        booking = Booking.objects.create(
+            salon=salon,
+            customer_name=name,
+            customer_phone=phone,
+            customer_email=email,
+            status=status,
+            booking_mode="consecutive",
+            selected_payment_method=selected_payment_method,
+            payment_choice=payment_choice,
+            payment_required_amount=payment_required_amount,
+        )
+        BookingItem.objects.create(
+            booking=booking,
+            service=service,
+            employee=employee,
+            start_datetime=start,
+            end_datetime=start + timedelta(minutes=service.duration_minutes),
+        )
+        return booking
+
+    def login_owner(self):
+        self.client.login(username="owner-clientes", password="pass12345")
+
+    def test_owner_sees_customers_from_own_salon(self):
+        self.login_owner()
+
+        response = self.client.get(reverse("panel_customers"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Maria Perez Completa")
+        self.assertNotContains(response, "Cliente Otro Salon")
+
+    def test_active_staff_sees_customers_from_own_salon(self):
+        self.client.login(username="staff-clientes", password="pass12345")
+
+        response = self.client.get(reverse("panel_customers"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Maria Perez Completa")
+        self.assertNotContains(response, "Cliente Otro Salon")
+
+    def test_other_salon_user_does_not_see_foreign_customers(self):
+        self.client.login(username="owner-otro-clientes", password="pass12345")
+
+        response = self.client.get(reverse("panel_customers"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Cliente Otro Salon")
+        self.assertNotContains(response, "Maria Perez Completa")
+
+    def test_anonymous_user_cannot_access_customers(self):
+        response = self.client.get(reverse("panel_customers"))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(reverse("panel_login"), response["Location"])
+
+    def test_user_without_active_membership_cannot_access_customers(self):
+        self.client.login(username="sin-membership", password="pass12345")
+
+        response = self.client.get(reverse("panel_customers"))
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_same_email_with_different_names_is_grouped(self):
+        self.login_owner()
+
+        response = self.client.get(reverse("panel_customers"))
+
+        customers = response.context["customers"]
+        self.assertEqual(len(customers), 1)
+        self.assertEqual(customers[0]["total_bookings"], 2)
+        self.assertEqual(customers[0]["key"], "email-maria@example.com")
+
+    def test_grouped_customer_uses_best_available_display_name(self):
+        self.login_owner()
+
+        response = self.client.get(reverse("panel_customers"))
+
+        self.assertEqual(response.context["customers"][0]["name"], "Maria Perez Completa")
+        self.assertContains(response, "Maria Perez Completa")
+
+    def test_email_with_spaces_and_uppercase_is_grouped(self):
+        self.login_owner()
+
+        response = self.client.get(reverse("panel_customers"))
+
+        customer = response.context["customers"][0]
+        self.assertEqual(customer["email"], "maria@example.com")
+        self.assertEqual(customer["total_bookings"], 2)
+
+    def test_without_email_groups_by_normalized_phone(self):
+        first = self.create_booking(
+            salon=self.salon,
+            service=self.service,
+            employee=self.employee,
+            name="Cliente Sin Email",
+            phone="(341) 222-3333",
+            email="",
+            status="confirmed",
+            start=timezone.now() + timedelta(days=8),
+        )
+        self.create_booking(
+            salon=self.salon,
+            service=self.color_service,
+            employee=self.employee,
+            name="Cliente Sin Email Bis",
+            phone="341 222 3333",
+            email="",
+            status="completed",
+            start=timezone.now() - timedelta(days=8),
+        )
+        self.login_owner()
+
+        response = self.client.get(
+            reverse("panel_customer_detail", args=[panel_views._customer_key_for_booking(first)]),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Cliente Sin Email")
+        self.assertContains(response, "Cliente Sin Email Bis")
+
+    def test_search_by_name_phone_and_email(self):
+        self.login_owner()
+
+        name_response = self.client.get(reverse("panel_customers"), {"q": "maria"})
+        old_name_response = self.client.get(reverse("panel_customers"), {"q": "Perez"})
+        new_name_response = self.client.get(reverse("panel_customers"), {"q": "Completa"})
+        phone_response = self.client.get(reverse("panel_customers"), {"q": "5550000"})
+        email_response = self.client.get(reverse("panel_customers"), {"q": "maria@example.com"})
+
+        self.assertEqual(len(name_response.context["customers"]), 1)
+        self.assertEqual(len(old_name_response.context["customers"]), 1)
+        self.assertEqual(len(new_name_response.context["customers"]), 1)
+        self.assertEqual(len(phone_response.context["customers"]), 1)
+        self.assertEqual(len(email_response.context["customers"]), 1)
+
+    def test_customer_detail_shows_history(self):
+        self.login_owner()
+        customer_key = panel_views._customer_key_for_booking(self.booking)
+
+        response = self.client.get(reverse("panel_customer_detail", args=[customer_key]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Historial de turnos")
+        self.assertContains(response, "Corte")
+        self.assertContains(response, "Color")
+        self.assertEqual(len(response.context["history_entries"]), 2)
+        self.assertContains(response, "Ana Profesional")
+        self.assertContains(response, "Transferencia")
+
+    def test_internal_notes_can_be_created_and_seen_in_panel(self):
+        self.login_owner()
+        customer_key = panel_views._customer_key_for_booking(self.booking)
+        legacy_phone_key = f"phone-{panel_views._normalize_customer_phone(self.booking.customer_phone)}"
+        CustomerNote.objects.create(
+            salon=self.salon,
+            customer_key=legacy_phone_key,
+            author=self.owner,
+            note="Nota previa por telefono",
+        )
+
+        response = self.client.post(
+            reverse("panel_customer_detail", args=[customer_key]),
+            {"note": "Prefiere turno por la manana"},
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Nota previa por telefono")
+        self.assertContains(response, "Prefiere turno por la manana")
+        self.assertTrue(
+            CustomerNote.objects.filter(
+                salon=self.salon,
+                customer_key=customer_key,
+                note="Prefiere turno por la manana",
+            ).exists()
+        )
+
+    def test_internal_notes_do_not_appear_on_public_site_or_customer_email(self):
+        customer_key = panel_views._customer_key_for_booking(self.booking)
+        CustomerNote.objects.create(
+            salon=self.salon,
+            customer_key=customer_key,
+            author=self.owner,
+            note="Usa tintura X",
+        )
+
+        public_response = self.client.get(reverse("service_list", args=[self.salon.slug]))
+        sent = send_booking_confirmed_email(self.booking)
+
+        self.assertEqual(public_response.status_code, 200)
+        self.assertNotContains(public_response, "Usa tintura X")
+        self.assertTrue(sent)
+        self.assertNotIn("Usa tintura X", mail.outbox[0].body)
+        self.assertNotIn("Usa tintura X", mail.outbox[0].alternatives[0].content)
+
+    def test_notes_and_customers_do_not_mix_between_salons(self):
+        self.login_owner()
+        own_key = panel_views._customer_key_for_booking(self.booking)
+        other_key = panel_views._customer_key_for_booking(self.other_booking)
+        CustomerNote.objects.create(
+            salon=self.other_salon,
+            customer_key=other_key,
+            author=self.other_owner,
+            note="Nota de otro salon",
+        )
+
+        list_response = self.client.get(reverse("panel_customers"))
+        detail_response = self.client.get(reverse("panel_customer_detail", args=[own_key]))
+        forbidden_response = self.client.get(reverse("panel_customer_detail", args=[other_key]))
+
+        self.assertNotContains(list_response, "Cliente Otro Salon")
+        self.assertNotContains(detail_response, "Nota de otro salon")
+        self.assertEqual(forbidden_response.status_code, 403)
+
+
+@override_settings(
+    DEFAULT_FROM_EMAIL="turnos@example.com",
+    EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
+    TIME_ZONE="America/Argentina/Buenos_Aires",
+)
+class PanelMetricsTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.owner = User.objects.create_user(
+            username="owner-metricas",
+            email="owner-metricas@example.com",
+            password="pass12345",
+        )
+        self.staff_user = User.objects.create_user(
+            username="staff-metricas",
+            email="staff-metricas@example.com",
+            password="pass12345",
+        )
+        self.other_owner = User.objects.create_user(
+            username="owner-otras-metricas",
+            email="owner-otras-metricas@example.com",
+            password="pass12345",
+        )
+        self.salon = Salon.objects.create(
+            name="Salon Metricas",
+            slug="salon-metricas",
+            is_active=True,
+        )
+        self.other_salon = Salon.objects.create(
+            name="Otro Salon Metricas",
+            slug="otro-salon-metricas",
+            is_active=True,
+        )
+        SalonMembership.objects.create(
+            user=self.owner,
+            salon=self.salon,
+            role="owner",
+            is_active=True,
+        )
+        SalonMembership.objects.create(
+            user=self.staff_user,
+            salon=self.salon,
+            role="staff",
+            is_active=True,
+        )
+        SalonMembership.objects.create(
+            user=self.other_owner,
+            salon=self.other_salon,
+            role="owner",
+            is_active=True,
+        )
+        SalonSubscription.objects.create(
+            salon=self.salon,
+            status=SalonSubscription.Status.TRIAL,
+            plan=SalonSubscription.Plan.BASIC,
+        )
+        SalonSubscription.objects.create(
+            salon=self.other_salon,
+            status=SalonSubscription.Status.TRIAL,
+            plan=SalonSubscription.Plan.BASIC,
+        )
+        self.corte = Service.objects.create(
+            salon=self.salon,
+            name="Corte",
+            price=1000,
+            duration_minutes=30,
+            is_active=True,
+        )
+        self.color = Service.objects.create(
+            salon=self.salon,
+            name="Color",
+            price=2500,
+            duration_minutes=60,
+            is_active=True,
+        )
+        self.other_service = Service.objects.create(
+            salon=self.other_salon,
+            name="Servicio Ajeno",
+            price=3000,
+            duration_minutes=45,
+            is_active=True,
+        )
+        self.visible_user = User.objects.create_user(
+            username="usuariointerno",
+            password="pass12345",
+            first_name="Lara",
+            last_name="Visible",
+        )
+        self.employee = Employee.objects.create(
+            salon=self.salon,
+            user=self.visible_user,
+            name="usuariointerno",
+            is_active=True,
+        )
+        self.other_employee = Employee.objects.create(
+            salon=self.salon,
+            name="Ana Profesional",
+            is_active=True,
+        )
+        self.foreign_employee = Employee.objects.create(
+            salon=self.other_salon,
+            name="Profesional Ajeno",
+            is_active=True,
+        )
+        self.create_booking(
+            salon=self.salon,
+            service=self.corte,
+            employee=self.employee,
+            name="Mili",
+            phone="3415550000",
+            email=" MiliCentral2004@gmail.com ",
+            status="confirmed",
+            days_offset=0,
+        )
+        self.create_booking(
+            salon=self.salon,
+            service=self.color,
+            employee=self.employee,
+            name="mili central",
+            phone="341 555 0000",
+            email="milicentral2004@gmail.com",
+            status="completed",
+            days_offset=-1,
+        )
+        self.create_booking(
+            salon=self.salon,
+            service=self.corte,
+            employee=self.other_employee,
+            name="Ana",
+            phone="(341) 222-3333",
+            email="",
+            status="cancelled",
+            days_offset=-2,
+        )
+        self.create_booking(
+            salon=self.salon,
+            service=self.corte,
+            employee=self.other_employee,
+            name="Carla",
+            phone="3414445555",
+            email="",
+            status="completed",
+            days_offset=-10,
+        )
+        self.create_booking(
+            salon=self.other_salon,
+            service=self.other_service,
+            employee=self.foreign_employee,
+            name="Mili Ajena",
+            phone="3419990000",
+            email="milicentral2004@gmail.com",
+            status="confirmed",
+            days_offset=0,
+        )
+
+    def metric_datetime(self, days_offset):
+        selected_date = timezone.localdate() + timedelta(days=days_offset)
+        selected_time = time(23, 45) if days_offset == 0 else time(12, 0)
+        return timezone.make_aware(
+            datetime.combine(selected_date, selected_time),
+            timezone.get_current_timezone(),
+        )
+
+    def create_booking(
+        self,
+        salon,
+        service,
+        employee,
+        name,
+        phone,
+        email,
+        status,
+        days_offset,
+    ):
+        booking = Booking.objects.create(
+            salon=salon,
+            customer_name=name,
+            customer_phone=phone,
+            customer_email=email,
+            status=status,
+            booking_mode="consecutive",
+        )
+        start_datetime = self.metric_datetime(days_offset)
+        BookingItem.objects.create(
+            booking=booking,
+            service=service,
+            employee=employee,
+            start_datetime=start_datetime,
+            end_datetime=start_datetime + timedelta(minutes=service.duration_minutes),
+        )
+        return booking
+
+    def login_owner(self):
+        self.client.login(username="owner-metricas", password="pass12345")
+
+    def get_metrics(self, params=None):
+        self.login_owner()
+        return self.client.get(reverse("panel_metrics"), params or {})
+
+    def test_owner_sees_metrics_from_own_salon(self):
+        response = self.get_metrics({"period": "last_7"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Metricas")
+        self.assertContains(response, "Corte")
+        self.assertNotContains(response, "Servicio Ajeno")
+
+    def test_active_staff_sees_metrics_from_own_salon(self):
+        self.client.login(username="staff-metricas", password="pass12345")
+
+        response = self.client.get(reverse("panel_metrics"), {"period": "last_7"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Corte")
+        self.assertNotContains(response, "Servicio Ajeno")
+
+    def test_other_salon_user_does_not_see_foreign_metrics(self):
+        self.client.login(username="owner-otras-metricas", password="pass12345")
+
+        response = self.client.get(reverse("panel_metrics"), {"period": "last_7"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Servicio Ajeno")
+        self.assertNotContains(response, "Ana Profesional")
+
+    def test_anonymous_user_cannot_access_metrics(self):
+        response = self.client.get(reverse("panel_metrics"))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(reverse("panel_login"), response["Location"])
+
+    def test_total_statuses_and_cancellation_rate_are_calculated(self):
+        response = self.get_metrics({"period": "last_7"})
+        metrics = response.context["metrics"]
+
+        self.assertEqual(metrics["total_turns"], 3)
+        self.assertEqual(metrics["confirmed_count"], 1)
+        self.assertEqual(metrics["completed_count"], 1)
+        self.assertEqual(metrics["cancelled_count"], 1)
+        self.assertEqual(metrics["cancellation_rate"], 33.3)
+
+    def test_unique_customers_use_email_and_phone_grouping(self):
+        response = self.get_metrics({"period": "last_7"})
+        metrics = response.context["metrics"]
+
+        self.assertEqual(metrics["unique_customers_count"], 2)
+        self.assertEqual(metrics["new_customers_count"], 2)
+        self.assertEqual(metrics["recurrent_customers_count"], 1)
+
+    def test_service_ranking_is_ordered(self):
+        response = self.get_metrics({"period": "last_7"})
+        ranking = response.context["metrics"]["service_ranking"]
+
+        self.assertEqual(ranking[0]["name"], "Corte")
+        self.assertEqual(ranking[0]["count"], 2)
+        self.assertEqual(ranking[1]["name"], "Color")
+        self.assertEqual(ranking[1]["count"], 1)
+
+    def test_employee_ranking_uses_public_name_not_username(self):
+        response = self.get_metrics({"period": "last_7"})
+        ranking = response.context["metrics"]["employee_ranking"]
+        ranking_names = [row["name"] for row in ranking]
+
+        self.assertIn("Lara Visible", ranking_names)
+        self.assertNotIn("usuariointerno", response.content.decode())
+
+    def test_last_7_and_last_30_filters_work(self):
+        last_7 = self.get_metrics({"period": "last_7"})
+        last_30 = self.get_metrics({"period": "last_30"})
+
+        self.assertEqual(last_7.context["metrics"]["total_turns"], 3)
+        self.assertEqual(last_30.context["metrics"]["total_turns"], 4)
 
 
 class GuidedOnboardingDecisionTests(TestCase):
@@ -1166,13 +2116,17 @@ class ManualBookingGoogleCalendarTests(TestCase):
             is_active=True,
         )
         self.client.login(username="owner-calendar", password="pass12345")
+        days_until_monday = (7 - timezone.localdate().weekday()) % 7
+        if days_until_monday == 0:
+            days_until_monday = 7
+        appointment_date = timezone.localdate() + timedelta(days=days_until_monday)
         self.post_data = {
             "customer_name": "Ana",
             "customer_phone": "3415550000",
             "customer_email": "",
             "employee": str(self.employee.id),
             "service": str(self.service.id),
-            "appointment_date": "2026-07-06",
+            "appointment_date": appointment_date.isoformat(),
             "appointment_time": "10:00",
             "notes": "Cliente habitual",
         }

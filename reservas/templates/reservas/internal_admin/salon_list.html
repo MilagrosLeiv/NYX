@@ -1,0 +1,69 @@
+{% extends "reservas/internal_admin/base.html" %}
+
+{% block title %}Salones | Admin NYX{% endblock %}
+{% block heading %}Salones{% endblock %}
+
+{% block content %}
+<div class="nyx-admin-card p-3">
+  <div class="table-responsive">
+    <table class="table nyx-admin-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Salon</th>
+          <th>Owner principal</th>
+          <th>Creado</th>
+          <th>Profesionales</th>
+          <th>Servicios</th>
+          <th>Reservas</th>
+          <th>Mercado Pago</th>
+          <th>Google Calendar</th>
+          <th>Link publico</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in salon_rows %}
+          <tr>
+            <td>{{ row.salon.id }}</td>
+            <td>
+              <strong>{{ row.salon.name }}</strong>
+              <div class="nyx-admin-muted small">{{ row.salon.slug }}</div>
+            </td>
+            <td>
+              {% if row.owner %}
+                {{ row.owner.username }}
+                <div class="nyx-admin-muted small">{{ row.owner.email|default:"Sin email" }}</div>
+              {% else %}
+                <span class="nyx-admin-muted">Sin owner activo</span>
+              {% endif %}
+            </td>
+            <td>{{ row.salon.created_at|date:"d/m/Y H:i" }}</td>
+            <td>{{ row.salon.employees_count }}</td>
+            <td>{{ row.salon.services_count }}</td>
+            <td>{{ row.salon.bookings_count }}</td>
+            <td>
+              <span class="nyx-admin-badge {% if not row.payment.connected %}is-off{% endif %}">
+                {% if row.payment.connected %}Si{% else %}No{% endif %}
+              </span>
+            </td>
+            <td>
+              <span class="nyx-admin-badge {% if not row.calendar.connected %}is-off{% endif %}">
+                {% if row.calendar.connected %}Si{% else %}No{% endif %}
+              </span>
+            </td>
+            <td>
+              <a href="{{ row.public_url }}" target="_blank" rel="noopener" class="text-decoration-none">Abrir</a>
+            </td>
+            <td class="text-end">
+              <a href="{% url 'internal_admin_salon_detail' row.salon.id %}" class="btn btn-outline-dark btn-sm">Detalle</a>
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="11">No hay salones.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1072,6 +1072,16 @@ document.addEventListener('DOMContentLoaded', function () {
             <span>Bloqueos</span>
           </a>
 
+          <a href="{% url 'panel_metrics' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_metrics' %}active{% endif %}">
+            <i class="bi bi-graph-up-arrow"></i>
+            <span>Métricas</span>
+          </a>
+
+          <a href="{% url 'panel_customers' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_customers' or request.resolver_match.url_name == 'panel_customer_detail' %}active{% endif %}">
+            <i class="bi bi-person-lines-fill"></i>
+            <span>Clientes</span>
+          </a>
+
           {% if panel_role == 'owner' %}
             <a href="{% url 'panel_services' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_services' or request.resolver_match.url_name == 'panel_service_create' or request.resolver_match.url_name == 'panel_service_edit' or request.resolver_match.url_name == 'panel_service_categories' or request.resolver_match.url_name == 'panel_service_category_create' or request.resolver_match.url_name == 'panel_service_category_edit' %}active{% endif %}">
               <i class="bi bi-scissors"></i>
@@ -1169,6 +1179,16 @@ document.addEventListener('DOMContentLoaded', function () {
               <a href="{% url 'panel_bloqueos' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_bloqueos' %}active{% endif %}">
                 <i class="bi bi-slash-circle-fill"></i>
                 <span>Bloqueos</span>
+              </a>
+
+              <a href="{% url 'panel_metrics' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_metrics' %}active{% endif %}">
+                <i class="bi bi-graph-up-arrow"></i>
+                <span>Métricas</span>
+              </a>
+
+              <a href="{% url 'panel_customers' %}" class="nyx-nav-link {% if request.resolver_match.url_name == 'panel_customers' or request.resolver_match.url_name == 'panel_customer_detail' %}active{% endif %}">
+                <i class="bi bi-person-lines-fill"></i>
+                <span>Clientes</span>
               </a>
 
               {% if panel_role == 'owner' %}

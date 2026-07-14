@@ -49,7 +49,7 @@
                                             {% if appointment.employee %}
                                             <div class="col-12 col-md-6">
                                                 <div class="small nyx-text-muted">Profesional</div>
-                                                <div class="fw-semibold">{{ appointment.employee.name }}</div>
+                                                <div class="fw-semibold">{{ appointment.employee.public_name }}</div>
                                             </div>
                                             {% endif %}
 
@@ -107,7 +107,7 @@
 
                                         {% if appointment.employee %}
                                             <div class="mb-4">
-                                                <div class="fw-semibold">{{ appointment.employee.name }}</div>
+                                                <div class="fw-semibold">{{ appointment.employee.public_name }}</div>
                                                 <div class="nyx-text-muted small">Profesional</div>
                                             </div>
                                         {% endif %}

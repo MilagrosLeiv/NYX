@@ -1,0 +1,69 @@
+{% extends "reservas/internal_admin/base.html" %}
+
+{% block title %}Usuarios | Admin NYX{% endblock %}
+{% block heading %}Usuarios{% endblock %}
+
+{% block content %}
+<div class="nyx-admin-card p-3 mb-3">
+  <form method="get" class="row g-2 align-items-end">
+    <div class="col-md-8">
+      <label for="q" class="form-label fw-bold">Buscar por username o email</label>
+      <input type="search" id="q" name="q" value="{{ query }}" class="form-control" placeholder="usuario@example.com">
+    </div>
+    <div class="col-md-4">
+      <button type="submit" class="btn btn-dark w-100">Buscar</button>
+    </div>
+  </form>
+</div>
+
+<div class="nyx-admin-card p-3">
+  <div class="table-responsive">
+    <table class="table nyx-admin-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Username</th>
+          <th>Email</th>
+          <th>Activo</th>
+          <th>Django staff</th>
+          <th>Superuser</th>
+          <th>Memberships</th>
+          <th>Salones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for user in users %}
+          <tr>
+            <td>{{ user.id }}</td>
+            <td>{{ user.username }}</td>
+            <td>{{ user.email|default:"Sin email" }}</td>
+            <td>{% if user.is_active %}Si{% else %}No{% endif %}</td>
+            <td>{% if user.is_staff %}Si{% else %}No{% endif %}</td>
+            <td>{% if user.is_superuser %}Si{% else %}No{% endif %}</td>
+            <td>
+              {% for membership in user.salon_memberships.all %}
+                <span class="nyx-admin-badge {% if not membership.is_active %}is-off{% endif %}">
+                  {{ membership.get_role_display }}
+                </span>
+              {% empty %}
+                <span class="nyx-admin-muted">Sin memberships</span>
+              {% endfor %}
+            </td>
+            <td>
+              {% for membership in user.salon_memberships.all %}
+                <a href="{% url 'internal_admin_salon_detail' membership.salon.id %}" class="d-block text-decoration-none">
+                  {{ membership.salon.name }}
+                </a>
+              {% empty %}
+                <span class="nyx-admin-muted">Sin salones</span>
+              {% endfor %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="8">No hay usuarios para esa busqueda.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

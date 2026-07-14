@@ -7,6 +7,11 @@ from django.core.exceptions import ValidationError
 from .models import Appointment, Employee, Service, Salon
 
 
+class PublicEmployeeChoiceField(forms.ModelChoiceField):
+    def label_from_instance(self, obj):
+        return obj.public_name
+
+
 class AppointmentForm(forms.ModelForm):
     services = forms.ModelMultipleChoiceField(
         queryset=Service.objects.filter(is_active=True).order_by('name'),
@@ -88,6 +93,7 @@ class AppointmentForm(forms.ModelForm):
 
         self.fields['employee'].queryset = Employee.objects.none()
         self.fields['employee'].empty_label = 'Seleccioná un profesional'
+        self.fields['employee'].label_from_instance = lambda obj: obj.public_name
         self.fields['salon'].queryset = Salon.objects.filter(is_active=True).order_by('name')
 
         selected_salon_id = None
@@ -184,7 +190,7 @@ class AppointmentForm(forms.ModelForm):
         if employee:
             for selected_service in services:
                 if not employee.services.filter(pk=selected_service.pk).exists():
-                    self.add_error('employee', f"{employee.name} no realiza el servicio '{selected_service.name}'.")
+                    self.add_error('employee', f"{employee.public_name} no realiza el servicio '{selected_service.name}'.")
 
         if self.errors:
             return cleaned_data
@@ -251,7 +257,7 @@ class PublicAppointmentForm(forms.Form):
         required=True
     )
 
-    employee = forms.ModelChoiceField(
+    employee = PublicEmployeeChoiceField(
         queryset=Employee.objects.none(),
         label='Profesional',
         required=True,
@@ -360,7 +366,7 @@ class PublicAppointmentForm(forms.Form):
 
         for selected_service in services:
             if not employee.services.filter(pk=selected_service.pk).exists():
-                self.add_error('employee', f"{employee.name} no realiza el servicio '{selected_service.name}'.")
+                self.add_error('employee', f"{employee.public_name} no realiza el servicio '{selected_service.name}'.")
 
         if self.errors:
             return cleaned_data

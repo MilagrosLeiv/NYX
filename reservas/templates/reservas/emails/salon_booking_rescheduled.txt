@@ -9,7 +9,7 @@ Teléfono: {{ booking.customer_phone }}
 
 Nuevo detalle del turno:
 {% for item in items %}
-- {{ item.service.name }} con {{ item.employee.name }}: {{ item.start_datetime|localtime|date:"d/m/Y H:i" }} a {{ item.end_datetime|localtime|date:"H:i" }}
+- {{ item.service.name }} con {{ item.employee.public_name }}: {{ item.start_datetime|localtime|date:"d/m/Y H:i" }} a {{ item.end_datetime|localtime|date:"H:i" }}
 {% endfor %}
 
 Duración total: {{ total_duration }} minutos

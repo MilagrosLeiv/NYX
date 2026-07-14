@@ -1,10 +1,14 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
 from .panel_forms import NyxPasswordResetForm
-from . import views, panel_views
+from . import views, panel_views, internal_admin_views
 from .views import mercadopago_oauth_connect, mercadopago_oauth_callback
 urlpatterns = [
     path('', views.landing_nyx, name='landing_nyx'),
+    path('admin-nyx/', internal_admin_views.dashboard, name='internal_admin_dashboard'),
+    path('admin-nyx/salones/', internal_admin_views.salon_list, name='internal_admin_salon_list'),
+    path('admin-nyx/salones/<int:salon_id>/', internal_admin_views.salon_detail, name='internal_admin_salon_detail'),
+    path('admin-nyx/usuarios/', internal_admin_views.user_list, name='internal_admin_user_list'),
     path('s/<slug:salon_slug>/', views.service_list, name='service_list'),
 
     path('reservar/profesional/', views.select_professional, name='select_professional'),
@@ -264,6 +268,9 @@ urlpatterns = [
         name='panel_google_calendar_disconnect'
     ),
     path('panel/configuracion/', panel_views.panel_settings, name='panel_settings'),
+    path('panel/metricas/', panel_views.panel_metrics, name='panel_metrics'),
+    path('panel/clientes/', panel_views.panel_customers, name='panel_customers'),
+    path('panel/clientes/<str:cliente_id>/', panel_views.panel_customer_detail, name='panel_customer_detail'),
     path('panel/reservas/', panel_views.panel_bookings, name='panel_bookings'),
     path('panel/reservas/<int:booking_id>/', panel_views.panel_booking_detail, name='panel_booking_detail'),
     path('panel/reservas/<int:booking_id>/cancelar/', panel_views.panel_booking_cancel, name='panel_booking_cancel'),

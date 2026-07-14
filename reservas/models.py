@@ -443,8 +443,26 @@ class Employee(models.Model):
         default=False
     )
 
+    @property
+    def public_name(self):
+        visible_name = (self.name or "").strip()
+        username = ""
+        full_name = ""
+
+        if self.user_id:
+            username = (self.user.username or "").strip()
+            full_name = self.user.get_full_name().strip()
+
+        if visible_name and visible_name.lower() != username.lower():
+            return visible_name
+
+        if full_name:
+            return full_name
+
+        return "Profesional"
+
     def __str__(self):
-        return self.name
+        return self.public_name
 
 
 class EmployeeWorkingHour(models.Model):
@@ -1288,6 +1306,37 @@ class BookingItem(models.Model):
 
     def __str__(self):
         return f"{self.booking.customer_name} - {self.service.name} - {self.employee.name}"
+
+
+class CustomerNote(models.Model):
+    salon = models.ForeignKey(
+        Salon,
+        on_delete=models.CASCADE,
+        related_name='customer_notes',
+        verbose_name='Peluqueria',
+    )
+    customer_key = models.CharField(max_length=120, db_index=True)
+    author = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='customer_notes',
+    )
+    note = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['salon', 'customer_key']),
+        ]
+        verbose_name = 'Nota interna de cliente'
+        verbose_name_plural = 'Notas internas de clientes'
+
+    def __str__(self):
+        return f"{self.salon} - {self.customer_key}"
     
 class EmployeeTimeOff(models.Model):
     employee = models.ForeignKey(

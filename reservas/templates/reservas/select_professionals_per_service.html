@@ -53,7 +53,7 @@
                   >
                     <option value="">Seleccioná un profesional</option>
                     {% for employee in employees_by_service|get_item:service.id %}
-                      <option value="{{ employee.id }}">{{ employee.name }}</option>
+                      <option value="{{ employee.id }}">{{ employee.public_name }}</option>
                     {% endfor %}
                   </select>
                 </div>

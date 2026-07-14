@@ -15,6 +15,10 @@ def format_local_time(datetime_value):
     return format_local_datetime(datetime_value, "%H:%M")
 
 
+def employee_public_name(employee):
+    return getattr(employee, "public_name", None) or "Profesional"
+
+
 def send_booking_confirmed_email(booking, request=None):
     customer_email = (booking.customer_email or "").strip()
     from_email = (settings.DEFAULT_FROM_EMAIL or "").strip()
@@ -29,11 +33,11 @@ def send_booking_confirmed_email(booking, request=None):
     services_text = ', '.join(item.service.name for item in booking_items)
 
     professionals_text_plain = ' | '.join(
-        f'{item.service.name}: {item.employee.name}' for item in booking_items
+        f'{item.service.name}: {employee_public_name(item.employee)}' for item in booking_items
     )
 
     professionals_text_html = '<br>'.join(
-        f'{item.service.name}: {item.employee.name}' for item in booking_items
+        f'{item.service.name}: {employee_public_name(item.employee)}' for item in booking_items
     )
 
     first_item = booking_items.order_by('start_datetime').first()
@@ -250,11 +254,11 @@ def send_booking_payment_pending_email(booking, request=None):
     services_text = ', '.join(item.service.name for item in booking_items)
 
     professionals_text_plain = ' | '.join(
-        f'{item.service.name}: {item.employee.name}' for item in booking_items
+        f'{item.service.name}: {employee_public_name(item.employee)}' for item in booking_items
     )
 
     professionals_text_html = '<br>'.join(
-        f'{item.service.name}: {item.employee.name}' for item in booking_items
+        f'{item.service.name}: {employee_public_name(item.employee)}' for item in booking_items
     )
 
     first_item = booking_items.order_by('start_datetime').first()
@@ -628,11 +632,11 @@ def send_booking_cancelled_email(booking):
     services_text = ', '.join(item.service.name for item in booking_items)
 
     professionals_text_plain = ' | '.join(
-        f'{item.service.name}: {item.employee.name}' for item in booking_items
+        f'{item.service.name}: {employee_public_name(item.employee)}' for item in booking_items
     )
 
     professionals_text_html = '<br>'.join(
-        f'{item.service.name}: {item.employee.name}' for item in booking_items
+        f'{item.service.name}: {employee_public_name(item.employee)}' for item in booking_items
     )
 
     first_item = booking_items.order_by('start_datetime').first()
@@ -883,11 +887,11 @@ def send_booking_rescheduled_email(booking, request=None):
     services_text = ', '.join(item.service.name for item in booking_items)
 
     professionals_text_plain = ' | '.join(
-        f'{item.service.name}: {item.employee.name}' for item in booking_items
+        f'{item.service.name}: {employee_public_name(item.employee)}' for item in booking_items
     )
 
     professionals_text_html = '<br>'.join(
-        f'{item.service.name}: {item.employee.name}' for item in booking_items
+        f'{item.service.name}: {employee_public_name(item.employee)}' for item in booking_items
     )
 
     first_item = booking_items.first()
@@ -1190,7 +1194,7 @@ def send_staff_invitation_email(invitation, request=None):
     subject = f"Te invitaron a NYX - {invitation.salon.name}"
 
     text_body = (
-        f"Hola {invitation.employee.name},\n\n"
+        f"Hola {employee_public_name(invitation.employee)},\n\n"
         f"Te invitaron a acceder al panel de NYX para {invitation.salon.name}.\n\n"
         f"Para activar tu cuenta y crear tu contraseña, entrá al siguiente link:\n"
         f"{accept_url}\n\n"
@@ -1221,7 +1225,7 @@ def send_staff_invitation_email(invitation, request=None):
 
                 <div style="padding:32px;">
                     <p style="margin:0 0 18px; font-size:17px; line-height:1.6; color:#1f2937;">
-                        Hola <strong>{invitation.employee.name}</strong>, te invitaron a acceder al panel de NYX para <strong>{invitation.salon.name}</strong>.
+                        Hola <strong>{employee_public_name(invitation.employee)}</strong>, te invitaron a acceder al panel de NYX para <strong>{invitation.salon.name}</strong>.
                     </p>
 
                     <div style="margin:0 0 24px; padding:16px 18px; background-color:#ecfeff; border:1px solid #b6ecef; border-radius:14px;">

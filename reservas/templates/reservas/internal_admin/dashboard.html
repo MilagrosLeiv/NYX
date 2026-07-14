@@ -1,0 +1,119 @@
+{% extends "reservas/internal_admin/base.html" %}
+
+{% block title %}Dashboard | Admin NYX{% endblock %}
+{% block heading %}Dashboard interno{% endblock %}
+
+{% block content %}
+<section class="row g-3 mb-4">
+  <div class="col-6 col-xl-3">
+    <div class="nyx-admin-card nyx-admin-stat">
+      <span>Total salones</span>
+      <strong>{{ total_salons }}</strong>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="nyx-admin-card nyx-admin-stat">
+      <span>Total usuarios</span>
+      <strong>{{ total_users }}</strong>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="nyx-admin-card nyx-admin-stat">
+      <span>Total reservas</span>
+      <strong>{{ total_bookings }}</strong>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="nyx-admin-card nyx-admin-stat">
+      <span>Reservas ultimos 7 dias</span>
+      <strong>{{ recent_bookings_count }}</strong>
+    </div>
+  </div>
+</section>
+
+<section class="row g-3 mb-4">
+  <div class="col-md-3">
+    <div class="nyx-admin-card nyx-admin-stat">
+      <span>Mercado Pago conectado</span>
+      <strong>{{ mercadopago_connected_count }}</strong>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="nyx-admin-card nyx-admin-stat">
+      <span>Google Calendar conectado</span>
+      <strong>{{ google_calendar_connected_count }}</strong>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="nyx-admin-card nyx-admin-stat">
+      <span>Trials activos</span>
+      <strong>{{ active_trials_count }}</strong>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="nyx-admin-card nyx-admin-stat">
+      <span>Trials vencidos</span>
+      <strong>{{ expired_trials_count }}</strong>
+    </div>
+  </div>
+</section>
+
+<section class="row g-3">
+  <div class="col-lg-5">
+    <div class="nyx-admin-card p-3">
+      <h2 class="nyx-admin-section-title">Salones creados recientemente</h2>
+      <div class="table-responsive">
+        <table class="table nyx-admin-table">
+          <tbody>
+            {% for salon in recent_salons %}
+              <tr>
+                <td>
+                  <a href="{% url 'internal_admin_salon_detail' salon.id %}" class="fw-bold text-decoration-none">{{ salon.name }}</a>
+                  <div class="nyx-admin-muted small">ID {{ salon.id }}</div>
+                </td>
+                <td class="text-end">{{ salon.created_at|date:"d/m/Y H:i" }}</td>
+              </tr>
+            {% empty %}
+              <tr><td>No hay salones.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-7">
+    <div class="nyx-admin-card p-3">
+      <h2 class="nyx-admin-section-title">Reservas recientes</h2>
+      <div class="table-responsive">
+        <table class="table nyx-admin-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Salon</th>
+              <th>Cliente</th>
+              <th>Estado</th>
+              <th>Creada</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for booking in recent_bookings %}
+              <tr>
+                <td>#{{ booking.id }}</td>
+                <td>
+                  <a href="{% url 'internal_admin_salon_detail' booking.salon_id %}" class="text-decoration-none">{{ booking.salon.name }}</a>
+                </td>
+                <td>{{ booking.customer_name }}</td>
+                <td><span class="nyx-admin-badge">{{ booking.get_status_display }}</span></td>
+                <td>{{ booking.created_at|date:"d/m/Y H:i" }}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="5">No hay reservas.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

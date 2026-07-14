@@ -766,12 +766,16 @@
             <p><strong>Dirección:</strong> {{ salon.address }}</p>
           {% endif %}
 
-          {% if active_blocks %}
+          {% if public_hours %}
             <div class="salon-hours-list">
-              {% for block in active_blocks %}
+              {% for day in public_hours %}
                 <div>
-                  <span>{{ block.get_weekday_display }}</span>
-                  <strong>{{ block.start_time|time:"H:i" }} - {{ block.end_time|time:"H:i" }}</strong>
+                  <span>{{ day.weekday_label }}</span>
+                  <strong>
+                    {% for block in day.blocks %}
+                      {{ block.start_time|time:"H:i" }} - {{ block.end_time|time:"H:i" }}{% if not forloop.last %} &middot; {% endif %}
+                    {% endfor %}
+                  </strong>
                 </div>
               {% endfor %}
             </div>
@@ -792,8 +796,8 @@
             <div class="salon-employees-list">
               {% for employee in employees %}
                 <div class="salon-employee-chip">
-                  <span>{{ employee.name|slice:":1" }}</span>
-                  {{ employee.name }}
+                  <span>{{ employee.public_name|slice:":1" }}</span>
+                  {{ employee.public_name }}
                 </div>
               {% endfor %}
             </div>
