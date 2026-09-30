@@ -118,5 +118,5 @@ Ejemplo:
 Estudiante de Ingeniería en Sistemas de Información  
 Universidad Tecnológica Nacional — Facultad Regional Rosario
 
-- LinkedIn: https://www.linkedin.com/in/milagros-leiva-1a273625b/
+- LinkedIn: https://www.linkedin.com/in/milagrossleiva/
 - GitHub: https://github.com/MilagrosLeiv
